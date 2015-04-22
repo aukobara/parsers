@@ -19,3 +19,5 @@ HTTPCACHE_ENABLED = True
 #USER_AGENT = 'ok (+http://www.yourdomain.com)'
 
 LOG_ENCODING = "cp1251"
+DUPEFILTER_CLASS = "ok.filters.FragmentsONDupFilter"
+LOG_LEVEL = "INFO"

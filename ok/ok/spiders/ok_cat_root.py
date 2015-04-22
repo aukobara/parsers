@@ -1,7 +1,8 @@
 # coding: cp1251
 import scrapy
-from scrapy.spider import Spider
+from scrapy.http.response.text import TextResponse
 from ok.items import CatItem, ProductItem
+import re
 
 '''//*[@id="departmentLink_16568_alt"]'''
 '''<a id="departmentLink_16568_alt" href="http://www.okeydostavka.ru/msk/..." aria-haspopup="true" data-toggle="departmentMenu_16568" 
@@ -10,7 +11,7 @@ from ok.items import CatItem, ProductItem
 	</a>'''
 
 
-class RootCatSpider(Spider):
+class RootCatSpider(scrapy.Spider):
     name = "ok"
     allowed_domains = ["okeydostavka.ru"]
     start_urls = ["http://www.okeydostavka.ru/msk/catalog"]
@@ -45,6 +46,10 @@ class RootCatSpider(Spider):
             f.write("%d: %s%s\n" % (level, " " * level, ' '.join(item["title"])))
 
     def parse(self, response):
+        """
+        @type response: TextResponse
+        @param response
+        """
         catsSel = response.xpath("//ul[@id='categoryMenu']//a[@class=\"link menuLink\"]")
         if not catsSel:
             # home page? all dep menu
@@ -59,12 +64,51 @@ class RootCatSpider(Spider):
             if item["link"]:
                 yield scrapy.Request(item["link"], callback=self.parse)
 
+        pageLinks = self.parseProductListPaging(response)
+        for link in pageLinks:
+            yield scrapy.Request(link, self.parse)
+
         for prodSel in response.xpath("//div[@class='product_listing_container']//div[contains(concat(' ', @class, ' '), ' product ')]"):
             item = self.extractProd(prodSel)
             if item:
                 yield item
-                yield scrapy.Request(item["link"], callback=self.parseProductDetails)
+                if item["link"]:
+                    yield scrapy.Request(item["link"], callback=self.parseProductDetails)
+
+    def parseProductListPaging(self, response):
+        """
+        Parse paging links on Product Grid pages
+
+        <div id="pageControlMenu_6_-1011_3074457345618259713" class="pageControlMenu" data-dojo-attach-point="pageControlMenu" data-parent="header">
+            <div class="pageControl number">
+                <a class="active selected" href="#" role="button" aria-disabled="true" aria-label="Перейти к странице 1" tabindex="-1">1</a>
+                <a class="hoverover" role="button" href='javascript:dojo.publish("showResultsForPageNumber",
+                    [{pageNumber:"2",pageSize:"72", linkId:"WC_SearchBasedNavigationResults_pagination_link_2_categoryResults"}])'
+                    id="WC_SearchBasedNavigationResults_pagination_link_2_categoryResults" aria-label="Перейти к странице 2" title="Перейти к странице 2">2</a>
+        Current orderBy: <input type="hidden" name="orderBy" data-dojo-attach-point="valueNode" value="2" aria-hidden="true">
+        Link format: {cat-url}#facet:&productBeginIndex:72&orderBy:2&pageView:grid&minPrice:&maxPrice:&pageSize:&
+        """
+        pageLinks = set()
+        pageMenuSel = response.xpath("//div[@class='pageControlMenu']")
+        if pageMenuSel:
+            baseUrl = response.request.url
+            if baseUrl.find("#") < 0:
+                baseUrl += "#productBeginIndex:0"
+                orderBySel = response.xpath("//div[@class='orderByDropdown selectWrapper']//option[@selected]/@value")
+                if orderBySel:
+                    baseUrl += "&orderBy:%d" % int( orderBySel[0].extract() )
+            for jslinkSel in pageMenuSel.xpath(".//a[contains(@href, 'pageNumber')]/@href"):
+                pageNumber = int(jslinkSel.re("pageNumber:\"(\\d+)\"")[0])
+                pageSize = int(jslinkSel.re("pageSize:\"(\\d+)\"")[0])
+                link = re.sub(r"productBeginIndex:\d+", "productBeginIndex:%d" % ((pageNumber-1) * pageSize), baseUrl)
+                pageLinks.add( link )
+        return pageLinks
 
     def parseProductDetails(self, response):
+        """
+        Parse page with Product key-values
+        @type response: TextResponse
+        @param response Original HTTP Response
+        """
         pass
 
