@@ -1,0 +1,88 @@
+<?xml version='1.0' encoding="cp1251"?>
+<li>
+    <div id="entitledItem_78280" style="display:none;">
+            [
+                            {
+                            "catentry_id" : "78292",
+                            "Attributes" :	{
+                                },
+                                        "ItemImage" : "/wcsstore/OKMarketCAS/cat_entries/389690/389690_thumbnail.jpg",
+                                        "ItemImage467" : "/wcsstore/OKMarketCAS/cat_entries/389690/389690_thumbnail.jpg",
+                                        "ItemThumbnailImage" : "/wcsstore/OKMarketCAS/cat_entries/389690/389690_thumbnail.jpg"
+                            }
+            ]
+    </div>
+    <input type="hidden" id="ProductInfoName_78280" style="display:none;" value="Биойогурт обог.б/б Активия 2.1% 870г злаки" autocomplete="off"/>
+    <input type="hidden" id="ProductInfoImage_78280" style="display:none;" value="/wcsstore/OKMarketCAS/cat_entries/389690/389690_thumbnail.jpg" autocomplete="off"/>
+    <div class="product ok-theme">
+        <div class="product_info">
+            <div class="product_name">
+                <a aria-hidden="true" tabindex="-1" id="WC_CatalogEntryDBThumbnailDisplayJSPF_78280_link_9b" href="http://www.okeydostavka.ru/msk/%D0%BC%D0%BE%D0%BB%D0%BE%D1%87%D0%BD%D1%8B%D0%B5-%D0%BF%D1%80%D0%BE%D0%B4%D1%83%D0%BA%D1%82%D1%8B--%D1%81%D1%8B%D1%80%D1%8B--%D1%8F%D0%B9%D1%86%D0%BE/%D0%BC%D0%BE%D0%BB%D0%BE%D1%87/%D0%B9%D0%BE%D0%B3%D1%83%D1%80%D1%82%D1%8B-%D0%B8-%D1%82%D0%B2%D0%BE%D1%80%D0%BE%D0%B6%D0%BA%D0%B8/%D0%B1%D0%B8%D0%BE%D0%B9%D0%BE%D0%B3%D1%83%D1%80%D1%82-%D0%BE%D0%B1%D0%BE%D0%B3%D0%B1-%D0%B1-%D0%B0%D0%BA%D1%82%D0%B8%D0%B2%D0%B8%D1%8F-21-870%D0%B3-%D0%B7%D0%BB%D0%B0%D0%BA%D0%B8-389690-parent" title="Биойогурт обог.б/б Активия 2.1% 870г злаки">Биойогурт обог.б/б Активия 2.1% 870г злаки</a>
+            </div>
+        </div>
+        <div id="CatalogEntryProdImg_78280" class="product_image">
+            <div class="image">
+                <a id="catalogEntry_img78280" href="http://www.okeydostavka.ru/msk/%D0%BC%D0%BE%D0%BB%D0%BE%D1%87%D0%BD%D1%8B%D0%B5-%D0%BF%D1%80%D0%BE%D0%B4%D1%83%D0%BA%D1%82%D1%8B--%D1%81%D1%8B%D1%80%D1%8B--%D1%8F%D0%B9%D1%86%D0%BE/%D0%BC%D0%BE%D0%BB%D0%BE%D1%87/%D0%B9%D0%BE%D0%B3%D1%83%D1%80%D1%82%D1%8B-%D0%B8-%D1%82%D0%B2%D0%BE%D1%80%D0%BE%D0%B6%D0%BA%D0%B8/%D0%B1%D0%B8%D0%BE%D0%B9%D0%BE%D0%B3%D1%83%D1%80%D1%82-%D0%BE%D0%B1%D0%BE%D0%B3%D0%B1-%D0%B1-%D0%B0%D0%BA%D1%82%D0%B8%D0%B2%D0%B8%D1%8F-21-870%D0%B3-%D0%B7%D0%BB%D0%B0%D0%BA%D0%B8-389690-parent" title="Биойогурт обог.б/б Активия 2.1% 870г злаки">
+                    <img alt="Биойогурт обог.б/б Активия 2.1% 870г злаки" src="/wcsstore/OKMarketCAS/cat_entries/389690/389690_thumbnail.jpg"/>
+                    <div class="badges">
+                        <ul>
+                        </ul>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div class="product_weight">
+            <span>
+                    0,87</span>
+            <span>
+            кг</span>
+        </div>
+
+        <div class="shopperActions">
+            <!-- BEGIN RangePricing.jsp -->
+            <div id="itemLevelPriceRange_78280" class="quantity_discount clear_margin" style="display: none;">
+            </div>
+            <!-- END RangePricing.jsp -->
+            <div class="quantity_section">
+                    <label for="quantity_78280" class="header">Количество</label>
+                    <a href="#" onclick="FieldHelper.resetCurrentField();productDisplayJS.subtractQuantity('quantity_78280','C62');setCurrentId('quantity_78280');return false;">
+                        <span class="btn glyphicon glyphicon-minus-sign"></span>
+                    </a>
+                            <input name="quantity_78280" id="quantity_78280" type="tel" class="quantity_input" value="1" onclick="FieldHelper.saveCurrentField(this); if (this.value == '1') this.value = '';" onkeydown="FieldHelper.numericKeyDown(this,event,0)" onblur="if (this.value == '') {this.value = '1'} else {FieldHelper.numericBlur(this);}" onkeypress="FieldHelper.numericKeyPress(this,event,0)" onchange="javascript:productDisplayJS.notifyQuantityChange(this.value);"/>
+                    <a href="#" onclick="FieldHelper.resetCurrentField();productDisplayJS.addQuantity('quantity_78280','C62');setCurrentId('quantity_78280');return false;">
+                        <span class="btn glyphicon glyphicon-plus-sign"></span>
+                    </a>
+                    <span>шт</span>
+                    <div class="clear_float"></div>
+            </div>
+            <div class="price_and_cart">
+                <span class="product_price">
+                <!-- BEGIN PriceDisplay.jspf -->
+                <!--  If leverage price rule to get the price, get the contract unit price. -->
+                    <span id="listPrice_78280" class="label small crossed">
+                        75,40 руб.
+                    </span>
+                    <span id="offerPrice_78280" class="price label  label-red " itemprop="price">
+                        59,90 руб.
+                    </span>
+                    <input type="hidden" id="ProductInfoPrice_78280" value="59,90 руб." autocomplete="off"/>
+                <!-- END PriceDisplay.jspf -->
+                </span><span class="product_cart">
+                    <a id="add2CartBtn_78280" href="javascript:setCurrentId('add2CartBtn_78280');var p = [];p['uom']='C62';productDisplayJS.Add2ShopCartAjax('entitledItem_78280',document.getElementById('quantity_78280').value, false, p)" wairole="button" role="button" class="btn cart" title="Добавить в корзину" onkeypress="javascript:MessageHelper.setFocusElement('add2CartBtn_78280');">
+                    </a>
+                </span>
+            </div>
+
+        </div>
+        <input type="hidden" id="ProductInfoQuantityLabel_78280" style="display:none;" value="Количество" autocomplete="off"/>
+        <input type="hidden" id="ProductInfoQuantityUOM_78280" style="display:none;" value="шт" autocomplete="off"/>
+        <script type="text/javascript">
+        dojo.addOnLoad(function() {
+            if(typeof productDisplayJS != 'undefined'){
+                productDisplayJS.setCommonParameters('-20','10151','10551','G','руб.');
+            }
+        });
+        </script>
+    </div>
+</li>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="cp1251"?>
+<div class="product-characteristics">
+    <h2>Характеристики товара</h2>
+    <table>
+        <tbody>
+            <tr>
+                <th><span id="descAttributeName_1_12_-1018_3074457345618259955">
+                    Бренд:
+                </span></th>
+                <td><span id="descAttributeValue_1_12_-1018_3074457345618259955">
+                                Чудо
+                    </span>
+                </td>
+            </tr><tr>
+                <th><span id="descAttributeName_2_12_-1018_3074457345618259955">
+                    Вес:
+                </span></th>
+                <td><span id="descAttributeValue_2_12_-1018_3074457345618259955">
+                                    0,1
+                    </span>
+                                <span>кг</span>
+                </td>
+            </tr><tr>
+                <th><span id="descAttributeName_3_12_-1018_3074457345618259955">
+                    Вкус:
+                </span></th>
+                <td><span id="descAttributeValue_3_12_-1018_3074457345618259955">
+                                Черника
+                    </span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
