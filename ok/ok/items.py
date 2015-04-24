@@ -5,7 +5,6 @@
 # See documentation in:
 # http://doc.scrapy.org/en/latest/topics/items.html
 import json
-
 import scrapy
 
 class CatItem(scrapy.Item):

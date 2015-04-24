@@ -1,6 +1,7 @@
 # coding: cp1251
 from urlparse import urlunparse
 import scrapy
+from scrapy.http.request.form import FormRequest
 from scrapy.http.response.text import TextResponse
 from scrapy.log import ERROR
 from scrapy.utils.url import parse_url
@@ -17,14 +18,15 @@ import re
 class RootCatSpider(scrapy.Spider):
     name = "ok"
     allowed_domains = ["okeydostavka.ru"]
-    # start_urls = ["http://www.okeydostavka.ru/msk/catalog"]
-    start_urls = ["http://www.okeydostavka.ru/msk/%D0%BC%D0%BE%D0%BB%D0%BE%D1%87%D0%BD%D1%8B%D0%B5-%D0%BF%D1%80%D0%BE%D0%B4%D1%83%D0%BA%D1%82%D1%8B--%D1%81%D1%8B%D1%80%D1%8B--%D1%8F%D0%B9%D1%86%D0%BE/%D0%BC%D0%BE%D0%BB%D0%BE%D1%87/%D0%B9%D0%BE%D0%B3%D1%83%D1%80%D1%82%D1%8B-%D0%B8-%D1%82%D0%B2%D0%BE%D1%80%D0%BE%D0%B6%D0%BA%D0%B8"]
+    start_urls = ["http://www.okeydostavka.ru/msk/catalog"]
+    # start_urls = ["http://www.okeydostavka.ru/msk/%D1%81%D0%BA%D0%B8%D0%B4%D0%BA%D0%B8",
+    #               "http://www.okeydostavka.ru/msk/%D0%BC%D0%BE%D0%BB%D0%BE%D1%87%D0%BD%D1%8B%D0%B5-%D0%BF%D1%80%D0%BE%D0%B4%D1%83%D0%BA%D1%82%D1%8B--%D1%81%D1%8B%D1%80%D1%8B--%D1%8F%D0%B9%D1%86%D0%BE"]
 
     def __init__(self):
         super(RootCatSpider, self).__init__()
         with open("catlog.txt", "w") as f:
             f.truncate()
-            # self.download_delay = 1/2
+            self.download_delay = 1/2
 
     def extractA(self, selA):
         text = selA.xpath("text()").extract()[0].strip()
@@ -54,9 +56,9 @@ class RootCatSpider(scrapy.Spider):
             if item["link"]:
                 yield scrapy.Request(item["link"], callback=self.parse)
 
-        pageLinks = self.parseProductListPaging(response)
-        for link in pageLinks:
-            yield scrapy.Request(link, self.parse)
+        pageAjaxReqs = self.parseProductListPaging(response)
+        for req in pageAjaxReqs:
+            yield req
 
         prodContSel = response.xpath("//div[@class='product_listing_container']")
         for prodSel in prodContSel.css("div.product"):
@@ -70,7 +72,7 @@ class RootCatSpider(scrapy.Spider):
                 else:
                     self.log("Link is empty or unparsed to PDP on page %r for product %r" %
                                (response.url, item["name"]), level=ERROR)
-                    yield item # return broken uncompleted product
+                    yield item  # return broken uncompleted product
 
     def parseProductListPaging(self, response):
         """
@@ -82,26 +84,65 @@ class RootCatSpider(scrapy.Spider):
                 <a class="hoverover" role="button" href='javascript:dojo.publish("showResultsForPageNumber",
                     [{pageNumber:"2",pageSize:"72", linkId:"WC_SearchBasedNavigationResults_pagination_link_2_categoryResults"}])'
                     id="WC_SearchBasedNavigationResults_pagination_link_2_categoryResults" aria-label="Перейти к странице 2" title="Перейти к странице 2">2</a>
+
+        Base POST form url for refresh data via AJAX
+        <script>
+		dojo.addOnLoad(function(){
+			SearchBasedNavigationDisplayJS.init('_6_-1011_3074457345618259713',
+			'http://www.okeydostavka.ru/webapp/wcs/stores/servlet/ProductListingView?searchType=1000&filterTerm=&langId=-20&advancedSearch=&sType=SimpleSearch&gridPosition=&metaData=&manufacturer=&custom_view=true&ajaxStoreImageDir=%2Fwcsstore%2FOKMarketSAS%2F&resultCatEntryType=&catalogId=10551&searchTerm=&resultsPerPage=72&emsName=&facet=&categoryId=16106&storeId=10151&disableProductCompare=true&ddkey=ProductListingView_6_-1011_3074457345618259713&filterFacet=');
+		});
+	    </script>
+
         Current orderBy: <input type="hidden" name="orderBy" data-dojo-attach-point="valueNode" value="2" aria-hidden="true">
         Link format: {cat-url}#facet:&productBeginIndex:72&orderBy:2&pageView:grid&minPrice:&maxPrice:&pageSize:&
         """
-        pageLinks = set()
-        """ REWRITE TO USE POST AJAX REQUESTS
+        if response.meta.get("skip_paging", False):
+            return []
+        pageAjaxReqs = []
+        pageNumbers = set()
         pageMenuSel = response.xpath("//div[@class='pageControlMenu']")
         if pageMenuSel:
-            baseUrl = response.request.url
-            if baseUrl.find("#") < 0:
-                baseUrl += "#productBeginIndex:0"
-                orderBySel = response.xpath("//div[@class='orderByDropdown selectWrapper']//option[@selected]/@value")
-                if orderBySel:
-                    baseUrl += "&orderBy:%d" % int( orderBySel[0].extract() )
+            initScript = response.xpath("//script[contains(text(), 'SearchBasedNavigationDisplayJS.init(')]/text()").extract()[0]
+            baseUrl = re.search("SearchBasedNavigationDisplayJS\.init\('[^']*',\s*'([^']*)'\)", initScript, re.MULTILINE).group(1)
+
+            orderBySel = response.xpath("//div[@class='orderByDropdown selectWrapper']//option[@selected]/@value").extract()
+            orderBy = orderBySel[0] if orderBySel else ""
+
             for jslinkSel in pageMenuSel.xpath(".//a[contains(@href, 'pageNumber')]/@href"):
                 pageNumber = int(jslinkSel.re("pageNumber:\"(\\d+)\"")[0])
-                pageSize = int(jslinkSel.re("pageSize:\"(\\d+)\"")[0])
-                link = re.sub(r"productBeginIndex:\d+", "productBeginIndex:%d" % ((pageNumber-1) * pageSize), baseUrl)
-                pageLinks.add( link )
-        """
-        return pageLinks
+                if pageNumber not in pageNumbers:
+                    pageSize = int(jslinkSel.re("pageSize:\"(\\d+)\"")[0])
+                    beginIndex = (pageNumber - 1) * pageSize
+
+                    searchParams = {}
+                    for inpSel in response.xpath("//form[@name='CatalogSearchForm']//input[@type='hidden']"):
+                        nameSel = inpSel.xpath("@name").extract()
+                        valueSel = inpSel.xpath("@value").extract()
+                        if nameSel and valueSel:
+                            searchParams[ nameSel[0] ] = valueSel[0]
+                    pagingParams = {
+                        "contentBeginIndex": "0",
+                        "productBeginIndex": str( beginIndex ),
+                        "beginIndex": str( beginIndex ),
+                        "orderBy": orderBy or "2",
+                        "facetId:": "",
+                        "pageView": "grid",
+                        "resultType": "products",
+                        "orderByContent": "",
+                        "searchTerm": "",
+                        "facet": "",
+                        "facetLimit": "",
+                        "pageSize": "",
+                        "storeId": searchParams.get("storeId", "10151"),
+                        "catalogId": searchParams.get("catalogId", "10551"),
+                        "langId": searchParams.get("langId", "-20"),
+                        "objectId": "_6_-1011_3074457345618259713",
+                        "requesttype": "ajax"
+                    }
+                    req = FormRequest(baseUrl, formdata=sorted(pagingParams.iteritems()))
+                    req.meta["skip_paging"] = True # avoid recursive paging because of broken baseURL in ajax responses
+                    pageAjaxReqs.append( req )
+        return pageAjaxReqs
 
     def parseProductThumbnail(self, selP):
         """
@@ -125,7 +166,7 @@ class RootCatSpider(scrapy.Spider):
 
     def parseProductDetails(self, response):
         """
-        Parse page with Product key-values
+        Parse page with Product key-values. Executed by Spider
         @type response: TextResponse
         @param response Original HTTP Response
         response.meta["prodItem"] contains ProductItem from category grid

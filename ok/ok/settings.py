@@ -7,6 +7,7 @@
 #
 #     http://doc.scrapy.org/en/latest/topics/settings.html
 #
+from scrapy.settings.default_settings import ITEM_PIPELINES
 
 BOT_NAME = 'ok'
 
@@ -21,3 +22,7 @@ HTTPCACHE_ENABLED = True
 LOG_ENCODING = "cp1251"
 DUPEFILTER_CLASS = "ok.filters.FragmentsONDupFilter"
 LOG_LEVEL = "INFO"
+
+ITEM_PIPELINES = {
+    "ok.pipelines.OkPipeline" : 100
+}
