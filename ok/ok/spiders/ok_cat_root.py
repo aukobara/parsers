@@ -190,6 +190,10 @@ class RootCatSpider(scrapy.Spider):
             if name:
                 item["name"] = name
 
+        # Check mandatory attributes
+        if not item["id"] or not item["name"] or not item["price"]:
+            self.log("Product[id=%d] has empty one of mandatory attributes (id,price,name):\n%r" %(item["id"],item), scrapy.log.ERROR)
+
         details = self.parsePDPkeyvalues(response)
         item ["details"] = details
         yield item
