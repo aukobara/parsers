@@ -1,4 +1,4 @@
-# coding: cp1251
+# coding: utf-8
 from urlparse import urlunparse
 import scrapy
 from scrapy.http.request.form import FormRequest
@@ -7,6 +7,7 @@ from scrapy.log import ERROR
 from scrapy.utils.url import parse_url
 from ok.items import CatItem, ProductItem
 import re
+from ok.settings import FixEncodingLogFormatter
 
 '''//*[@id="departmentLink_16568_alt"]'''
 '''<a id="departmentLink_16568_alt" href="http://www.okeydostavka.ru/msk/..." aria-haspopup="true" data-toggle="departmentMenu_16568" 
@@ -80,10 +81,10 @@ class RootCatSpider(scrapy.Spider):
 
         <div id="pageControlMenu_6_-1011_3074457345618259713" class="pageControlMenu" data-dojo-attach-point="pageControlMenu" data-parent="header">
             <div class="pageControl number">
-                <a class="active selected" href="#" role="button" aria-disabled="true" aria-label="Ïåðåéòè ê ñòðàíèöå 1" tabindex="-1">1</a>
+                <a class="active selected" href="#" role="button" aria-disabled="true" aria-label="ÐŸÐµÑ€ÐµÐ¹Ñ‚Ð¸ Ðº ÑÑ‚Ñ€Ð°Ð½Ð¸Ñ†Ðµ 1" tabindex="-1">1</a>
                 <a class="hoverover" role="button" href='javascript:dojo.publish("showResultsForPageNumber",
                     [{pageNumber:"2",pageSize:"72", linkId:"WC_SearchBasedNavigationResults_pagination_link_2_categoryResults"}])'
-                    id="WC_SearchBasedNavigationResults_pagination_link_2_categoryResults" aria-label="Ïåðåéòè ê ñòðàíèöå 2" title="Ïåðåéòè ê ñòðàíèöå 2">2</a>
+                    id="WC_SearchBasedNavigationResults_pagination_link_2_categoryResults" aria-label="ÐŸÐµÑ€ÐµÐ¹Ñ‚Ð¸ Ðº ÑÑ‚Ñ€Ð°Ð½Ð¸Ñ†Ðµ 2" title="ÐŸÐµÑ€ÐµÐ¹Ñ‚Ð¸ Ðº ÑÑ‚Ñ€Ð°Ð½Ð¸Ñ†Ðµ 2">2</a>
 
         Base POST form url for refresh data via AJAX
         <script>
@@ -192,7 +193,11 @@ class RootCatSpider(scrapy.Spider):
 
         # Check mandatory attributes
         if not item["id"] or not item["name"] or not item["price"]:
-            self.log("Product[id=%d] has empty one of mandatory attributes (id,price,name):\n%r" %(item["id"],item), scrapy.log.ERROR)
+            logformatter = self.crawler.logformatter
+            dumpItem = item
+            if isinstance(logformatter, FixEncodingLogFormatter):
+                dumpItem = logformatter.encodeDumpObject(item)
+            self.log("Product[id=%d] has empty one of mandatory attributes (id,price,name):\n%r" %(item["id"],dumpItem), scrapy.log.ERROR)
 
         details = self.parsePDPkeyvalues(response)
         item ["details"] = details
