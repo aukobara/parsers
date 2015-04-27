@@ -19,7 +19,7 @@ HTTPCACHE_ENABLED = True
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'ok (+http://www.yourdomain.com)'
 
-LOG_ENCODING = "cp1251"
+LOG_ENCODING = "utf-8"
 DUPEFILTER_CLASS = "ok.filters.FragmentsONDupFilter"
 LOG_LEVEL = "INFO"
 

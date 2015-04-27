@@ -156,6 +156,7 @@ class RootCatSpider(scrapy.Spider):
             return None
 
         item = ProductItem()
+        # NOTE. Title attribute may have a bug if name contains quotes (") - it will be split by first quote
         item ["name"] = selP.xpath(".//div[@class='product_name']/a/@title").extract()[0].strip()
         item ["crawllink"] = selP.xpath(".//div[@class='product_name']/a/@href").extract()[0]
         item ["imgUrl"] = selP.xpath(".//div[@class='image']//img/@src").extract()[0]
@@ -180,6 +181,15 @@ class RootCatSpider(scrapy.Spider):
         item ["link"] = urlunparse((parsedUrl.scheme, parsedUrl.netloc.lower(), "webapp/wcs/stores/servlet/ProductDisplay", "",
                                 "urlRequestType=Base&productId=%d&storeId=10151" % productId, ""))
 
+        # Check product name on PDP and validate with thumbnail
+        name = ' '.join(txt.strip() for txt in
+                        response.css("div.namePartPriceContainer .main_header")
+                                .xpath(".//text()").extract() if txt.strip())
+        if name != item["name"]:
+            self.log("Product[id=%d] name is different on thumbnail and PDP. TB: %s => PDP: %s" % (productId, item["name"], name), scrapy.log.WARNING)
+            if name:
+                item["name"] = name
+
         details = self.parsePDPkeyvalues(response)
         item ["details"] = details
         yield item
@@ -192,8 +202,9 @@ class RootCatSpider(scrapy.Spider):
         trSelList = response.css("div.product-characteristics tr,div.product-desc tr")
         details = {}
         for tr in trSelList:
-            key = " ".join(txt.strip() for txt in tr.xpath("th//text()").extract())
-            value = " ".join(txt.strip() for txt in tr.xpath("td//text()").extract())
-            details[key] = value
+            key = " ".join(txt.strip() for txt in tr.xpath("th//text()").extract() if txt.strip())
+            value = " ".join(txt.strip() for txt in tr.xpath("td//text()").extract() if txt.strip())
+            if key and value:
+                details[key] = value
         return details
 
