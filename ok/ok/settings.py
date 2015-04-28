@@ -34,10 +34,10 @@ class FixEncodingLogFormatter(LogFormatter):
         """
         @return: unicode
         """
-        return ("%r" % obj).decode("unicode-escape")
+        return ("%r" % obj).decode("unicode-escape").encode(LOG_ENCODING)
 
     def dropped(self, item, exception, response, spider):
         dropped = super(FixEncodingLogFormatter, self).dropped(item, exception, response, spider)
-        """@type dropped: dict of [unicode, unicode]"""
+        """@type dropped: dict of (unicode, unicode)"""
         dropped["item"] = self.encodeDumpObject(dropped["item"])
         return dropped

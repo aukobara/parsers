@@ -1,11 +1,13 @@
 # coding: utf-8
 from urlparse import urlunparse
 import scrapy
+from scrapy.contrib.exporter import CsvItemExporter
 from scrapy.http.request.form import FormRequest
 from scrapy.http.response.text import TextResponse
+from scrapy.selector.unified import Selector
 from scrapy.log import ERROR
 from scrapy.utils.url import parse_url
-from ok.items import CatItem, ProductItem
+from ok.items import CatItem, ProductItem, ROOT_CAT_ITEM
 import re
 from ok.settings import FixEncodingLogFormatter
 
@@ -23,48 +25,48 @@ class RootCatSpider(scrapy.Spider):
     # start_urls = ["http://www.okeydostavka.ru/msk/%D1%81%D0%BA%D0%B8%D0%B4%D0%BA%D0%B8",
     #               "http://www.okeydostavka.ru/msk/%D0%BC%D0%BE%D0%BB%D0%BE%D1%87%D0%BD%D1%8B%D0%B5-%D0%BF%D1%80%D0%BE%D0%B4%D1%83%D0%BA%D1%82%D1%8B--%D1%81%D1%8B%D1%80%D1%8B--%D1%8F%D0%B9%D1%86%D0%BE"]
 
+    cats = dict()
+    """ @type cats: dict of (unicode, ok.items.CatItem) """
+
     def __init__(self):
         super(RootCatSpider, self).__init__()
-        with open("catlog.txt", "w") as f:
-            f.truncate()
-            self.download_delay = 1/2
+        self.cats[ROOT_CAT_ITEM["id"]] = ROOT_CAT_ITEM
+        # self.download_delay = 1/2
 
-    def extractA(self, selA):
-        text = selA.xpath("text()").extract()[0].strip()
-        url = selA.xpath("@href").extract()[0]
-        return url, text
-
-    def catlog(self, level, item):
-        with open("catlog.txt", "ab") as f:
-            f.write("%d: %s%s\n" % (level, " " * level, ' '.join(item["title"])))
+    def closed(self, reason):
+        with open("out/cats.csv", "wb") as file:
+            file.truncate()
+            exporter = CsvItemExporter(file)
+            exporter.start_exporting()
+            [exporter.export_item(cat) for cat in self.cats.itervalues()]
+            exporter.finish_exporting()
 
     def parse(self, response):
         """
         @type response: TextResponse
         @param response
         """
-        catsSel = response.xpath("//ul[@id='categoryMenu']//a[@class=\"link menuLink\"]")
-        if not catsSel:
-            # home page? all dep menu
-            if response.xpath("//div[@id='homePageMenu']"):
-                catsSel = response.xpath("//a[@class=\"link menuLink\"]")
-        for topCat in catsSel:
-            item = CatItem()
-            item["link"], item["title"] = self.extractA(topCat)
-            self.catlog(0, item)
-
-            # yield item
-            if item["link"]:
-                yield scrapy.Request(item["link"], callback=self.parse)
+        catItems = self.parseCats(response)
+        for item in catItems:
+            yield item
+        # This should be after cat parsing because it can add some virtual catItemId to response.meta
+        catItemId = response.meta.get("catItemId")
 
         pageAjaxReqs = self.parseProductListPaging(response)
         for req in pageAjaxReqs:
             yield req
 
-        prodContSel = response.xpath("//div[@class='product_listing_container']")
+        prodContSel = response.css("div.product_listing_container")
         for prodSel in prodContSel.css("div.product"):
             item = self.parseProductThumbnail(prodSel)
             if item:
+                # add item's id to current category item
+                if catItemId:
+                    currentCatItem = self.cats[catItemId]
+                    currentCatItem["products"] = [] if not currentCatItem["products"] else currentCatItem["products"]
+                    currentCatItem["products"].append(item["id"])
+                    currentCatItem["productCount"] = len(currentCatItem["products"])
+
                 # yield item
                 if item["crawllink"]:
                     pdpRequest = scrapy.Request(item["crawllink"], callback=self.parseProductDetails)
@@ -74,6 +76,68 @@ class RootCatSpider(scrapy.Spider):
                     self.log("Link is empty or unparsed to PDP on page %r for product %r" %
                                (response.url, item["name"]), level=ERROR)
                     yield item  # return broken uncompleted product
+
+    def parseCats(self, response):
+        """
+        Parse one level of sub-categories only. Deep cats will be parsed recursively
+        @type response: TextResponse
+        @rtype: list[scrapy.Request]
+        """
+        currentCatItemId = response.meta.get("catItemId")
+        childCatSel = response.css('div#categoryNavigationMenu > ul > li > a.menuLink')
+        if not childCatSel:
+            # home page? all dep menu. NOTE: homePageMenu div is filled by js after load. Empty in response body.
+            # Use fluid header menu for top cats
+            if response.css('div#homePageMenu'):
+                childCatSel = response.css('ul#allDepartmentsMenu > li > a.menuLink')
+                if currentCatItemId is None:
+                    currentCatItemId = ROOT_CAT_ITEM["id"]  # mimic ROOT (HomePage) cat
+                    response.meta["catItemId"] = currentCatItemId
+        if not currentCatItemId:
+            # TODO - determine parent cat by current page if crawling not from TOP
+            self.log("Parent cat 's not found for category page: %s" % response.url, scrapy.log.WARNING)
+            currentCatItemId = ROOT_CAT_ITEM["id"]  # mimic ROOT (HomePage) cat
+            response.meta["catItemId"] = currentCatItemId
+
+        items = []
+        # Iterate children
+        for catSel in childCatSel:
+            childItem = self.parseCatLink(catSel, self.cats[currentCatItemId])
+
+            if not childItem["id"] or self.cats.get(childItem["id"]):
+                self.log("Category [id: %d, title: %s] with duplicated or empty ID on page %s" % (childItem["id"], childItem["title"], response.url),
+                         scrapy.log.ERROR)
+
+            elif childItem["crawllink"]:
+                self.cats[childItem["id"]] = childItem
+                subcatReq = scrapy.Request(childItem["crawllink"], callback=self.parse,
+                                           meta = { "catItemId": childItem["id"] })
+                items += [subcatReq]
+
+            else:
+                self.log("Category [title: %s] with broken or empty link on page %s" % (childItem["title"], response.url),
+                         scrapy.log.WARNING)
+        return items
+
+    def parseCatLink(self, selA, parentItem):
+        """
+        @param Selector selA: Selector of <a> with category link
+        @param CatItem parentItem: category Item which produces children or None if child is Top Cat
+        @rtype: CatItem
+        """
+        item = CatItem()
+        item["id"] = selA.xpath("@id").re('(\d+)')[-1]
+        item["title"] = selA.xpath("text()").extract()[0].strip()
+        item["crawllink"] = selA.xpath("@href").extract()[0]
+        item["level"] = int( parentItem["level"] ) + 1
+        item["parentId"] = parentItem["id"]
+        if parentItem.get("pathTitles", None):
+            item["pathTitles"] = [parentItem["title"]] + parentItem["pathTitles"]
+        else:
+            item["pathTitles"] = [parentItem["title"]]
+        item["productCount"] = 0
+        item["products"] = []
+        return item
 
     def parseProductListPaging(self, response):
         """
@@ -140,7 +204,7 @@ class RootCatSpider(scrapy.Spider):
                         "objectId": "_6_-1011_3074457345618259713",
                         "requesttype": "ajax"
                     }
-                    req = FormRequest(baseUrl, formdata=sorted(pagingParams.iteritems()))
+                    req = FormRequest(baseUrl, formdata=sorted(pagingParams.iteritems()), meta=response.meta)
                     req.meta["skip_paging"] = True # avoid recursive paging because of broken baseURL in ajax responses
                     pageAjaxReqs.append( req )
         return pageAjaxReqs
@@ -157,6 +221,7 @@ class RootCatSpider(scrapy.Spider):
             return None
 
         item = ProductItem()
+        item ["id"] = self._parseEntitledItem(selP.xpath(".."))  # select parent <li> element
         # NOTE. Title attribute may have a bug if name contains quotes (") - it will be split by first quote
         item ["name"] = selP.xpath(".//div[@class='product_name']/a/@title").extract()[0].strip()
         item ["crawllink"] = selP.xpath(".//div[@class='product_name']/a/@href").extract()[0]
@@ -165,6 +230,11 @@ class RootCatSpider(scrapy.Spider):
         selPrice = selP.css("span.product_price span.price.label")
         item ["price"] = selPrice.xpath("text()").extract()[0].strip() if selPrice else None
         return item
+
+    def _parseEntitledItem(self, response):
+        entItemJsonSel = response.xpath(".//div[starts-with(@id, 'entitledItem_')]/text()")
+        productId = int(entItemJsonSel.re("\"catentry_id\"\s+:\s+\"(\d+)\",")[0])
+        return productId
 
     def parseProductDetails(self, response):
         """
@@ -175,8 +245,7 @@ class RootCatSpider(scrapy.Spider):
         """
         item = response.meta["prodItem"]
         """@type item: ProductItem"""
-        entItemJsonSel = response.xpath("//div[starts-with(@id, 'entitledItem_')]/text()")
-        productId = int( entItemJsonSel.re("\"catentry_id\"\s+:\s+\"(\d+)\",")[0] )
+        productId = self._parseEntitledItem(response)
         item ["id"] = productId
         parsedUrl = parse_url(response.url)
         item ["link"] = urlunparse((parsedUrl.scheme, parsedUrl.netloc.lower(), "webapp/wcs/stores/servlet/ProductDisplay", "",
