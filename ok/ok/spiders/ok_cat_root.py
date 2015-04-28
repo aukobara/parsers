@@ -27,6 +27,10 @@ class RootCatSpider(scrapy.Spider):
 
     cats = dict()
     """ @type cats: dict of (unicode, ok.items.CatItem) """
+    stop_cats = [
+        "24577", "26552", "15055", "16614", "16608", "16629", "16068", "15075", "15058", "16622", "15093",  # top non-product cats
+        "26090", "26092"  # Скидки -> non products, TODO: update
+    ]
 
     def __init__(self):
         super(RootCatSpider, self).__init__()
@@ -110,9 +114,14 @@ class RootCatSpider(scrapy.Spider):
 
             elif childItem["crawllink"]:
                 self.cats[childItem["id"]] = childItem
-                subcatReq = scrapy.Request(childItem["crawllink"], callback=self.parse,
-                                           meta = { "catItemId": childItem["id"] })
-                items += [subcatReq]
+
+                if not self.underStopCat(childItem):
+                    subcatReq = scrapy.Request(childItem["crawllink"], callback=self.parse,
+                                               meta = { "catItemId": childItem["id"] }, priority=2)
+                    items += [subcatReq]
+                else:
+                    self.log("Category [id: %s, title: %s] is under stop list. Skipped" % (childItem["id"], childItem["title"]),
+                             scrapy.log.INFO)
 
             else:
                 self.log("Category [title: %s] with broken or empty link on page %s" % (childItem["title"], response.url),
@@ -204,7 +213,7 @@ class RootCatSpider(scrapy.Spider):
                         "objectId": "_6_-1011_3074457345618259713",
                         "requesttype": "ajax"
                     }
-                    req = FormRequest(baseUrl, formdata=sorted(pagingParams.iteritems()), meta=response.meta)
+                    req = FormRequest(baseUrl, formdata=sorted(pagingParams.iteritems()), meta=response.meta, priority=1)
                     req.meta["skip_paging"] = True # avoid recursive paging because of broken baseURL in ajax responses
                     pageAjaxReqs.append( req )
         return pageAjaxReqs
@@ -231,9 +240,10 @@ class RootCatSpider(scrapy.Spider):
         item ["price"] = selPrice.xpath("text()").extract()[0].strip() if selPrice else None
         return item
 
+    _entitledItem_catentry_id_re = re.compile('"catentry_id"\s+:\s+"(\d+)",')
     def _parseEntitledItem(self, response):
-        entItemJsonSel = response.xpath(".//div[starts-with(@id, 'entitledItem_')]/text()")
-        productId = int(entItemJsonSel.re("\"catentry_id\"\s+:\s+\"(\d+)\",")[0])
+        entItemJsonSel = response.xpath('descendant-or-self::div[starts-with(@id, "entitledItem_")]/text()')
+        productId = int(entItemJsonSel.re(self._entitledItem_catentry_id_re)[0])
         return productId
 
     def parseProductDetails(self, response):
@@ -245,7 +255,9 @@ class RootCatSpider(scrapy.Spider):
         """
         item = response.meta["prodItem"]
         """@type item: ProductItem"""
-        productId = self._parseEntitledItem(response)
+        productInfoSel = response.css('div.product-info')
+        # lookup for entitledSection bottom-up to avoid full document scan
+        productId = self._parseEntitledItem(productInfoSel.xpath('ancestor::div/preceding-sibling::div[starts-with(@id, "entitled")]'))
         item ["id"] = productId
         parsedUrl = parse_url(response.url)
         item ["link"] = urlunparse((parsedUrl.scheme, parsedUrl.netloc.lower(), "webapp/wcs/stores/servlet/ProductDisplay", "",
@@ -253,7 +265,7 @@ class RootCatSpider(scrapy.Spider):
 
         # Check product name on PDP and validate with thumbnail
         name = ' '.join(txt.strip() for txt in
-                        response.css("div.namePartPriceContainer .main_header")
+                        productInfoSel.css("div.namePartPriceContainer .main_header")
                                 .xpath(".//text()").extract() if txt.strip())
         if name != item["name"]:
             self.log("Product[id=%d] name is different on thumbnail and PDP. TB: %s => PDP: %s" % (productId, item["name"], name), scrapy.log.WARNING)
@@ -285,4 +297,18 @@ class RootCatSpider(scrapy.Spider):
             if key and value:
                 details[key] = value
         return details
+
+    def underStopCat(self, childItem):
+        """
+        Check if next child catItem is in stop_cats list or its descendant
+        @param CatItem childItem:
+        @rtype: bool
+        """
+        if childItem["id"] in self.stop_cats:
+            # stop current cat?
+            return True
+        currentId = childItem["parentId"]
+        while currentId is not None and currentId not in self.stop_cats:
+            currentId = self.cats[currentId].get("parentId")
+        return currentId is not None
 
