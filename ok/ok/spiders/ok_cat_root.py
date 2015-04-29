@@ -257,7 +257,7 @@ class RootCatSpider(scrapy.Spider):
         """@type item: ProductItem"""
         productInfoSel = response.css('div.product-info')
         # lookup for entitledSection bottom-up to avoid full document scan
-        productId = self._parseEntitledItem(productInfoSel.xpath('ancestor::div/preceding-sibling::div[starts-with(@id, "entitled")]'))
+        productId = self._parseEntitledItem(productInfoSel.xpath('ancestor::div/preceding-sibling::div[starts-with(@id, "entitledItem_")]'))
         item ["id"] = productId
         parsedUrl = parse_url(response.url)
         item ["link"] = urlunparse((parsedUrl.scheme, parsedUrl.netloc.lower(), "webapp/wcs/stores/servlet/ProductDisplay", "",
