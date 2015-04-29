@@ -39,7 +39,7 @@ class RootCatSpider(scrapy.Spider):
     def closed(self, reason):
         with open("out/cats.csv", "wb") as file:
             file.truncate()
-            fields = CatItem.fields.keys()
+            fields = sorted(CatItem.fields.keys())  # TODO. Move this to CatItem.fields_to_export
             exporter = CsvItemExporter(file, fields_to_export=[f for f in fields if f not in ("stop")])
             exporter.start_exporting()
             [exporter.export_item(cat) for cat in self.cats.itervalues() if not cat.get("stop", False)]
