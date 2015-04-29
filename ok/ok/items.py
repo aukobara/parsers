@@ -19,6 +19,7 @@ class CatItem(scrapy.Item):
     pathTitles = scrapy.Field(serializer=lambda list: "|".join(list).encode("utf-8"))  # list of parent-title from bottom to top
     productCount = scrapy.Field()  # count of products in category
     products = scrapy.Field(serializer=lambda list: "|".join(map(str, list)))  # set of productIds in category
+    stop = scrapy.Field()  # True if category and all under should not be further processed
 
 
 ROOT_CAT_ITEM = CatItem({"id": "-1", "title": "ROOT", "level": -1})

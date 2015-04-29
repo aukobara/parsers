@@ -28,8 +28,7 @@ class RootCatSpider(scrapy.Spider):
     cats = dict()
     """ @type cats: dict of (unicode, ok.items.CatItem) """
     stop_cats = [
-        "24577", "26552", "15055", "16614", "16608", "16629", "16068", "15075", "15058", "16622", "15093",  # top non-product cats
-        "26090", "26092"  # Скидки -> non products, TODO: update
+        "15075", "16614", "15070", "16622", "16629", "16053", "15093", "16068", "24577", "15055", "26090", "26092", "15058", "16608"  # top non-product cats
     ]
 
     def __init__(self):
@@ -40,9 +39,10 @@ class RootCatSpider(scrapy.Spider):
     def closed(self, reason):
         with open("out/cats.csv", "wb") as file:
             file.truncate()
-            exporter = CsvItemExporter(file)
+            fields = CatItem.fields.keys()
+            exporter = CsvItemExporter(file, fields_to_export=[f for f in fields if f not in ("stop")])
             exporter.start_exporting()
-            [exporter.export_item(cat) for cat in self.cats.itervalues()]
+            [exporter.export_item(cat) for cat in self.cats.itervalues() if not cat.get("stop", False)]
             exporter.finish_exporting()
 
     def parse(self, response):
@@ -75,7 +75,7 @@ class RootCatSpider(scrapy.Spider):
                 if item["crawllink"]:
                     pdpRequest = scrapy.Request(item["crawllink"], callback=self.parseProductDetails)
                     pdpRequest.meta["prodItem"] = item
-                    yield pdpRequest
+                    # yield pdpRequest
                 else:
                     self.log("Link is empty or unparsed to PDP on page %r for product %r" %
                                (response.url, item["name"]), level=ERROR)
@@ -122,6 +122,7 @@ class RootCatSpider(scrapy.Spider):
                 else:
                     self.log("Category [id: %s, title: %s] is under stop list. Skipped" % (childItem["id"], childItem["title"]),
                              scrapy.log.INFO)
+                    childItem["stop"] = True
 
             else:
                 self.log("Category [title: %s] with broken or empty link on page %s" % (childItem["title"], response.url),
