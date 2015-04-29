@@ -24,7 +24,7 @@ class Brand(object):
         """
         @rtype: list[Brand]
         """
-        return cls._brands.values()
+        return sorted(cls._brands.values(), key=lambda b: b.name)
 
     def __init__(self, name = "N/A"):
         self.name = name
