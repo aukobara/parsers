@@ -73,6 +73,7 @@ def configure():
     Brand.findOrCreate(u"Активиа").synonyms += [u"Активия"]
     Brand.findOrCreate(u"PL NoName").synonyms += [u"PL FP"]
     Brand.findOrCreate(u"TM Mlekara Subotica").synonyms += [u"Mlekara Subotica"]
+    Brand.findOrCreate(u"MLEKARA SABАС").synonyms += [u"Сырко"]
     Brand.findOrCreate(u"Лайме").synonyms += [u"LAIME"]
     Brand.findOrCreate(u"Laime").synonyms += [u"Лайме"]
     Brand.findOrCreate(u"Laima").synonyms += [u"Лайма"]
@@ -156,20 +157,20 @@ def configure():
     Brand.findOrCreate(u"FIT").synonyms += [u"ДжоФит"]
     Brand.findOrCreate(u"Bio Баланс").synonyms += [u"Био-баланс", u"Юни Милк"]
     Brand.findOrCreate(u"Balsen").synonyms += [u"Бальзен"]
-    Brand.findOrCreate(u"Брест- Литовск").synonyms += [u"Брест-Литовск"]
+    Brand.findOrCreate(u"Брест- Литовск").synonyms += [u"Брест-Литовск", u"Брест-Литовский"]
     Brand.findOrCreate(u"Альтеро").synonyms += [u"Altero"]
     Brand.findOrCreate(u"Альтеро").synonyms += [u"Altero"]
     Brand.findOrCreate(u"Австралийский Торговый Дом").synonyms += [u"АТД"]
     Brand.findOrCreate(u"Natura").synonyms += [u"Натура"]
     Brand.findOrCreate(u"DANONE").synonyms += [u"Данон"]
     Brand.findOrCreate(u"Б.Ю. Александров").synonyms += [u"Б.Ю.Александров"]
-    Brand.findOrCreate(u"Anchor").synonyms += [u"ТМ Анкор"]
+    Brand.findOrCreate(u"Anchor").synonyms += [u"ТМ Анкор", u"Анкор"]
     Brand.findOrCreate(u"ТМ Аланталь").synonyms += [u"Аланталь", u"МЗ Порховский"]
     Brand.findOrCreate(u"PRESIDENT").synonyms += [u"Президент"]
     Brand.findOrCreate(u"Margot Fromages").synonyms += [u"Margot"]
     Brand.findOrCreate(u"Almette").synonyms += [u"Альметте"]
-    Brand.findOrCreate(u"Apetina").synonyms += [u"Апетина"]
-    Brand.findOrCreate(u"VALIO").synonyms += [u"Виола"]
+    Brand.findOrCreate(u"VALIO").synonyms += [u"Виола", u"Валио"]
+    Brand.findOrCreate(u"Viola").synonyms += [u"Виола", u"Валио"]
     Brand.findOrCreate(u"Dr.Oetker").synonyms += [u"Dr. Oetker"]
     Brand.findOrCreate(u"Mr.Сливкин").synonyms += [u"Mr. Сливкин"]
     Brand.findOrCreate(u"ОКЕАН ТРК").synonyms += [u"Океан"]
@@ -181,8 +182,10 @@ def configure():
     Brand.findOrCreate(u"Моя Семья").synonyms += [u"МС"]
     Brand.findOrCreate(u"Фонте Аква Fonte").synonyms += [u"Fonte"]
     Brand.findOrCreate(u"ОСТАNКИНО").synonyms += [u"Останкино"]
+    Brand.findOrCreate(u"Останкино").synonyms += [u"по-Останкински", u"Останкинские"]
+    Brand.findOrCreate(u"Останкинское").synonyms += [u"Останкино"]
     Brand.findOrCreate(u"Рублёвский").synonyms += [u"Рублевский"]
-    Brand.findOrCreate(u"колбасы и деликатесы Рублевские").synonyms += [u"Рублёвский"]
+    Brand.findOrCreate(u"колбасы и деликатесы Рублевские").synonyms += [u"Рублёвский", u"Рублевские"]
     Brand.findOrCreate(u"Клинский").synonyms += [u"Клинские МК", u"КМК"]
     Brand.findOrCreate(u"АПК \"Черкизовский\"").synonyms += [u"Черкизовский МК"]
     Brand.findOrCreate(u"АПК \"Черкизовский\"").synonyms += [u"Черкизовский МК"]
@@ -209,9 +212,42 @@ def configure():
     Brand.findOrCreate(u"MacCoffee").generic_type = u"Кофе"
     Brand.findOrCreate(u"Саратовский").synonyms += [u"Саратововский"]
     Brand.findOrCreate(u"ITLV").synonyms += [u"ИТЛВ"]
-    Brand.findOrCreate(u"Рузское молоко").synonyms += [u"Рузское"]
+    Brand.findOrCreate(u"Рузское молоко").synonyms += [u"Рузское", u"Рузский"]
     Brand.findOrCreate(u"Из Вологды").synonyms += [u"Северное молоко"]
     Brand.findOrCreate(u"Омский завод плавленых сыров").synonyms += [u"Ичалковское"]
+    Brand.findOrCreate(u"Ичалки").synonyms += [u"Ичалковский"]
+    Brand.findOrCreate(u"Очаково").synonyms += [u"Очаковский"]
+    Brand.findOrCreate(u"Первая Свежесть").synonyms += [u"Элинар"]
+    Brand.findOrCreate(u"Надежда КФ").synonyms += [u"Коровалетта Молоконти"]
+    Brand.findOrCreate(u"Доль Ким").synonyms += [u"ДольКим"]
+    Brand.findOrCreate(u"ГИАГИНСКИЙ молзавод").synonyms += [u"Гиагинский МЗ"]
+    Brand.findOrCreate(u"Garcia Baquero").synonyms += [u"Гарсия Бакеро"]
+    Brand.findOrCreate(u"Сыры \"Красногвардейские\"").synonyms += [u"Адыгея КМЗ", u"КМЗ"]
+    Brand.findOrCreate(u"Arla").synonyms += [u"Арла", u"Апетина"]
+    Brand.findOrCreate(u"Apetina").synonyms += [u"Апетина"]
+    Brand.findOrCreate(u"Locatelli").synonyms += [u"Локателли"]
+    Brand.findOrCreate(u"Савушкин").synonyms += [u"101 Зерно"]
+    Brand.findOrCreate(u"Emmi").synonyms += [u"Эмми", u"Эмми деликат"]
+    Brand.findOrCreate(u"4LIFE").synonyms += [u"4 Life"]
+    Brand.findOrCreate(u"DROGHERIA E ALIMENTARI").synonyms += [u"Drogheria"]
+    Brand.findOrCreate(u"Фруктовый  сад").synonyms += [u"Фруктовый Сад"]
+    Brand.findOrCreate(u"J-7").synonyms += [u"J7"]
+    Brand.findOrCreate(u"ВБД J-7 Фрустайл").synonyms += [u"J7"]
+    Brand.findOrCreate(u"Tropicana").synonyms += [u"Тропикана"]
+    Brand.findOrCreate(u"Coca-Cola").synonyms += [u"Кока Кола"]
+    Brand.findOrCreate(u"Coca-Cola").generic_type = u"Coca-Cola"
+    Brand.findOrCreate(u"7-UP").synonyms += [u"Севен Ап"]
+    Brand.findOrCreate(u"7-UP").generic_type = u"7-UP"
+    Brand.findOrCreate(u"Морозко").synonyms += [u"ОКЕЙ", u"Цезарь"]
+    Brand.findOrCreate(u"Звездный").synonyms += [u"Морозко"]
+    Brand.findOrCreate(u"Франко Оллиани").synonyms += [u"Olliani"]
+    Brand.findOrCreate(u"Maestro de Oliva").synonyms += [u"Маэстро де Олива"]
+    Brand.findOrCreate(u"Нутелла").synonyms += [u"Nutella"]
+    Brand.findOrCreate(u"Финети").synonyms += [u"Финетти"]
+    Brand.findOrCreate(u"Белевская пастила").synonyms += [u"Белевская"]
+    Brand.findOrCreate(u"Белевская пастила").synonyms += [u"Белевская"]
+    Brand.findOrCreate(u"Hame").synonyms += [u"Хаме"]
+    Brand.findOrCreate(u"Равиолло").synonyms += [u"Снежная страна"]
 
 
     return (prodcsvname, toprint)
@@ -251,14 +287,14 @@ def parse_pfqn(pfqn):
                         pfqn )
     # fat
     fl=[u""]
-    mdzh = u'(?:\s*(?:с\s)?м\.д\.ж\. в сух(?:ом)? вещ(?:-|ест)ве\s*|\s*массовая доля жира в сухом веществе\s*)?'
-    pfqn = re.sub( u'(' + pre + u')(' + mdzh + u'(?:\d+(?:[\.,]\d+)?%?-)?\d+(?:[\.,]\d+)?\s*%(?:\s*жирн\.?)?' + mdzh + u')' + post,
+    mdzh = u'(?:\s*(?:с\s)?м\.?д\.?ж\.? в сух(?:ом)?\.?\s?вещ(?:-|ест)ве\s*|\s*массовая доля жира в сухом веществе\s*)?'
+    pfqn = re.sub( u'(' + pre + u')(' + mdzh + u'(?:\d+(?:[\.,]\d+)?%?-)?\d+(?:[\.,]\d+)?\s*%(?:\s*жирн(?:\.|ости)?)?' + mdzh + u')' + post,
                    lambda g: _add_match(fl, g), pfqn )
     # pack
     pl=[u""]
     pfqn = re.sub( u'(' + pre + u')'
                   u'(т/пак|ж/б|ст/б|с/б|ст/бут|пл/б|пл/бут|пэтбутылка|пл|кор\.?|\d*\s*пак\.?|\d+\s*таб|\d+\s*саше|\d+\s*пир(?:\.|амидок)?|(?:\d+\s*)?шт\.?|упак\.?|уп\.?|в/у|п/э|жесть|'
-                  u'стакан|ванночка|в\sванночке|дой-пак|пюр-пак|пюр\sпак|зип|зип-пакет|д/пак|п/пак|пл\.упаковка|ПЭТ|пакет|туба|ведро|бан|лоток|фольга|фас(?:ованные)?|н/подл\.?|ф/пакет|0[.,]5|0[.,]75|0[.,]33)' + post,
+                  u'стакан|ванночка|в\sванночке|дой-пак|пюр-пак|пюр\sпак|зип|зип-пакет|д/пак|п/пак|пл\.упаковка|пэт|пакет|туба|ведро|бан|лоток|фольга|фас(?:ованные)?|н/подл\.?|ф/пакет|0[.,]5|0[.,]75|0[.,]33)' + post,
                    lambda g: _add_match(pl, g), pfqn )
     return wl[0], fl[0], pl[0], pfqn
 
