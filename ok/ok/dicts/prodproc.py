@@ -142,7 +142,8 @@ def configure():
     Brand.findOrCreate(u"Tassimo").synonyms += [u"Тассимо"]
     Brand.findOrCreate(u"Mars").synonyms += [u"Марс", u"Милки Вей"]
     Brand.findOrCreate(u"Snickers").synonyms += [u"Сникерс"]
-    Brand.findOrCreate(u"ЯЙЦА \"ЯРКОVО\"").synonyms += [u"Ярково", u"Роскар"]
+    Brand.findOrCreate(u'ЯЙЦА "ЯРКОVО"').synonyms += [u"Ярково", u"Роскар"]
+    Brand.findOrCreate(u'ЯЙЦА "ЯРКОVО"  Столовые 1 категории (25)').synonyms += [u"Ярково", u"Роскар"]
     Brand.findOrCreate(u"Villars").synonyms += [u"Вилларс"]
     Brand.findOrCreate(u"Milka").synonyms += [u"Милка"]
     Brand.findOrCreate(u"Мясной дом БОРОДИНА").synonyms += [u"МД Бородина"]
@@ -248,6 +249,7 @@ def configure():
     Brand.findOrCreate(u"Белевская пастила").synonyms += [u"Белевская"]
     Brand.findOrCreate(u"Hame").synonyms += [u"Хаме"]
     Brand.findOrCreate(u"Равиолло").synonyms += [u"Снежная страна"]
+    Brand.findOrCreate(u"Белебеевский МК").synonyms += [u"Белебей"]
 
 
     return (prodcsvname, toprint)
@@ -293,8 +295,8 @@ def parse_pfqn(pfqn):
     # pack
     pl=[u""]
     pfqn = re.sub( u'(' + pre + u')'
-                  u'(т/пак|ж/б|ст/б|с/б|ст/бут|пл/б|пл/бут|пэтбутылка|пл|кор\.?|\d*\s*пак\.?|\d+\s*таб|\d+\s*саше|\d+\s*пир(?:\.|амидок)?|(?:\d+\s*)?шт\.?|упак\.?|уп\.?|в/у|п/э|жесть|'
-                  u'стакан|ванночка|в\sванночке|дой-пак|пюр-пак|пюр\sпак|зип|зип-пакет|д/пак|п/пак|пл\.упаковка|пэт|пакет|туба|ведро|бан|лоток|фольга|фас(?:ованные)?|н/подл\.?|ф/пакет|0[.,]5|0[.,]75|0[.,]33)' + post,
+                  u'(т/пак|ж/б|ст/б|м/у|с/б|ст/бут|пл/б|пл/бут|пэтбутылка|пл|кор\.?|\d*\s*пак\.?|\d+\s*таб|\d+\s*саше|\d+\s*пир(?:\.|амидок)?|(?:\d+\s*)?шт\.?|упак\.?|уп\.?|в/у|п/э|жесть|'
+                  u'стакан|ванночка|в\sванночке|дой-пак|дой/пак|пюр-пак|пюр\sпак|зип|зип-пакет|д/пак|п/пак|пл\.упаковка|пэт|пакет|туба|ведро|бан|лоток|фольга|фас(?:ованные)?|н/подл\.?|ф/пакет|0[.,]5|0[.,]75|0[.,]33)' + post,
                    lambda g: _add_match(pl, g), pfqn )
     return wl[0], fl[0], pl[0], pfqn
 
@@ -353,7 +355,7 @@ if __name__ == '__main__':
     (prodcsvname, toprint) = configure()
 
     types = dict()
-    """ @type types: dict of (unicode, dict of (str, unicode)) """
+    """ @type types: dict of (unicode, dict[str, unicode]) """
     weights = dict()
     fats = dict()
     packs = dict()
@@ -385,7 +387,7 @@ if __name__ == '__main__':
 
             sqn_without_brand = replace_brand(sqn, brand, " " if not brand.generic_type else u" " + brand.generic_type + u" ") if brand.name != u"N/A" else sqn
             types[pfqn] = dict(weight=weight, fat=fat, pack=pack,
-                               brand=brand.name, sqn=sqn_without_brand, brand_detected=sqn != sqn_without_brand)
+                               brand=brand.name, sqn=sqn_without_brand.strip(), brand_detected=sqn != sqn_without_brand)
 
     if toprint == "brands":
         manufacturers = dict()
@@ -403,7 +405,19 @@ if __name__ == '__main__':
     elif toprint == "producttypes":
         ptypes_count = 0
         nobrand_count = 0
+        types2 = dict()
         for t, d in sorted(types.iteritems(), key=lambda t: t[1]["sqn"].split(" ", 1)[0]):
+            words = re.split(u'\s+|"|,|\.|«|»|\(|\)', d["sqn"])
+            first_word = words.pop(0)
+            buf = ''
+            for w in words:
+                if w:
+                    if w == u'в' or w == u'с' or w == u'со' or w == u'из' or w == u'для' or w == u'и' or w == u'на':
+                        buf = w
+                        continue
+                    w = buf + u' ' + w if buf else w
+                    types2[(first_word, w)] = types2.get((first_word, w), 0) + 1
+                    buf = u''
             if d["brand"] == u"Не Бренд" \
                     or d["brand"] == u"Собственное производство" \
                     or d["brand"] == u"Мясо" \
@@ -414,6 +428,8 @@ if __name__ == '__main__':
                       (d["sqn"], d["brand"], d["weight"], d["fat"], d["pack"], t)
                 ptypes_count += 1
         print "Total product types: %d [%d, %d]" % (len(types), ptypes_count, nobrand_count)
+        for t, c in sorted(types2.iteritems(), key=lambda k: types2[k[0]], reverse=True):
+            print "Tuple %s + %s: %d" % (t[0], t[1], c)
 
     elif toprint == "weights":
         for dict_i in (weights, fats, packs):
