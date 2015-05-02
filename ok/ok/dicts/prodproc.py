@@ -64,6 +64,7 @@ def configure():
     Brand.findOrCreate(u"Витамин").synonyms += [u"vитамин"]
     Brand.findOrCreate(u"VITAMIN").synonyms += [u"Vитамин"]
     Brand.findOrCreate(u"Мираторг").synonyms += [u"Vитамин"]
+    Brand.findOrCreate(u"Садия").synonyms += [u"Мираторг"]
     Brand.findOrCreate(u"Хлебцы-Молодцы").generic_type = u"Хлебцы"
     Brand.findOrCreate(u"Хлебцы-Молодцы").synonyms += [u"Хлебцы Молодцы"]
     Brand.findOrCreate(u"Сиртаки").generic_type = u"Брынза"
@@ -73,9 +74,10 @@ def configure():
     Brand.findOrCreate(u"PL NoName").synonyms += [u"PL FP"]
     Brand.findOrCreate(u"TM Mlekara Subotica").synonyms += [u"Mlekara Subotica"]
     Brand.findOrCreate(u"Лайме").synonyms += [u"LAIME"]
+    Brand.findOrCreate(u"Laime").synonyms += [u"Лайме"]
     Brand.findOrCreate(u"Laima").synonyms += [u"Лайма"]
     Brand.findOrCreate(u"Galbani").synonyms += [u"Гальбани"]
-    Brand.findOrCreate(u"Santa-Maria").synonyms += [u"Santa Maria"]
+    Brand.findOrCreate(u"Santa-Maria").synonyms += [u"Santa Maria", u"Санта Мария"]
     Brand.findOrCreate(u"Knorr").synonyms += [u"Кнорр", u"Чашка супа"]
     Brand.findOrCreate(u"Gallina Blanca").synonyms += [u"Гал.Бланка"]
     Brand.findOrCreate(u"Печем Дома").synonyms += [u"Печём дома"]
@@ -84,14 +86,15 @@ def configure():
     Brand.findOrCreate(u"Green Ray").synonyms += [u"Грин Рэй"]
     Brand.findOrCreate(u"Ciro").synonyms += [u"Cirio"]
     Brand.findOrCreate(u"Lutik").synonyms += [u"Лютик"]
-    Brand.findOrCreate(u"Дмитровский молочный завод").synonyms += [u"Дмитровский МЗ"]
+    Brand.findOrCreate(u"Дмитровский молочный завод").synonyms += [u"Дмитровский МЗ", u"Дмитровская"]
     Brand.findOrCreate(u"Jon West").synonyms += [u"Джон Вест"]
     Brand.findOrCreate(u"Морской Котик").synonyms += [u"МК"]
-    Brand.findOrCreate(u"STANDARD").synonyms += [u"Agama", u"Дальний Восток", u"AQUA PRODUKT", u"РРК"]
+    Brand.findOrCreate(u"STANDARD").synonyms += [u"Agama", u"Дальний Восток", u"AQUA PRODUKT", u"РРК"]  # What is it?
     Brand.findOrCreate(u"4 сезона").synonyms += [u"4Сезона"]
     Brand.findOrCreate(u"Четыре Сезона").synonyms += [u"4 Сезона"]
     Brand.findOrCreate(u"Мясо").synonyms += [u"Самсон"]  # Virtual brand
     Brand.findOrCreate(u"Heinz").synonyms += [u"Хайнц"]
+    Brand.findOrCreate(u"HP").synonyms += [u"Хайнц"]
     Brand.findOrCreate(u"Агроальянс").synonyms += [u"Агро-Альянс"]
     Brand.findOrCreate(u"Рюген Фиш").synonyms += [u"Rugen Fisch"]
     Brand.findOrCreate(u"РОК-1").synonyms += [u"Аморе", u"РОК1"]
@@ -126,12 +129,12 @@ def configure():
     Brand.findOrCreate(u"Петелино").synonyms += [u"Петелинка"]
     Brand.findOrCreate(u"Российский").synonyms += [u"Россия щедрая душа"]
     Brand.findOrCreate(u"Фабрика Крупской").synonyms += [u"Ф-ка Крупской", u"ф-ка им.Крупской"]
-    Brand.findOrCreate(u"Вдохновение").synonyms += [u"Бабаевский"]
-    Brand.findOrCreate(u"Lindt").synonyms += [u"Линдт"]
+    Brand.findOrCreate(u"Lindt").synonyms += [u"Линдт", u"Lintd"]
     Brand.findOrCreate(u"Kinder").synonyms += [u"Киндер"]
     Brand.findOrCreate(u"Kinder").generic_type = u"Киндер"
     Brand.findOrCreate(u"Café Tasse").synonyms += [u"Кафе Тассе"]
-    Brand.findOrCreate(u"Nesquick").synonyms += [u"Несквик"]
+    Brand.findOrCreate(u"Nesquick").synonyms += [u"Несквик", u"Nesquik"]
+    Brand.findOrCreate(u"NESQUIK").synonyms += [u"Несквик"]
     Brand.findOrCreate(u"Nestle").synonyms += [u"Нестле", u"Несквик"]
     Brand.findOrCreate(u"Ritter Sport").synonyms += [u"Р/Спорт"]
     Brand.findOrCreate(u"Alpen Gold").synonyms += [u"Альпен Гольд"]
@@ -143,10 +146,10 @@ def configure():
     Brand.findOrCreate(u"Milka").synonyms += [u"Милка"]
     Brand.findOrCreate(u"Мясной дом БОРОДИНА").synonyms += [u"МД Бородина"]
     Brand.findOrCreate(u"Домашнее БИСТРО").synonyms += [u"Дом.Бистро"]
-    Brand.findOrCreate(u"St.Dalfour").synonyms += [u"СтДальфор"]
+    Brand.findOrCreate(u"St.Dalfour").synonyms += [u"СтДальфор", u"St.Dalfou", u"St. Dalfour"]
     Brand.findOrCreate(u"Dolmio").synonyms += [u"Долмио"]
     Brand.findOrCreate(u"Dolmio").generic_type = u"Долмио"  # What is this basic type?
-    Brand.findOrCreate(u"Alela").synonyms += [u"Алела"]
+    Brand.findOrCreate(u"Alela").synonyms += [u"Алела", u"Алурэ"]
     Brand.findOrCreate(u"Саф-Момент").synonyms += [u"Саф Момент"]
     Brand.findOrCreate(u"Iberica").synonyms += [u"Иберика"]
     Brand.findOrCreate(u"Mamba").synonyms += [u"Мамба"]
@@ -158,6 +161,57 @@ def configure():
     Brand.findOrCreate(u"Альтеро").synonyms += [u"Altero"]
     Brand.findOrCreate(u"Австралийский Торговый Дом").synonyms += [u"АТД"]
     Brand.findOrCreate(u"Natura").synonyms += [u"Натура"]
+    Brand.findOrCreate(u"DANONE").synonyms += [u"Данон"]
+    Brand.findOrCreate(u"Б.Ю. Александров").synonyms += [u"Б.Ю.Александров"]
+    Brand.findOrCreate(u"Anchor").synonyms += [u"ТМ Анкор"]
+    Brand.findOrCreate(u"ТМ Аланталь").synonyms += [u"Аланталь", u"МЗ Порховский"]
+    Brand.findOrCreate(u"PRESIDENT").synonyms += [u"Президент"]
+    Brand.findOrCreate(u"Margot Fromages").synonyms += [u"Margot"]
+    Brand.findOrCreate(u"Almette").synonyms += [u"Альметте"]
+    Brand.findOrCreate(u"Apetina").synonyms += [u"Апетина"]
+    Brand.findOrCreate(u"VALIO").synonyms += [u"Виола"]
+    Brand.findOrCreate(u"Dr.Oetker").synonyms += [u"Dr. Oetker"]
+    Brand.findOrCreate(u"Mr.Сливкин").synonyms += [u"Mr. Сливкин"]
+    Brand.findOrCreate(u"ОКЕАН ТРК").synonyms += [u"Океан"]
+    Brand.findOrCreate(u"MacChocolate").synonyms += [u"МакШоколад"]
+    Brand.findOrCreate(u"Вдохновение").synonyms += [u"Бабаевский"]
+    Brand.findOrCreate(u"Бабаевский").synonyms += [u"Рот Фронт"]
+    Brand.findOrCreate(u"АХА").synonyms += [u"AXA"]
+    Brand.findOrCreate(u"Ясно Солнышко").synonyms += [u"ЯС"]
+    Brand.findOrCreate(u"Моя Семья").synonyms += [u"МС"]
+    Brand.findOrCreate(u"Фонте Аква Fonte").synonyms += [u"Fonte"]
+    Brand.findOrCreate(u"ОСТАNКИНО").synonyms += [u"Останкино"]
+    Brand.findOrCreate(u"Рублёвский").synonyms += [u"Рублевский"]
+    Brand.findOrCreate(u"колбасы и деликатесы Рублевские").synonyms += [u"Рублёвский"]
+    Brand.findOrCreate(u"Клинский").synonyms += [u"Клинские МК", u"КМК"]
+    Brand.findOrCreate(u"АПК \"Черкизовский\"").synonyms += [u"Черкизовский МК"]
+    Brand.findOrCreate(u"АПК \"Черкизовский\"").synonyms += [u"Черкизовский МК"]
+    Brand.findOrCreate(u"Merci").synonyms += [u"Мерси"]
+    Brand.findOrCreate(u"Ferrero").synonyms += [u"Ферреро Роше", u"Ферреро Рошер"]
+    Brand.findOrCreate(u"Cote D'or").synonyms += [u"Кот Дор"]
+    Brand.findOrCreate(u"Haribo").synonyms += [u"Харибо"]
+    Brand.findOrCreate(u"Toffifee").synonyms += [u"Тоффифе"]
+    Brand.findOrCreate(u"FLUIDE").synonyms += [u"Флюид", u"СладКо"]
+    Brand.findOrCreate(u"Kuhne").synonyms += [u"Кюне"]
+    Brand.findOrCreate(u"Baleno").synonyms += [u"Балено"]
+    Brand.findOrCreate(u"ПРОДУКТЫ ОТ ИЛЬИНОЙ").synonyms += [u"От Ильиной"]
+    Brand.findOrCreate(u"Меридиан").synonyms += [u"Мирамар"]
+    Brand.findOrCreate(u"Приазовская").synonyms += [u"Троекурово"]
+    Brand.findOrCreate(u"Биг Ланч").synonyms += [u"БигЛанч"]
+    Brand.findOrCreate(u"BIGBON").synonyms += [u"БигБон"]
+    Brand.findOrCreate(u"DELICADOS").synonyms += [u"Деликадос"]
+    Brand.findOrCreate(u"Меркатус Напитки из Черноголовки").synonyms += [u"Напитки из Черноголовки"]
+    Brand.findOrCreate(u"Frukto").synonyms += [u"Фруктомания"]
+    Brand.findOrCreate(u"Alaeddin").synonyms += [u"Алладин"]
+    Brand.findOrCreate(u"Тысяча Озер").synonyms += [u"Тысяча озёр"]
+    Brand.findOrCreate(u"3 Glocken").synonyms += [u"3Glocken"]
+    Brand.findOrCreate(u"MacCoffee").synonyms += [u"МакКофе"]
+    Brand.findOrCreate(u"MacCoffee").generic_type = u"Кофе"
+    Brand.findOrCreate(u"Саратовский").synonyms += [u"Саратововский"]
+    Brand.findOrCreate(u"ITLV").synonyms += [u"ИТЛВ"]
+    Brand.findOrCreate(u"Рузское молоко").synonyms += [u"Рузское"]
+    Brand.findOrCreate(u"Из Вологды").synonyms += [u"Северное молоко"]
+    Brand.findOrCreate(u"Омский завод плавленых сыров").synonyms += [u"Ичалковское"]
 
 
     return (prodcsvname, toprint)
@@ -197,13 +251,14 @@ def parse_pfqn(pfqn):
                         pfqn )
     # fat
     fl=[u""]
-    pfqn = re.sub( u'(' + pre + u')((?:\d+(?:[\.,]\d+)?-)?\d+(?:[\.,]\d+)?\s*%(?:\s*жирн\.?)?)' + post,
+    mdzh = u'(?:\s*(?:с\s)?м\.д\.ж\. в сух(?:ом)? вещ(?:-|ест)ве\s*|\s*массовая доля жира в сухом веществе\s*)?'
+    pfqn = re.sub( u'(' + pre + u')(' + mdzh + u'(?:\d+(?:[\.,]\d+)?%?-)?\d+(?:[\.,]\d+)?\s*%(?:\s*жирн\.?)?' + mdzh + u')' + post,
                    lambda g: _add_match(fl, g), pfqn )
     # pack
     pl=[u""]
     pfqn = re.sub( u'(' + pre + u')'
                   u'(т/пак|ж/б|ст/б|с/б|ст/бут|пл/б|пл/бут|пэтбутылка|пл|кор\.?|\d*\s*пак\.?|\d+\s*таб|\d+\s*саше|\d+\s*пир(?:\.|амидок)?|(?:\d+\s*)?шт\.?|упак\.?|уп\.?|в/у|п/э|жесть|'
-                  u'стакан|дой-пак|пюр-пак|зип|зип-пакет|д/пак|п/пак|пл\.упаковка|пакет|туба|ведро|бан|лоток|фольга|фас(?:ованные)?|н/подл\.?|ф/пакет|0[.,]5|0[.,]75|0[.,]33)' + post,
+                  u'стакан|ванночка|в\sванночке|дой-пак|пюр-пак|пюр\sпак|зип|зип-пакет|д/пак|п/пак|пл\.упаковка|ПЭТ|пакет|туба|ведро|бан|лоток|фольга|фас(?:ованные)?|н/подл\.?|ф/пакет|0[.,]5|0[.,]75|0[.,]33)' + post,
                    lambda g: _add_match(pl, g), pfqn )
     return wl[0], fl[0], pl[0], pfqn
 
@@ -311,12 +366,18 @@ if __name__ == '__main__':
 
     elif toprint == "producttypes":
         ptypes_count = 0
+        nobrand_count = 0
         for t, d in sorted(types.iteritems(), key=lambda t: t[1]["sqn"].split(" ", 1)[0]):
-            if not d["brand_detected"] and d["brand"] != u"Не Бренд":
+            if d["brand"] == u"Не Бренд" \
+                    or d["brand"] == u"Собственное производство" \
+                    or d["brand"] == u"Мясо" \
+                    or d["brand"] == u"Птица":
+                nobrand_count += 1
+            elif not d["brand_detected"]:
                 print '%s   => brand: %s, weight: %s, fat: %s, pack: %s, fqn: %s' % \
                       (d["sqn"], d["brand"], d["weight"], d["fat"], d["pack"], t)
                 ptypes_count += 1
-        print "Total product types: %d" % ptypes_count
+        print "Total product types: %d [%d, %d]" % (len(types), ptypes_count, nobrand_count)
 
     elif toprint == "weights":
         for dict_i in (weights, fats, packs):
