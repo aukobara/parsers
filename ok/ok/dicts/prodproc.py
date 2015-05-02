@@ -199,6 +199,7 @@ def configure():
     Brand.findOrCreate(u"Kuhne").synonyms += [u"Кюне"]
     Brand.findOrCreate(u"Baleno").synonyms += [u"Балено"]
     Brand.findOrCreate(u"ПРОДУКТЫ ОТ ИЛЬИНОЙ").synonyms += [u"От Ильиной"]
+    Brand.findOrCreate(u"Колпинский, Ильина").synonyms += [u"От Ильиной"]
     Brand.findOrCreate(u"Меридиан").synonyms += [u"Мирамар"]
     Brand.findOrCreate(u"Приазовская").synonyms += [u"Троекурово"]
     Brand.findOrCreate(u"Биг Ланч").synonyms += [u"БигЛанч"]
@@ -387,7 +388,10 @@ if __name__ == '__main__':
 
             sqn_without_brand = replace_brand(sqn, brand, " " if not brand.generic_type else u" " + brand.generic_type + u" ") if brand.name != u"N/A" else sqn
             types[pfqn] = dict(weight=weight, fat=fat, pack=pack,
-                               brand=brand.name, sqn=sqn_without_brand.strip(), brand_detected=sqn != sqn_without_brand)
+                               brand=brand.name,
+                               # Clean up SQN
+                               sqn=re.sub(u'(?:\s|"|,|\.|«|»|\(|\))+', u' ', sqn_without_brand).strip(),
+                               brand_detected=sqn != sqn_without_brand)
 
     if toprint == "brands":
         manufacturers = dict()
@@ -407,7 +411,7 @@ if __name__ == '__main__':
         nobrand_count = 0
         types2 = dict()
         for t, d in sorted(types.iteritems(), key=lambda t: t[1]["sqn"].split(" ", 1)[0]):
-            words = re.split(u'\s+|"|,|\.|«|»|\(|\)', d["sqn"])
+            words = re.split(u'\s+', d["sqn"])
             first_word = words.pop(0)
             buf = ''
             for w in words:
@@ -427,9 +431,15 @@ if __name__ == '__main__':
                 print '%s   => brand: %s, weight: %s, fat: %s, pack: %s, fqn: %s' % \
                       (d["sqn"], d["brand"], d["weight"], d["fat"], d["pack"], t)
                 ptypes_count += 1
+        print
         print "Total product types: %d [%d, %d]" % (len(types), ptypes_count, nobrand_count)
+        num_tuples = dict()
         for t, c in sorted(types2.iteritems(), key=lambda k: types2[k[0]], reverse=True):
             print "Tuple %s + %s: %d" % (t[0], t[1], c)
+            num_tuples[c] = num_tuples.get(c, 0) + 1
+        print "Total tuples: %d" % len(types2)
+        for num in sorted(num_tuples.iterkeys(), reverse=True):
+            print "    %d: %d" % (num, num_tuples[num])
 
     elif toprint == "weights":
         for dict_i in (weights, fats, packs):
