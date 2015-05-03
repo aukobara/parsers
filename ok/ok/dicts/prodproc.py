@@ -23,8 +23,13 @@ class Brand(object):
         return (name if isinstance(name, unicode) else unicode(name, "utf-8")).lower()
 
     @classmethod
-    def findOrCreate(cls, name):
+    def exist(cls, name):
         exist = cls._brands.get(cls.to_key(name))
+        return exist
+
+    @classmethod
+    def findOrCreate(cls, name):
+        exist = cls.exist(name)
         return exist or cls(name)
 
     @classmethod
@@ -252,6 +257,34 @@ def configure():
     Brand.findOrCreate(u"Равиолло").synonyms += [u"Снежная страна"]
     Brand.findOrCreate(u"Белебеевский МК").synonyms += [u"Белебей"]
 
+    # Manufacturer's brands
+    Brand.findOrCreate(u"ООО \"Эхо\"").synonyms += [u"Белоручка"]
+    Brand.findOrCreate(u"Arla Foods amba").synonyms += [u"Арла"]
+    Brand.findOrCreate(u"Citterio").synonyms += [u"Читтерио"]
+    Brand.findOrCreate(u"DP \"Artemsil`\"").synonyms += [u"Артем"]
+    Brand.findOrCreate(u"Dolceria Alba S.r.l").synonyms += [u"Laime"]
+    Brand.findOrCreate(u"Frozen Fish International GmbH").synonyms += [u"Iglo"]
+    Brand.findOrCreate(u"OOO \"TPK \"VILON\"").synonyms += [u"Сытоедов"]
+    Brand.findOrCreate(u"RONGGHENG SANY FOODSTUFF Co. Ltd").synonyms += [u"NORTON"]
+    Brand.findOrCreate(u"Tulip").synonyms += [u"Tulip"]
+    Brand.findOrCreate(u"WORKSHOP I SEAPRODEX, Вьетнам").synonyms += [u"Emborg"]
+    Brand.findOrCreate(u'ЗАО "БРПИ"').synonyms += [u"Баскин Роббинс"]
+    Brand.findOrCreate(u'ЗАО "Балтийский берег"').synonyms += [u"Балтийский Берег"]
+    Brand.findOrCreate(u'ЗАО "Дедовский хлеб"').synonyms += [u"Дедовский хлеб"]
+    Brand.findOrCreate(u'ЗАО "ИТА Северная Компания"').synonyms += [u"СК"]
+    Brand.findOrCreate(u'ЗАО "Краснобор", Россия').synonyms += [u"Краснобор"]
+    Brand.findOrCreate(u'ЗАО "Приосколье", Россия').synonyms += [u"ГВУ Приосколье"]
+    Brand.findOrCreate(u'ЗАО "Русская рыбная компания", Россия').synonyms += [u"РРК"]
+    Brand.findOrCreate(u'ЗАО "Русское море"').synonyms += [u"Русское море"]
+    Brand.findOrCreate(u'ЗАО "СевероВосточная компания", Россия').synonyms += [u"PLESK"]
+    Brand.findOrCreate(u'ОАО "Березовский мясоконсервный комбинат"').synonyms += [u"Береза"]
+    Brand.findOrCreate(u'ОАО "Маслосырзавод "Порховский"').synonyms += [u"МЗ Порховский"]
+    Brand.findOrCreate(u'ООО МОРОЗКО').synonyms += [u"La Trattoria"]
+    Brand.findOrCreate(u'ООО "МОРОЗКО"').synonyms += [u"Морозко Green"]
+    Brand.findOrCreate(u'ООО "Элинар-Бройлер"').synonyms += [u"Элинар"]
+    Brand.findOrCreate(u'ООО "Элинар-Бройлер", Россия').synonyms += [u"Элинар"]
+
+
 
     return (prodcsvname, toprint)
 
@@ -352,6 +385,16 @@ def replace_brand(s, brand, rs):
     return result
 
 
+def cleanup_token_str(s):
+    """
+    Cleanup one-line string from non-label symbols - colon, quotes, periods etc
+    Replace multi-spaces to single space. Strip
+    @param unicode s: one-line string
+    @rtype: unicode
+    """
+    return re.sub(u'(?:\s|"|,|\.|«|»|\(|\))+', u' ', s).strip()
+
+
 if __name__ == '__main__':
     (prodcsvname, toprint) = configure()
 
@@ -368,14 +411,16 @@ if __name__ == '__main__':
             item = ProductItem(prodrow)
             pfqn = unicode(item["name"], "utf-8")
 
+            product_manufacturer = None
             if item.get("details"):
                 details = json.loads(item["details"])
                 """ @type details: dict of (unicode, unicode) """
 
                 brand = Brand.findOrCreate(details.get(ATTRIBUTE_BRAND, "N/A"))
 
-                if details.get(ATTRIBUTE_MANUFACTURER):
-                    brand.manufacturers.add(details.get(ATTRIBUTE_MANUFACTURER))
+                product_manufacturer = details.get(ATTRIBUTE_MANUFACTURER)
+                if product_manufacturer:
+                    brand.manufacturers.add(product_manufacturer)
             else:
                 brand = Brand.findOrCreate(u"N/A")
 
@@ -386,29 +431,64 @@ if __name__ == '__main__':
             __fill_fqn_dict(fats, fat)
             __fill_fqn_dict(packs, pack)
 
-            sqn_without_brand = replace_brand(sqn, brand, " " if not brand.generic_type else u" " + brand.generic_type + u" ") if brand.name != u"N/A" else sqn
+            known_brands = [brand]
+            if product_manufacturer:
+                manufacturer_brand = Brand.exist(product_manufacturer)
+                if manufacturer_brand and manufacturer_brand != brand:
+                    # Consider manufacturer as brand - replace its synonyms
+                    known_brands.append(manufacturer_brand)
+
+            sqn_without_brand = sqn
+            for ibrand in known_brands:
+                if ibrand.name != u"N/A":
+                    sqn_without_brand = replace_brand(sqn_without_brand, ibrand,
+                                                  " " if not ibrand.generic_type else u" " + ibrand.generic_type + u" ")
+
             types[pfqn] = dict(weight=weight, fat=fat, pack=pack,
                                brand=brand.name,
-                               # Clean up SQN
-                               sqn=re.sub(u'(?:\s|"|,|\.|«|»|\(|\))+', u' ', sqn_without_brand).strip(),
-                               brand_detected=sqn != sqn_without_brand)
+                               sqn=cleanup_token_str(sqn_without_brand),
+                               brand_detected=sqn != sqn_without_brand,
+                               product_manufacturer=product_manufacturer)
 
     if toprint == "brands":
         manufacturers = dict()
+        """ @type manufacturers: dict of (unicode, list[unicode]) """
         for b in Brand.all():
             print b
             for m in b.manufacturers:
                 manufacturers[m] = manufacturers.get(m, [])
                 manufacturers[m].append(b.name)
+                manufacturers[m] += map(lambda s: "~"+s, b.synonyms)
         print "Total brands: %d" % len(Brand.all())
         print
-        for m, b in manufacturers.iteritems():
-           print "%s [%s]" % (m, "|".join(b))
+        for m, b in sorted(manufacturers.iteritems(), key=lambda t:t[0]):
+            print "%s [%s]" % (m, "|".join(b))
+            for linked_m in [im for ib in b for im in Brand.findOrCreate(ib).manufacturers
+                             if im != m and ib != u"Не Бренд" and ib != u"PL NoName" and (ib != u"О'КЕЙ" or m == u"ООО \"О'КЕЙ\"")]:
+                print "    ==> %s [%s]" % (linked_m, "|".join(manufacturers[linked_m]))
         print "Total manufacturers: %d" % len(manufacturers)
 
     elif toprint == "producttypes":
         ptypes_count = 0
         nobrand_count = 0
+        # for t, d in sorted(types.iteritems(), key=lambda t: t[1]["sqn"].split(" ", 1)[0]):
+        for t, d in sorted(types.iteritems(), key=lambda t: t[1]["product_manufacturer"]):
+            if d["product_manufacturer"] and not d["brand_detected"] and (d["brand"] == u"Не Бренд"
+                    or d["brand"] == u"Собственное производство"
+                    or d["brand"] == u"Мясо"
+                    or d["brand"] == u"Птица"):
+                print '%s   => brand: %s, prod_man: %s, weight: %s, fat: %s, pack: %s, fqn: %s' % \
+                      (d["sqn"], d["brand"], d["product_manufacturer"], d["weight"], d["fat"], d["pack"], t)
+                nobrand_count += 1
+            elif not d["brand_detected"]:
+#                print '%s   => brand: %s, weight: %s, fat: %s, pack: %s, fqn: %s' % \
+#                      (d["sqn"], d["brand"], d["weight"], d["fat"], d["pack"], t)
+                ptypes_count += 1
+        print
+        print "Total product types: %d [notintype: %d, nobrand: %d]" % (len(types), ptypes_count, nobrand_count)
+        print
+
+    elif toprint == "typetuples":
         types2 = dict()
         for t, d in sorted(types.iteritems(), key=lambda t: t[1]["sqn"].split(" ", 1)[0]):
             words = re.split(u'\s+', d["sqn"])
@@ -417,22 +497,12 @@ if __name__ == '__main__':
             for w in words:
                 if w:
                     if w == u'в' or w == u'с' or w == u'со' or w == u'из' or w == u'для' or w == u'и' or w == u'на':
-                        buf = w
+                        buf = w  # join proposition to the next word
                         continue
                     w = buf + u' ' + w if buf else w
                     types2[(first_word, w)] = types2.get((first_word, w), 0) + 1
                     buf = u''
-            if d["brand"] == u"Не Бренд" \
-                    or d["brand"] == u"Собственное производство" \
-                    or d["brand"] == u"Мясо" \
-                    or d["brand"] == u"Птица":
-                nobrand_count += 1
-            elif not d["brand_detected"]:
-                print '%s   => brand: %s, weight: %s, fat: %s, pack: %s, fqn: %s' % \
-                      (d["sqn"], d["brand"], d["weight"], d["fat"], d["pack"], t)
-                ptypes_count += 1
-        print
-        print "Total product types: %d [%d, %d]" % (len(types), ptypes_count, nobrand_count)
+
         num_tuples = dict()
         for t, c in sorted(types2.iteritems(), key=lambda k: types2[k[0]], reverse=True):
             print "Tuple %s + %s: %d" % (t[0], t[1], c)
