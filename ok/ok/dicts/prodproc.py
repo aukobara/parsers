@@ -380,7 +380,7 @@ def parse_pfqn(pfqn):
     # weight - if has digit should be bounded by non-Digit, if has no digit - than unit only is acceptable but as token
     wl = [u""]
     sqn = re.sub(u'(\D)('
-                u'(?:\d+(?:шт|пак)?(?:х|\*|x|/))?'
+                u'(?:\d+(?:шт|пак)?\s*(?:х|\*|x|/))?\s*'
                 u'(?:\d+(?:[\.,]\d+)?\s*)'
                 u'(?:кг|г|л|мл|гр)\.?'
                 u'(?:(?:х|\*|x|/)\d+(?:\s*шт)?)?'
@@ -492,7 +492,7 @@ def cleanup_token_str(s, ext_symbols=None):
     @rtype: unicode
     """
     ext = '|'.join(ext_symbols) if ext_symbols else None
-    return re.sub(u'(?:\s|"|,|\.|«|»|“|”|\(|\)' + ('|' + ext if ext else '') + ')+', u' ', s).strip()
+    return re.sub(u'(?:\s|"|,|\.|«|»|“|”|\(|\)|\?|\+' + ('|' + ext if ext else '') + ')+', u' ', s).strip()
 
 
 def findOrCreate_manufacturer_brand(manufacturer):
@@ -660,10 +660,12 @@ if __name__ == '__main__':
         for t, d in sorted(types.iteritems(), key=lambda t: t[1]["sqn"].split(" ", 1)[0]):
             words = re.split(u'\s+', d["sqn"])
             first_word = words.pop(0)
+            if not words:
+                words.append(u'')
             buf = ''
             for w in words:
-                if w:
-                    if w in [u'в', u'с', u'со', u'из', u'для', u'и', u'на', u'без']:
+                if w or len(words) == 1:
+                    if w in [u'в', u'с', u'со', u'из', u'для', u'и', u'на', u'без', u'к', u'не']:
                         buf = w  # join proposition to the next word
                         continue
                     w = buf + u' ' + w if buf else w
@@ -671,7 +673,8 @@ if __name__ == '__main__':
                     buf = u''
 
         num_tuples = dict()
-        for t, c in sorted(types2.iteritems(), key=lambda k: types2[k[0]], reverse=True):
+        # for t, c in sorted(types2.iteritems(), key=lambda k: types2[k[0]], reverse=True):
+        for t, c in sorted(types2.iteritems(), key=lambda k: k[0][0]):
             if c <= 1: continue
             print "Tuple %s + %s: %d" % (t[0], t[1], c)
             num_tuples[c] = num_tuples.get(c, 0) + 1
