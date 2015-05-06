@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 import re
 from Levenshtein import distance
+
 from transliterate import translit
-from ok.dicts import cleanup_token_str, isenglish, isrussian
+
+from ok.dicts import cleanup_token_str, isenglish, isrussian, add_string_combinations
+
 
 class Brand(object):
     """
@@ -131,7 +134,8 @@ class Brand(object):
         @param unicode manufacturer: manufacturer's full name
         @rtype: Brand | None
         """
-        brand = cls.exist(manufacturer)
+        brand = cls.findOrCreate(manufacturer)
+        brand.manufacturers.add(manufacturer)
         # Check for known patterns than findOrCreate brand with synonyms for determined patterns
         re_main_group = u'"?(.+?)"?'
         patterns = re.findall(u'^(?:ЗАО|ООО|ОАО)\s+(?:"(?:ТК|ТПК|Компания|ПО|МПК)\s+)?' + re_main_group + u'(?:\s*,\s*\S+)?\s*$', manufacturer, re.IGNORECASE)
@@ -139,21 +143,7 @@ class Brand(object):
             # English version
             patterns = re.findall(u'^(?:ZAO|OOO|OAO)\s+(?:"(?:TK|TPK|PO|MPK)\s+)?' + re_main_group + u'(?:\s*,\s*\S+)?\s*$', manufacturer)
         if patterns:
-            brand = brand or cls.findOrCreate(manufacturer)
-            brand.manufacturers.add(manufacturer)
-            # Collect all pattern variants
-            p_modified = True
-            while p_modified:
-                p_modified = False
-                for p in patterns[:]:
-                    p1 = p.replace('"', '')
-                    if p1 == p:
-                        p1 = p.replace('-', ' ')
-                    if p1 == p:
-                        p1 = p.replace('-', '')
-                    if p1 not in patterns:
-                        patterns.append(p1)
-                        p_modified = True
+            patterns = add_string_combinations(patterns, ('"', ''), ('-', ' '), ('-', ''))
             for p in patterns:
                 p = p.replace('"', '')
                 if p not in brand.synonyms:

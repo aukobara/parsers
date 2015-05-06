@@ -34,3 +34,20 @@ def isrussian(s):
         return True
     except UnicodeDecodeError:
         return False
+
+
+def add_string_combinations(patterns, *repl):
+    # Collect all possible pattern combinations
+    result = patterns[:]
+    p_modified = True
+    while p_modified:
+        p_modified = False
+        for p in result[:]:
+            for r in repl:
+                p1 = p.replace(*r)
+                if p1 != p:
+                    break
+            if p1 not in result:
+                result.append(p1)
+                p_modified = True
+    return result
