@@ -55,9 +55,9 @@ class Cats(dict):
         @param bool deep: if False only check specified category w/o go down
         @rtype: bool
         """
+        if not self.has_key(cat_id):
+            raise Exception("No category with id[%s]" % cat_id)
         item = self[cat_id]
-        if not item:
-            raise Exception("No category with id[]" % cat_id)
         result = product_id in item["products"]
         if not result and deep:
             result = any(self.is_product_under(product_id, sub_cat_id, True) for sub_cat_id in self.parentIdx.get(cat_id, []))

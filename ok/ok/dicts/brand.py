@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import csv
 import re
 from Levenshtein import distance
 
@@ -41,8 +42,10 @@ class Brand(object):
 
     def __init__(self, name=UNKNOWN_BRAND_NAME):
         self.name = name if isinstance(name, unicode) else unicode(name, "utf-8")
-        self.manufacturers = set()
+        if Brand.exist(self.name):
+            raise Exception("Brand with name[%s] already exists" % self.name)
         Brand._brands[Brand.to_key(self.name)] = self
+        self.manufacturers = set()
         self.synonyms = []  # TODO: refactor to use set instead of list
         self.generic_type = None
         self._no_brand = False
@@ -137,11 +140,11 @@ class Brand(object):
         brand = cls.findOrCreate(manufacturer)
         brand.manufacturers.add(manufacturer)
         # Check for known patterns than findOrCreate brand with synonyms for determined patterns
-        re_main_group = u'"?(.+?)"?'
-        patterns = re.findall(u'^(?:ЗАО|ООО|ОАО)\s+(?:"(?:ТК|ТПК|Компания|ПО|МПК)\s+)?' + re_main_group + u'(?:\s*,\s*\S+)?\s*$', manufacturer, re.IGNORECASE)
+        re_main_group = u'(?:"|«)?(.+?)(?:"|»)?'
+        patterns = re.findall(u'^(?:ЗАО|ООО|ОАО)\s+(?:(?:"|«)(?:ТК|ТПК|Компания|ПО|МПК)\s+)?' + re_main_group + u'(?:\s*,\s*\S+)?\s*$', manufacturer, re.IGNORECASE)
         if not patterns:
             # English version
-            patterns = re.findall(u'^(?:ZAO|OOO|OAO)\s+(?:"(?:TK|TPK|PO|MPK)\s+)?' + re_main_group + u'(?:\s*,\s*\S+)?\s*$', manufacturer)
+            patterns = re.findall(u'^(?:ZAO|OOO|OAO)\s+(?:(?:"|«)(?:TK|TPK|PO|MPK)\s+)?' + re_main_group + u'(?:\s*,\s*\S+)?\s*$', manufacturer)
         if patterns:
             patterns = add_string_combinations(patterns, ('"', ''), ('-', ' '), ('-', ''))
             for p in patterns:
@@ -153,3 +156,16 @@ class Brand(object):
                 if p_brand:
                     brand.synonyms += [syn for syn in p_brand.synonyms if syn not in brand.synonyms]
         return brand
+
+    @staticmethod
+    def to_csv(csvfile):
+        header = ['name','no_brand','generic','synonyms','manufacturers']
+        writer = csv.DictWriter(csvfile, header)
+        writer.writeheader()
+        for b in Brand.all():
+            writer.writerow({'name': b.name.encode("utf-8"),
+                             'no_brand': b.no_brand,
+                             'generic': b.generic_type.encode("utf-8") if b.generic_type else None,
+                             'synonyms': u'|'.join(sorted(b.synonyms)).encode("utf-8"),
+                             'manufacturers': u'|'.join(sorted(b.manufacturers)).encode("utf-8")
+                             })

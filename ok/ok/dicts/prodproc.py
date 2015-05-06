@@ -19,12 +19,15 @@ def configure():
     prodcsvname = argv[1]
     toprint = "producttypes"  # default
     catcsvname = None # Don't pre-load categories by default
+    brandscsvname = None # Don't save brands by default
     while len(argv) > 2:
         opt = argv.pop(2)
         if opt == "-p" and len(argv) > 2:
             toprint = argv.pop(2)
         elif opt == "-c" and len(argv) > 2:
             catcsvname = argv.pop(2)
+        elif opt == "-out-brands-csv" and len(argv) > 2:
+            brandscsvname = argv.pop(2)
         else:
             raise Exception("Unknown options")
 
@@ -294,7 +297,7 @@ def configure():
     Brand.findOrCreate(u'Jardin').synonyms += Brand.findOrCreate(u'Орими трейд').synonyms
 
 
-    return (prodcsvname, toprint, catcsvname)
+    return (prodcsvname, toprint, catcsvname, brandscsvname)
 
 # prefix can be consumed by re parser and must be returned in sub - must be always 1st Match
 RE_TEMPLATE_PFQN_PRE = u'(?:\s|\.|,|\()'
@@ -360,7 +363,7 @@ def parse_pfqn(pfqn):
 
 
 if __name__ == '__main__':
-    (prodcsvname, toprint, catcsvname) = configure()
+    (prodcsvname, toprint, catcsvname, brandscsvname) = configure()
 
     cats = Cats()
     if catcsvname is not None:
@@ -381,7 +384,7 @@ if __name__ == '__main__':
             item = ProductItem(prodrow)
             pfqn = unicode(item["name"], "utf-8")
 
-            if ignore_category_id_list and any(cats.is_product_under(item["id"], cat_id) for cat_id in ignore_category_id_list):
+            if ignore_category_id_list and any(cats.is_product_under(item["id"], cat_id) for cat_id in ignore_category_id_list if cat_id):
                 continue
 
             product_manufacturer = None
@@ -451,7 +454,7 @@ if __name__ == '__main__':
         print
         for m, b in sorted(manufacturers.iteritems(), key=lambda t:t[0]):
             print "%s [%s]" % (m, "|".join(b))
-            for linked_m in [im for ib in b for im in Brand.findOrCreate(ib).manufacturers
+            for linked_m in [im for ib in b if Brand.exist(ib) for im in Brand.exist(ib).manufacturers
                              if im != m and ib not in Brand.no_brand_names() and (ib != u"О'КЕЙ" or m == u"ООО \"О'КЕЙ\"")]:
                 print "    ==> %s [%s]" % (linked_m, "|".join(manufacturers[linked_m]))
         print "Total manufacturers: %d" % len(manufacturers)
@@ -522,5 +525,11 @@ if __name__ == '__main__':
 
     else:
         raise Exception("Unknown print type [%s]" % toprint)
+
+    if brandscsvname:
+        with open(brandscsvname, 'wb') as f:
+            f.truncate()
+            Brand.to_csv(f)
+        print "Stored %d brands to csv[%s]" % (len(Brand.all()), brandscsvname)
 
 
