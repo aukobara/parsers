@@ -3,28 +3,33 @@
 # Classes and procedures to process category data from crawler's CSV output
 import csv
 import re
-from sys import argv
-from ok.items import ProductItem
 import json
+from sys import argv
+
+from transliterate import translit
+from Levenshtein import distance
+
+from ok.items import ProductItem
+from ok.dicts.catsproc import Cats
 
 ATTRIBUTE_BRAND = u"Бренд:"
 ATTRIBUTE_MANUFACTURER = u"Изготовитель:"
 ATTRIBUTE_WEIGHT = u"Вес:"
 
+
 class Brand(object):
-    # TODO: Assert everything in class as unicode
-    # TODO: Add single place to define default(N/A)/NoBrand
+    UNKNOWN_BRAND_NAME = u"N/A"
 
     _brands = dict()
     """ @type __brands: dict of (unicode, Brand) """
 
-    @classmethod
-    def to_key(cls, name):
+    @staticmethod
+    def to_key(name):
         return (name if isinstance(name, unicode) else unicode(name, "utf-8")).lower()
 
-    @classmethod
-    def exist(cls, name):
-        exist = cls._brands.get(cls.to_key(name))
+    @staticmethod
+    def exist(name):
+        exist = Brand._brands.get(Brand.to_key(name))
         """ @type exist: Brand """
         return exist
 
@@ -33,18 +38,18 @@ class Brand(object):
         exist = cls.exist(name)
         return exist or cls(name)
 
-    @classmethod
-    def all(cls):
+    @staticmethod
+    def all():
         """
         @rtype: list[Brand]
         """
-        return sorted(cls._brands.values(), key=lambda b: b.name)
+        return sorted(Brand._brands.values(), key=lambda b: b.name)
 
-    def __init__(self, name = "N/A"):
+    def __init__(self, name=UNKNOWN_BRAND_NAME):
         self.name = name if isinstance(name, unicode) else unicode(name, "utf-8")
         self.manufacturers = set()
-        self.__class__._brands[self.__class__.to_key(self.name)] = self
-        self.synonyms = []
+        Brand._brands[Brand.to_key(self.name)] = self
+        self.synonyms = []  # TODO: refactor to use set instead of list
         self.generic_type = None
         self._no_brand = False
 
@@ -54,15 +59,15 @@ class Brand(object):
 
     @no_brand.setter
     def no_brand(self, no_brand):
-        self.__class__._no_brand_names_cache = None
+        Brand._no_brand_names_cache = None
         self._no_brand = no_brand
 
     _no_brand_names_cache = None
-    @classmethod
-    def no_brand_names(cls):
-        if cls._no_brand_names_cache is None:
-            cls._no_brand_names_cache = list([brand.name for brand in cls.all() if brand.no_brand])
-        return cls._no_brand_names_cache
+    @staticmethod
+    def no_brand_names():
+        if Brand._no_brand_names_cache is None:
+            Brand._no_brand_names_cache = list([brand.name for brand in Brand.all() if brand.no_brand])
+        return Brand._no_brand_names_cache
 
     def __eq__(self, other):
         return isinstance(other, Brand) and self.name == other.name
@@ -74,10 +79,13 @@ class Brand(object):
 def configure():
     prodcsvname = argv[1]
     toprint = "producttypes"  # default
-    if len(argv) > 2:
-        opt = argv[2]
-        if opt == "-p" and len(argv) > 3:
-            toprint = argv[3]
+    catcsvname = None # Don't pre-load categories by default
+    while len(argv) > 2:
+        opt = argv.pop(2)
+        if opt == "-p" and len(argv) > 2:
+            toprint = argv.pop(2)
+        elif opt == "-c" and len(argv) > 2:
+            catcsvname = argv.pop(2)
         else:
             raise Exception("Unknown options")
 
@@ -94,8 +102,6 @@ def configure():
     Brand.findOrCreate(u"Kotany").synonyms += [u"Kotanyi"]
     Brand.findOrCreate(u"Витамин").synonyms += [u"vитамин"]
     Brand.findOrCreate(u"VITAMIN").synonyms += [u"Vитамин"]
-    Brand.findOrCreate(u"Мираторг").synonyms += [u"Vитамин"]
-    Brand.findOrCreate(u"Садия").synonyms += [u"Мираторг"]
     Brand.findOrCreate(u"Хлебцы-Молодцы").generic_type = u"Хлебцы"
     Brand.findOrCreate(u"Хлебцы-Молодцы").synonyms += [u"Хлебцы Молодцы"]
     Brand.findOrCreate(u"Сиртаки").generic_type = u"Брынза"
@@ -126,12 +132,10 @@ def configure():
     Brand.findOrCreate(u"HP").synonyms += [u"Хайнц"]
     Brand.findOrCreate(u"Агроальянс").synonyms += [u"Агро-Альянс"]
     Brand.findOrCreate(u"Рюген Фиш").synonyms += [u"Rugen Fisch"]
-    Brand.findOrCreate(u"РОК-1").synonyms += [u"Аморе", u"РОК1"]
-    Brand.findOrCreate(u"а'море").synonyms += [u"Аморе"]
     Brand.findOrCreate(u"Санта-Бремор").synonyms += [u"Санта Бремор", u"Бухта Изобилия"]
     Brand.findOrCreate(u"Royal Selection Belberri").synonyms += [u"Belberry"]
     Brand.findOrCreate(u"Рот Фронт").synonyms += [u"Рот-Фронт"]
-    Brand.findOrCreate(u"Ложкарев").synonyms += [u"Ложкарёвъ"]
+    Brand.findOrCreate(u"Ложкарев").synonyms += [u"Ложкарёвъ", u"Чудо-малыши", u"Шельф", u"Любимые"]
     Brand.findOrCreate(u"Бутер хлеб").synonyms += [u"Бутерхлеб"]
     Brand.findOrCreate(u"Хлебный дом").synonyms += [u"Fazer"]
     Brand.findOrCreate(u"Fazer").synonyms += [u"Фазер"]
@@ -152,6 +156,7 @@ def configure():
     Brand.findOrCreate(u"Tess").synonyms += [u"Тесс"]
     Brand.findOrCreate(u"Curtis").synonyms += [u"Кертис"]
     Brand.findOrCreate(u"BERNLEY").synonyms += [u"Бернли"]
+    Brand.findOrCreate(u"Акбар").synonyms += [u"Бернли", u"English Classic"]
     Brand.findOrCreate(u"Hillway").synonyms += [u"Хилвей"]
     Brand.findOrCreate(u"Чебуречье").synonyms += [u"Вилон"]
     Brand.findOrCreate(u"Петелино").synonyms += [u"Петелинка"]
@@ -210,8 +215,9 @@ def configure():
     Brand.findOrCreate(u"Моя Семья").synonyms += [u"МС"]
     Brand.findOrCreate(u"Фонте Аква Fonte").synonyms += [u"Fonte"]
     Brand.findOrCreate(u"ОСТАNКИНО").synonyms += [u"Останкино"]
-    Brand.findOrCreate(u"Останкино").synonyms += [u"по-Останкински", u"Останкинские"]
-    Brand.findOrCreate(u"Останкинское").synonyms += [u"Останкино"]
+    Brand.findOrCreate(u"Останкинский молочный комбинат").synonyms += [u"Останкино", u"Останкинское", u"по-Останкински", u"Останкинские", u"Останкинская", u"Останкинский"]
+    Brand.findOrCreate(u"Останкино").synonyms += Brand.findOrCreate(u"Останкинский молочный комбинат").synonyms
+    Brand.findOrCreate(u"Останкинское").synonyms += Brand.findOrCreate(u"Останкинский молочный комбинат").synonyms
     Brand.findOrCreate(u"Рублёвский").synonyms += [u"Рублевский"]
     Brand.findOrCreate(u"колбасы и деликатесы Рублевские").synonyms += [u"Рублёвский", u"Рублевские"]
     Brand.findOrCreate(u"Клинский").synonyms += [u"Клинские МК", u"КМК"]
@@ -224,8 +230,6 @@ def configure():
     Brand.findOrCreate(u"FLUIDE").synonyms += [u"Флюид", u"СладКо"]
     Brand.findOrCreate(u"Kuhne").synonyms += [u"Кюне"]
     Brand.findOrCreate(u"Baleno").synonyms += [u"Балено"]
-    Brand.findOrCreate(u"ПРОДУКТЫ ОТ ИЛЬИНОЙ").synonyms += [u"От Ильиной"]
-    Brand.findOrCreate(u"Колпинский, Ильина").synonyms += [u"От Ильиной"]
     Brand.findOrCreate(u"Меридиан").synonyms += [u"Мирамар"]
     Brand.findOrCreate(u"Приазовская").synonyms += [u"Троекурово"]
     Brand.findOrCreate(u"Биг Ланч").synonyms += [u"БигЛанч"]
@@ -240,7 +244,7 @@ def configure():
     Brand.findOrCreate(u"MacCoffee").generic_type = u"Кофе"
     Brand.findOrCreate(u"Саратовский").synonyms += [u"Саратововский"]
     Brand.findOrCreate(u"ITLV").synonyms += [u"ИТЛВ"]
-    Brand.findOrCreate(u"Рузское молоко").synonyms += [u"Рузское", u"Рузский"]
+    Brand.findOrCreate(u"Рузское молоко").synonyms += [u"Рузское", u"Рузский", u"Рузская", u"Рузские"]
     Brand.findOrCreate(u"Из Вологды").synonyms += [u"Северное молоко"]
     Brand.findOrCreate(u"Омский завод плавленых сыров").synonyms += [u"Ичалковское"]
     Brand.findOrCreate(u"Ичалки").synonyms += [u"Ичалковский"]
@@ -284,6 +288,12 @@ def configure():
     Brand.findOrCreate(u"Nescafe").synonyms += [u"Нескафе", u"Нескафе Голд"]
     Brand.findOrCreate(u"Jacobs").synonyms += [u"Якобс", u"Якобс Монарх"]
     Brand.findOrCreate(u"Русская нива").synonyms += [u"Частная галерея"]
+    Brand.findOrCreate(u"Maggi").synonyms += [u"Смесь Магги на второе", u"Магги"]
+    Brand.findOrCreate(u"Maggi").generic_type = u"Приправа"
+    Brand.findOrCreate(u"Петрохолод").synonyms += [u"Идеальная пара"]
+    Brand.findOrCreate(u"Костровок").synonyms += [u"Идея на закуску"]
+    Brand.findOrCreate(u'Tchibo').synonyms += [u"Чибо", u"Эксклюзив", u"Голд Селекшен", u"Майлд", u"Интенс"]
+    Brand.findOrCreate(u'Tchibo Manufacturing Poland Sp.z.o.o.').synonyms += [u'Tchibo'] + Brand.findOrCreate(u'Tchibo').synonyms
 
     # Manufacturer's brands
     Brand.findOrCreate(u"ООО \"Эхо\"").synonyms += [u"Белоручка"]
@@ -297,8 +307,6 @@ def configure():
     Brand.findOrCreate(u"Tulip").synonyms += [u"Tulip"]
     Brand.findOrCreate(u"WORKSHOP I SEAPRODEX, Вьетнам").synonyms += [u"Emborg"]
     Brand.findOrCreate(u"Тай Юнион Фрозен Продактс Паблик").synonyms += [u"Emborg"]
-    Brand.findOrCreate(u'ЗАО "БРПИ"').synonyms += [u"Баскин Роббинс"]
-    Brand.findOrCreate(u'ЗАО "Балтийский берег"').synonyms += [u"Балтийский Берег", u"По-царски"]
     Brand.findOrCreate(u'ЗАО "Дедовский хлеб"').synonyms += [u"Дедовский хлеб"]
     Brand.findOrCreate(u'ЗАО "ИТА Северная Компания"').synonyms += [u"СК"]
     Brand.findOrCreate(u'ЗАО "Краснобор", Россия').synonyms += [u"Краснобор"]
@@ -310,17 +318,44 @@ def configure():
     Brand.findOrCreate(u'ОАО "Маслосырзавод "Порховский"').synonyms += [u"МЗ Порховский"]
     Brand.findOrCreate(u'ООО "Элинар-Бройлер"').synonyms += [u"Элинар"]
     Brand.findOrCreate(u'ООО "Элинар-Бройлер", Россия').synonyms += [u"Элинар"]
-    Brand.findOrCreate(u'Талосто-Продукты').synonyms += [u"Мастерица", u"Талосто", u"Талосто-3000", u"Ля Фам"]
+    Brand.findOrCreate(u'Талосто-Продукты').synonyms += [u"Мастерица", u"Талосто", u"Талосто-3000", u"Ля Фам", u"Без хлопот", u'Венеция']
     Brand.findOrCreate(u'Талосто-3000').synonyms += [u"Талосто-Продукты"] + Brand.findOrCreate(u'Талосто-Продукты').synonyms
     Brand.findOrCreate(u'Проморе').synonyms += [u"NORTON"]
     Brand.findOrCreate(u"RONGGHENG SANY FOODSTUFF Co. Ltd").synonyms += [u"NORTON"]
     # Implicit brand - neither defined as explicit brand but used in no-brand products
     Brand.findOrCreate(u"Не Бренд").manufacturers.add(u"Белая Дача")
     Brand.findOrCreate(u"Белая Дача").synonyms += [u"Белая Дача"]
+    Brand.findOrCreate(u"Пчеловод").synonyms += [u"Дальневосточный", u"Алтайский", u"Таёжный"]
+    Brand.findOrCreate(u"Агама Роял Гринланд").synonyms += [u"Бухта изобилия", u"Agama", u"Агама"]
+    Brand.findOrCreate(u"Лагуна Койл").synonyms += [u"Русский Холод", u"СССР", u"Юбилейное", u"Любимое", u"Юпитер Гигант", u"Лакомка", u"Энерго"]
+    Brand.findOrCreate(u"Мясной стандарт").synonyms += [u"Дары Артемиды", u"Максума"]
+    Brand.findOrCreate(u"Мираторг").synonyms += [u"Vитамин", u"Мирандия", u"GurMama", u"Садия"]
+    Brand.findOrCreate(u"Мираторг-Запад").synonyms += [u"Мираторг"] + Brand.findOrCreate(u"Мираторг").synonyms
+    Brand.findOrCreate(u"Садия").synonyms += [u"Мираторг"]
+    Brand.findOrCreate(u"Вичюнай-Русь").synonyms += [u"VICI", u"Любо есть"]
+    Brand.findOrCreate(u"Вичюнай Русь").synonyms += [u"Вичюнай-Русь"] + Brand.findOrCreate(u"Вичюнай-Русь").synonyms
+    Brand.findOrCreate(u"Белорусский вкус").synonyms += [u"Мясной Двор"]
+    Brand.findOrCreate(u"Невские сыры").synonyms += [u"ГОСТ 52253"]
+    Brand.findOrCreate(u"Мясная империя").synonyms += [u"Московский", u"ГОСТ"]
+    Brand.findOrCreate(u"Золотой Петушок").synonyms += [u"ЗП", u"Золотой Петушок", u'Добротный Продукт']
+    Brand.findOrCreate(u"Продукты питания Комбинат").synonyms += Brand.findOrCreate(u"Золотой Петушок").synonyms
+    Brand.findOrCreate(u"Мясокомбинат Всеволожский").synonyms += [u"Самсон"]
+    Brand.findOrCreate(u"Птицефабрика Калужская").synonyms += [u"Рококо"]
+    Brand.findOrCreate(u"ЕВРОДОН").synonyms += [u"ГВУ Индолина"]
+    Brand.findOrCreate(u"ПРОДУКТЫ ОТ ИЛЬИНОЙ").synonyms += [u"От Ильиной"]
+    Brand.findOrCreate(u"Колпинский, Ильина").synonyms += [u"От Ильиной"]
+    Brand.findOrCreate(u"Айс Продукт").synonyms += [u"От Ильиной"]
+    Brand.findOrCreate(u"Рыбообрабатывающий комбинат №1").synonyms += [u"Аморе", u"РОК1", u"РОК-1"]
+    Brand.findOrCreate(u"РОК-1").synonyms += Brand.findOrCreate(u"Рыбообрабатывающий комбинат №1").synonyms
+    Brand.findOrCreate(u"а'море").synonyms += Brand.findOrCreate(u"Рыбообрабатывающий комбинат №1").synonyms
+    Brand.findOrCreate(u'БРПИ').synonyms += [u"Баскин Роббинс", u"Baskin Robbins"]
+    Brand.findOrCreate(u'Baskin Robbins').synonyms += Brand.findOrCreate(u'БРПИ').synonyms
+    Brand.findOrCreate(u'Балтийский берег').synonyms += [u"Балтийский Берег", u"По-царски", u"ББ", u"Балт Берег"]
+    Brand.findOrCreate(u'Орими трейд').synonyms += [u"Jardin", u'Жардин', u"Орими", u"Супремо", u"Суматра Мандхелинг", u"Десерт Кап", u'Стиль ди Милано', u'Клауд Форест']
+    Brand.findOrCreate(u'Jardin').synonyms += Brand.findOrCreate(u'Орими трейд').synonyms
 
 
-
-    return (prodcsvname, toprint)
+    return (prodcsvname, toprint, catcsvname)
 
 
 def parse_pfqn(pfqn):
@@ -365,8 +400,8 @@ def parse_pfqn(pfqn):
     # pack
     pl=[u""]
     sqn = re.sub( u'(' + pre + u')'
-                  u'(т/пак|ж/б|ст/б|м/у|с/б|ст/бут|пл/б|пл/бут|пэтбутылка|пл|кор\.?|\d*\s*пак\.?|\d+\s*таб|\d+\s*саше|\d+\s*пир(?:\.|амидок)?|(?:\d+\s*)?шт\.?|упак\.?|уп\.?|в/у|п/э|жесть|'
-                  u'стакан|ванночка|в\sванночке|дой-пак|дой/пак|пюр-пак|пюр\sпак|зип|зип-пакет|д/пак|п/пак|пл\.упаковка|пэт|пакет|туба|ведро|бан|лоток|фольга|фас(?:ованные)?|н/подл\.?|ф/пакет|0[.,]5|0[.,]75|0[.,]33)' + post,
+                  u'(т/пак|ж/б|ст/б|м/у|с/б|ст\\\б|ст/бут|пл/б|пл/бут|пэтбутылка|пл|кор\.?|\d*\s*пак\.?|\d+\s*таб|\d+\s*саше|\d+\s*пир(?:\.|амидок)?|(?:\d+\s*)?шт\.?|упак\.?|уп\.?|в/у|п/э|жесть|'
+                  u'вакуум|нарезка|нар|стакан|ванночка|в\sванночке|дой-пак|дой/пак|пюр-пак|пюр\sпак|зип|зип-пакет|д/пак|п/пак|пл\.упаковка|пэт|пакет|туба|ведро|бан|лоток|фольга|фас(?:ованные)?|н/подл\.?|ф/пакет|0[.,]5|0[.,]75|0[.,]33)' + post,
                    lambda g: _add_match(pl, g), sqn )
     return wl[0], fl[0], pl[0], cleanup_token_str(sqn)
 
@@ -388,7 +423,6 @@ def isrussian(s):
     except UnicodeDecodeError:
         return False
 
-
 def replace_brand(s, brand, rs=None, normalize_brands=True, normalize_result=True):
     """
     Replace brand name in string s to rs. Only full words will be replaced.
@@ -405,10 +439,29 @@ def replace_brand(s, brand, rs=None, normalize_brands=True, normalize_result=Tru
     if not s: return s
     if rs is None:
         rs = " " if not brand.generic_type else u" " + brand.generic_type + u" "
+    result = s
+
     brand_variants = [brand.name] + brand.synonyms
     if normalize_brands:
         brand_variants = map(cleanup_token_str, brand_variants)
-    result = s
+        brand_variants += [translit(b.lower(), "ru") for b in brand_variants if re.match(u'[a-z]', b.lower())]
+
+        # Add variants with spaces replaced to '-' and vice verse
+        brand_variants += [b.replace(u' ', u'-') for b in brand_variants if u' ' in b] +\
+                            [b.replace(u'-', u'') for b in brand_variants if u'-' in b] +\
+                            [b.replace(u'-', u' ') for b in brand_variants if u'-' in b]
+
+        for b in brand_variants:
+            b_tokens = b.split(u' ', 1)
+            if len(b_tokens) > 1 or len(b_tokens[0]) <= 5: continue  # TODO: implement multi-tokens
+            for s_token in s.split(' '):
+                if len(s_token) > 5:
+                    dist = distance(b_tokens[0].lower(), s_token.lower())
+                    if 0 < dist <= 2:
+                        print "FOUND SIMILAR: %s : %s in %s, brand: %s" % (b_tokens[0], s_token, s, str(brand).decode("utf-8"))
+                        if not any(s_token.lower() == b_i.lower() for b_i in brand_variants):
+                            brand_variants.append(s_token)
+
     # Start with longest brand names to avoid double processing of shortened names
     for b in sorted(brand_variants, key=len, reverse=True):
         pos = result.lower().find(b.lower())
@@ -416,8 +469,12 @@ def replace_brand(s, brand, rs=None, normalize_brands=True, normalize_result=Tru
             pre_char = result[pos-1] if pos > 0 else u""
             post_char = result[pos+len(b)] if pos+len(b) < len(result) else u""
             if not pre_char.isalnum() and (not post_char.isalnum() or (isenglish(b[-1]) and isrussian(post_char))):  # Brand name is bounded by non-alphanum
+                was = result[pos:pos+len(b)]
                 result = result[:pos] + rs + result[pos+len(b):]
                 pos += len(rs)
+                if was.lower() != brand.name.lower() and not any(was.lower() == syn.lower() for syn in brand.synonyms):
+                    print "NEW SYNONYM FOR BRAND %s => %s, %s" % (was, s, str(brand).decode("utf-8"))
+                    brand.synonyms.append(was)
             else:
                 print u"Suspicious string [%s] may contain brand name [%s]" % (s, b)
                 pos += len(b)
@@ -426,14 +483,16 @@ def replace_brand(s, brand, rs=None, normalize_brands=True, normalize_result=Tru
     return cleanup_token_str(result) if normalize_result else result
 
 
-def cleanup_token_str(s):
+def cleanup_token_str(s, ext_symbols=None):
     """
     Cleanup one-line string from non-label symbols - colon, quotes, periods etc
     Replace multi-spaces to single space. Strip
     @param unicode s: one-line string
+    @param list[unicode] ext_symbols: list of additional symbols to clean
     @rtype: unicode
     """
-    return re.sub(u'(?:\s|"|,|\.|«|»|\(|\))+', u' ', s).strip()
+    ext = '|'.join(ext_symbols) if ext_symbols else None
+    return re.sub(u'(?:\s|"|,|\.|«|»|“|”|\(|\)' + ('|' + ext if ext else '') + ')+', u' ', s).strip()
 
 
 def findOrCreate_manufacturer_brand(manufacturer):
@@ -444,21 +503,46 @@ def findOrCreate_manufacturer_brand(manufacturer):
     """
     brand = Brand.exist(manufacturer)
     # Check for known patterns than findOrCreate brand with synonyms for determined patterns
-    patterns = re.findall(u'^(?:ЗАО|ООО|ОАО)\s+(?:"(?:ТК|ТПК)\s+)?"?([^"]+)"?(?:\s*,\s*\S+)?\s*$', manufacturer)
+    re_main_group = u'"?(.+?)"?'
+    patterns = re.findall(u'^(?:ЗАО|ООО|ОАО)\s+(?:"(?:ТК|ТПК|Компания|ПО|МПК)\s+)?' + re_main_group + u'(?:\s*,\s*\S+)?\s*$', manufacturer, re.IGNORECASE)
     if not patterns:
         # English version
-        patterns = re.findall(u'^(?:ZAO|OOO|OAO)\s+(?:"(?:TK|TPK)\s+)?"?([^"]+)"?(?:\s*,\s*\S+)?\s*$', manufacturer)
+        patterns = re.findall(u'^(?:ZAO|OOO|OAO)\s+(?:"(?:TK|TPK|PO|MPK)\s+)?' + re_main_group + u'(?:\s*,\s*\S+)?\s*$', manufacturer)
     if patterns:
         brand = brand or Brand.findOrCreate(manufacturer)
-        brand.synonyms += [p for p in patterns if p not in brand.synonyms]
-        # If brand with name as pattern already exists copy all its synonyms
-        brand.synonyms += [syn for p in patterns if Brand.exist(p) for syn in Brand.exist(p).synonyms if syn not in brand.synonyms]
         brand.manufacturers.add(manufacturer)
+        # Collect all pattern variants
+        p_modified = True
+        while p_modified:
+            p_modified = False
+            for p in patterns[:]:
+                p1 = p.replace('"', '')
+                if p1 == p:
+                    p1 = p.replace('-', ' ')
+                if p1 == p:
+                    p1 = p.replace('-', '')
+                if p1 not in patterns:
+                    patterns.append(p1)
+                    p_modified = True
+        for p in patterns:
+            p = p.replace('"', '')
+            if p not in brand.synonyms:
+                brand.synonyms.append(p)
+            # If brand with name as pattern already exists copy all its synonyms
+            p_brand = Brand.exist(p)
+            if p_brand:
+                brand.synonyms += [syn for syn in p_brand.synonyms if syn not in brand.synonyms]
     return brand
 
 
 if __name__ == '__main__':
-    (prodcsvname, toprint) = configure()
+    (prodcsvname, toprint, catcsvname) = configure()
+
+    cats = Cats()
+    if catcsvname is not None:
+        cats.load(catcsvname)
+        print "Categories've been loaded from '%s': %d" % (catcsvname, len(cats))
+    ignore_category_id_list = [cats.find_by_title(u"Алкогольные напитки"), cats.find_by_title(u"Скидки")]
 
     types = dict()
     """ @type types: dict of (unicode, dict[str, unicode]) """
@@ -473,18 +557,21 @@ if __name__ == '__main__':
             item = ProductItem(prodrow)
             pfqn = unicode(item["name"], "utf-8")
 
+            if ignore_category_id_list and any(cats.is_product_under(item["id"], cat_id) for cat_id in ignore_category_id_list):
+                continue
+
             product_manufacturer = None
             if item.get("details"):
                 details = json.loads(item["details"])
                 """ @type details: dict of (unicode, unicode) """
 
-                brand = Brand.findOrCreate(details.get(ATTRIBUTE_BRAND, "N/A"))
+                brand = Brand.findOrCreate(details.get(ATTRIBUTE_BRAND, Brand.UNKNOWN_BRAND_NAME))
 
                 product_manufacturer = details.get(ATTRIBUTE_MANUFACTURER)
                 if product_manufacturer:
                     brand.manufacturers.add(product_manufacturer)
             else:
-                brand = Brand.findOrCreate(u"N/A")
+                brand = Brand.findOrCreate(Brand.UNKNOWN_BRAND_NAME)
 
             (weight, fat, pack, sqn) = parse_pfqn(pfqn)
             def __fill_fqn_dict(d, item):
@@ -494,7 +581,7 @@ if __name__ == '__main__':
             __fill_fqn_dict(packs, pack)
 
             sqn_without_brand = sqn
-            if brand.name != u"N/A":
+            if brand.name != Brand.UNKNOWN_BRAND_NAME:
                 sqn_without_brand = replace_brand(sqn_without_brand, brand)
 
             types[pfqn] = dict(weight=weight, fat=fat, pack=pack,
@@ -552,15 +639,15 @@ if __name__ == '__main__':
         # for t, d in sorted(types.iteritems(), key=lambda t: t[1]["sqn"].split(" ", 1)[0]):
         for t, d in sorted(types.iteritems(), key=lambda t: t[1]["product_manufacturer"]):
             if not d["brand_detected"] and (d["brand"] in Brand.no_brand_names()):
-                print '%s   => brand: %s, prod_man: %s, weight: %s, fat: %s, pack: %s, fqn: %s' % \
-                      (d["sqn"], d["brand"], d["product_manufacturer"], d["weight"], d["fat"], d["pack"], t)
-                nobrand_count += 1
-                m_count[d["product_manufacturer"]] = m_count.get(d["product_manufacturer"], 0)
-                m_count[d["product_manufacturer"]] += 1
-
-            elif not d["brand_detected"] and not d["product_manufacturer"]:
                 # print '%s   => brand: %s, prod_man: %s, weight: %s, fat: %s, pack: %s, fqn: %s' % \
-                #      (d["sqn"], d["brand"], d["product_manufacturer"], d["weight"], d["fat"], d["pack"], t)
+                #       (d["sqn"], d["brand"], d["product_manufacturer"], d["weight"], d["fat"], d["pack"], t)
+                nobrand_count += 1
+
+            elif not d["brand_detected"]:
+                print '%s   => brand: %s, prod_man: %s, weight: %s, fat: %s, pack: %s, fqn: %s' % \
+                     (d["sqn"], d["brand"], d["product_manufacturer"], d["weight"], d["fat"], d["pack"], t)
+                m_count[d["brand"]] = m_count.get(d["brand"], 0)
+                m_count[d["brand"]] += 1
                 ptypes_count += 1
         print
         print "Total product types: %d [notintype: %d, nobrand: %d]" % (len(types), ptypes_count, nobrand_count)
@@ -585,9 +672,10 @@ if __name__ == '__main__':
 
         num_tuples = dict()
         for t, c in sorted(types2.iteritems(), key=lambda k: types2[k[0]], reverse=True):
+            if c <= 1: continue
             print "Tuple %s + %s: %d" % (t[0], t[1], c)
             num_tuples[c] = num_tuples.get(c, 0) + 1
-        print "Total tuples: %d" % len(types2)
+        print "Total tuples: %d" % sum(num_tuples.values())
         for num in sorted(num_tuples.iterkeys(), reverse=True):
             print "    %d: %d" % (num, num_tuples[num])
 
