@@ -75,6 +75,103 @@ class Brand(object):
     def __str__(self):
         return ("%s [synonyms: %s][m:%s]" % (self.name, "|".join(self.synonyms), "|".join(self.manufacturers))).encode("utf-8")
 
+    def replace_brand(self, s, rs=None, normalize_brands=True, normalize_result=True):
+        """
+        Replace brand name in string s to rs. Only full words will be replaced.
+        Brand synonyms are iterated to check different variants.
+        Quotation are treated as part of brand name substring.
+        TODO: Check spelling errors and translitiration
+        @param unicode s: original string
+        @param unicode rs: replacement. If None - use brand.generic_type if not Null or space otherwise
+        @param bool normalize_brands: if True call @cleanup_token_str for each brand and synonym
+        @return: Updated string if brand is found, original string otherwise
+        @rtype unicode
+        """
+        if not s: return s
+        if rs is None:
+            rs = " " if not self.generic_type else u" " + self.generic_type + u" "
+        result = s
+
+        brand_variants = [self.name] + self.synonyms
+        if normalize_brands:
+            brand_variants = map(cleanup_token_str, brand_variants)
+            brand_variants += [translit(b.lower(), "ru") for b in brand_variants if re.match(u'[a-z]', b.lower())]
+
+            # Add variants with spaces replaced to '-' and vice verse
+            brand_variants += [b.replace(u' ', u'-') for b in brand_variants if u' ' in b] +\
+                                [b.replace(u'-', u'') for b in brand_variants if u'-' in b] +\
+                                [b.replace(u'-', u' ') for b in brand_variants if u'-' in b]
+
+            for b in brand_variants:
+                b_tokens = b.split(u' ', 1)
+                if len(b_tokens) > 1 or len(b_tokens[0]) <= 5: continue  # TODO: implement multi-tokens
+                for s_token in s.split(' '):
+                    if len(s_token) > 5:
+                        dist = distance(b_tokens[0].lower(), s_token.lower())
+                        if 0 < dist <= 2:
+                            print "FOUND SIMILAR: %s : %s in %s, brand: %s" % (b_tokens[0], s_token, s, str(self).decode("utf-8"))
+                            if not any(s_token.lower() == b_i.lower() for b_i in brand_variants):
+                                brand_variants.append(s_token)
+
+        # Start with longest brand names to avoid double processing of shortened names
+        for b in sorted(brand_variants, key=len, reverse=True):
+            pos = result.lower().find(b.lower())
+            while pos >= 0:
+                pre_char = result[pos-1] if pos > 0 else u""
+                post_char = result[pos+len(b)] if pos+len(b) < len(result) else u""
+                if not pre_char.isalnum() and (not post_char.isalnum() or (isenglish(b[-1]) and isrussian(post_char))):  # Brand name is bounded by non-alphanum
+                    was = result[pos:pos+len(b)]
+                    result = result[:pos] + rs + result[pos+len(b):]
+                    pos += len(rs)
+                    if was.lower() != self.name.lower() and not any(was.lower() == syn.lower() for syn in self.synonyms):
+                        print "NEW SYNONYM FOR BRAND %s => %s, %s" % (was, s, str(self).decode("utf-8"))
+                        self.synonyms.append(was)
+                else:
+                    print u"Suspicious string [%s] may contain brand name [%s]" % (s, b)
+                    pos += len(b)
+                pos = result.lower().find(b.lower(), pos)
+
+        return cleanup_token_str(result) if normalize_result else result
+
+    @classmethod
+    def findOrCreate_manufacturer_brand(cls, manufacturer):
+        """
+        Dynamically create manufacturer's brand if it matches known manufacturer->brand patterns
+        @param unicode manufacturer: manufacturer's full name
+        @rtype: Brand | None
+        """
+        brand = cls.exist(manufacturer)
+        # Check for known patterns than findOrCreate brand with synonyms for determined patterns
+        re_main_group = u'"?(.+?)"?'
+        patterns = re.findall(u'^(?:ЗАО|ООО|ОАО)\s+(?:"(?:ТК|ТПК|Компания|ПО|МПК)\s+)?' + re_main_group + u'(?:\s*,\s*\S+)?\s*$', manufacturer, re.IGNORECASE)
+        if not patterns:
+            # English version
+            patterns = re.findall(u'^(?:ZAO|OOO|OAO)\s+(?:"(?:TK|TPK|PO|MPK)\s+)?' + re_main_group + u'(?:\s*,\s*\S+)?\s*$', manufacturer)
+        if patterns:
+            brand = brand or cls.findOrCreate(manufacturer)
+            brand.manufacturers.add(manufacturer)
+            # Collect all pattern variants
+            p_modified = True
+            while p_modified:
+                p_modified = False
+                for p in patterns[:]:
+                    p1 = p.replace('"', '')
+                    if p1 == p:
+                        p1 = p.replace('-', ' ')
+                    if p1 == p:
+                        p1 = p.replace('-', '')
+                    if p1 not in patterns:
+                        patterns.append(p1)
+                        p_modified = True
+            for p in patterns:
+                p = p.replace('"', '')
+                if p not in brand.synonyms:
+                    brand.synonyms.append(p)
+                # If brand with name as pattern already exists copy all its synonyms
+                p_brand = cls.exist(p)
+                if p_brand:
+                    brand.synonyms += [syn for syn in p_brand.synonyms if syn not in brand.synonyms]
+        return brand
 
 def configure():
     prodcsvname = argv[1]
@@ -357,6 +454,36 @@ def configure():
 
     return (prodcsvname, toprint, catcsvname)
 
+# prefix can be consumed by re parser and must be returned in sub - must be always 1st Match
+RE_TEMPLATE_PFQN_PRE = u'(?:\s|\.|,|\()'
+# post is predicate and isn't consumed by parser. but must start immediately after term group
+RE_TEMPLATE_PFQN_POST = u'(?=\s|$|,|\.|\)|/)'
+
+RE_TEMPLATE_PFQN_WEIGHT_FULL = u'(\D)(' +\
+                u'(?:\d+(?:шт|пак)?\s*(?:х|\*|x|/))?\s*' +\
+                u'(?:\d+(?:[\.,]\d+)?\s*)' +\
+                u'(?:кг|г|л|мл|гр)\.?' +\
+                u'(?:(?:х|\*|x|/)\d+(?:\s*шт)?)?' +\
+                u')' + RE_TEMPLATE_PFQN_POST
+RE_TEMPLATE_PFQN_WEIGHT_SHORT = u'(\D' + RE_TEMPLATE_PFQN_PRE + u')((?:кг|г|л|мл|гр)\.?)' + RE_TEMPLATE_PFQN_POST
+__pfqn_re_weight_full = re.compile(RE_TEMPLATE_PFQN_WEIGHT_FULL)
+__pfqn_re_weight_short = re.compile(RE_TEMPLATE_PFQN_WEIGHT_SHORT)
+
+RE_TEMPLATE_PFQN_FAT_MDZH = u'(?:\s*(?:с\s)?м\.?д\.?ж\.? в сух(?:ом)?\.?\s?вещ(?:-|ест)ве\s*' + \
+                            u'|\s*массовая доля жира в сухом веществе\s*)?'
+RE_TEMPLATE_PFQN_FAT = u'(' + RE_TEMPLATE_PFQN_PRE + u')(' + RE_TEMPLATE_PFQN_FAT_MDZH + \
+                       u'(?:\d+(?:[\.,]\d+)?%?-)?\d+(?:[\.,]\d+)?\s*%(?:\s*жирн(?:\.|ости)?)?' + \
+                       RE_TEMPLATE_PFQN_FAT_MDZH + u")" + RE_TEMPLATE_PFQN_POST
+__pfqn_re_fat = re.compile(RE_TEMPLATE_PFQN_FAT)
+
+RE_TEMPLATE_PFQN_PACK = u'(' + RE_TEMPLATE_PFQN_PRE + u')' \
+                        u'(т/пак|ж/б|ст/б|м/у|с/б|ст\\\б|ст/бут|пл/б|пл/бут|пэтбутылка|пл|кор\.?' + \
+                        u'|\d*\s*пак\.?|\d+\s*таб|\d+\s*саше|\d+\s*пир(?:\.|амидок)?' + \
+                        u'|(?:\d+\s*)?шт\.?|упак\.?|уп\.?|в/у|п/э|жесть|' \
+                        u'вакуум|нарезка|нар|стакан|ванночка|в\sванночке|дой-пак|дой/пак|пюр-пак|пюр\sпак|' + \
+                        u'зип|зип-пакет|д/пак|п/пак|пл\.упаковка|пэт|пакет|туба|ведро|бан|лоток|фольга' + \
+                        u'|фас(?:ованные)?|н/подл\.?|ф/пакет|0[.,]5|0[.,]75|0[.,]33)' + RE_TEMPLATE_PFQN_POST
+__pfqn_re_pack = re.compile(RE_TEMPLATE_PFQN_PACK)
 
 def parse_pfqn(pfqn):
     """
@@ -368,8 +495,6 @@ def parse_pfqn(pfqn):
     @rtype: (unicode, unicode, unicode, unicode)
     """
     sqn = pfqn.lower()
-    pre = u'(?:\s|\.|,|\()'  # prefix can be consumed by re parser and must be returned in sub - must be always 1st Match
-    post = u'(?=\s|$|,|\.|\)|/)'  # post is predicate and isn't consumed by parser. but must start immediately after term group
 
     def _add_match(ll, match):
         _pre = match.group(1)
@@ -379,30 +504,16 @@ def parse_pfqn(pfqn):
 
     # weight - if has digit should be bounded by non-Digit, if has no digit - than unit only is acceptable but as token
     wl = [u""]
-    sqn = re.sub(u'(\D)('
-                u'(?:\d+(?:шт|пак)?\s*(?:х|\*|x|/))?\s*'
-                u'(?:\d+(?:[\.,]\d+)?\s*)'
-                u'(?:кг|г|л|мл|гр)\.?'
-                u'(?:(?:х|\*|x|/)\d+(?:\s*шт)?)?'
-                u')' + post,
-           lambda g: _add_match(wl, g),
-           sqn
-           )
+    sqn = re.sub(__pfqn_re_weight_full, lambda g: _add_match(wl, g), sqn)
     if not wl[0]:
-        sqn = re.sub( u'(\D' + pre + u')((?:кг|г|л|мл|гр)\.?)' + post,
-                        lambda g: _add_match(wl, g),
-                        sqn )
+        sqn = re.sub(__pfqn_re_weight_short, lambda g: _add_match(wl, g), sqn )
     # fat
     fl=[u""]
-    mdzh = u'(?:\s*(?:с\s)?м\.?д\.?ж\.? в сух(?:ом)?\.?\s?вещ(?:-|ест)ве\s*|\s*массовая доля жира в сухом веществе\s*)?'
-    sqn = re.sub( u'(' + pre + u')(' + mdzh + u'(?:\d+(?:[\.,]\d+)?%?-)?\d+(?:[\.,]\d+)?\s*%(?:\s*жирн(?:\.|ости)?)?' + mdzh + u')' + post,
-                   lambda g: _add_match(fl, g), sqn )
+    sqn = re.sub(__pfqn_re_fat, lambda g: _add_match(fl, g), sqn )
     # pack
     pl=[u""]
-    sqn = re.sub( u'(' + pre + u')'
-                  u'(т/пак|ж/б|ст/б|м/у|с/б|ст\\\б|ст/бут|пл/б|пл/бут|пэтбутылка|пл|кор\.?|\d*\s*пак\.?|\d+\s*таб|\d+\s*саше|\d+\s*пир(?:\.|амидок)?|(?:\d+\s*)?шт\.?|упак\.?|уп\.?|в/у|п/э|жесть|'
-                  u'вакуум|нарезка|нар|стакан|ванночка|в\sванночке|дой-пак|дой/пак|пюр-пак|пюр\sпак|зип|зип-пакет|д/пак|п/пак|пл\.упаковка|пэт|пакет|туба|ведро|бан|лоток|фольга|фас(?:ованные)?|н/подл\.?|ф/пакет|0[.,]5|0[.,]75|0[.,]33)' + post,
-                   lambda g: _add_match(pl, g), sqn )
+    sqn = re.sub(__pfqn_re_pack, lambda g: _add_match(pl, g), sqn )
+
     return wl[0], fl[0], pl[0], cleanup_token_str(sqn)
 
 
@@ -423,65 +534,6 @@ def isrussian(s):
     except UnicodeDecodeError:
         return False
 
-def replace_brand(s, brand, rs=None, normalize_brands=True, normalize_result=True):
-    """
-    Replace brand name in string s to rs. Only full words will be replaced.
-    Brand synonyms are iterated to check different variants.
-    Quotation are treated as part of brand name substring.
-    TODO: Check spelling errors and translitiration
-    @param unicode s: original string
-    @param Brand brand: brand entity with synonyms
-    @param unicode rs: replacement. If None - use brand.generic_type if not Null or space otherwise
-    @param bool normalize_brands: if True call @cleanup_token_str for each brand and synonym
-    @return: Updated string if brand is found, original string otherwise
-    @rtype unicode
-    """
-    if not s: return s
-    if rs is None:
-        rs = " " if not brand.generic_type else u" " + brand.generic_type + u" "
-    result = s
-
-    brand_variants = [brand.name] + brand.synonyms
-    if normalize_brands:
-        brand_variants = map(cleanup_token_str, brand_variants)
-        brand_variants += [translit(b.lower(), "ru") for b in brand_variants if re.match(u'[a-z]', b.lower())]
-
-        # Add variants with spaces replaced to '-' and vice verse
-        brand_variants += [b.replace(u' ', u'-') for b in brand_variants if u' ' in b] +\
-                            [b.replace(u'-', u'') for b in brand_variants if u'-' in b] +\
-                            [b.replace(u'-', u' ') for b in brand_variants if u'-' in b]
-
-        for b in brand_variants:
-            b_tokens = b.split(u' ', 1)
-            if len(b_tokens) > 1 or len(b_tokens[0]) <= 5: continue  # TODO: implement multi-tokens
-            for s_token in s.split(' '):
-                if len(s_token) > 5:
-                    dist = distance(b_tokens[0].lower(), s_token.lower())
-                    if 0 < dist <= 2:
-                        print "FOUND SIMILAR: %s : %s in %s, brand: %s" % (b_tokens[0], s_token, s, str(brand).decode("utf-8"))
-                        if not any(s_token.lower() == b_i.lower() for b_i in brand_variants):
-                            brand_variants.append(s_token)
-
-    # Start with longest brand names to avoid double processing of shortened names
-    for b in sorted(brand_variants, key=len, reverse=True):
-        pos = result.lower().find(b.lower())
-        while pos >= 0:
-            pre_char = result[pos-1] if pos > 0 else u""
-            post_char = result[pos+len(b)] if pos+len(b) < len(result) else u""
-            if not pre_char.isalnum() and (not post_char.isalnum() or (isenglish(b[-1]) and isrussian(post_char))):  # Brand name is bounded by non-alphanum
-                was = result[pos:pos+len(b)]
-                result = result[:pos] + rs + result[pos+len(b):]
-                pos += len(rs)
-                if was.lower() != brand.name.lower() and not any(was.lower() == syn.lower() for syn in brand.synonyms):
-                    print "NEW SYNONYM FOR BRAND %s => %s, %s" % (was, s, str(brand).decode("utf-8"))
-                    brand.synonyms.append(was)
-            else:
-                print u"Suspicious string [%s] may contain brand name [%s]" % (s, b)
-                pos += len(b)
-            pos = result.lower().find(b.lower(), pos)
-
-    return cleanup_token_str(result) if normalize_result else result
-
 
 def cleanup_token_str(s, ext_symbols=None):
     """
@@ -493,46 +545,6 @@ def cleanup_token_str(s, ext_symbols=None):
     """
     ext = '|'.join(ext_symbols) if ext_symbols else None
     return re.sub(u'(?:\s|"|,|\.|«|»|“|”|\(|\)|\?|\+' + ('|' + ext if ext else '') + ')+', u' ', s).strip()
-
-
-def findOrCreate_manufacturer_brand(manufacturer):
-    """
-    Dynamically create manufacturer's brand if it matches known manufacturer->brand patterns
-    @param unicode manufacturer: manufacturer's full name
-    @rtype: Brand | None
-    """
-    brand = Brand.exist(manufacturer)
-    # Check for known patterns than findOrCreate brand with synonyms for determined patterns
-    re_main_group = u'"?(.+?)"?'
-    patterns = re.findall(u'^(?:ЗАО|ООО|ОАО)\s+(?:"(?:ТК|ТПК|Компания|ПО|МПК)\s+)?' + re_main_group + u'(?:\s*,\s*\S+)?\s*$', manufacturer, re.IGNORECASE)
-    if not patterns:
-        # English version
-        patterns = re.findall(u'^(?:ZAO|OOO|OAO)\s+(?:"(?:TK|TPK|PO|MPK)\s+)?' + re_main_group + u'(?:\s*,\s*\S+)?\s*$', manufacturer)
-    if patterns:
-        brand = brand or Brand.findOrCreate(manufacturer)
-        brand.manufacturers.add(manufacturer)
-        # Collect all pattern variants
-        p_modified = True
-        while p_modified:
-            p_modified = False
-            for p in patterns[:]:
-                p1 = p.replace('"', '')
-                if p1 == p:
-                    p1 = p.replace('-', ' ')
-                if p1 == p:
-                    p1 = p.replace('-', '')
-                if p1 not in patterns:
-                    patterns.append(p1)
-                    p_modified = True
-        for p in patterns:
-            p = p.replace('"', '')
-            if p not in brand.synonyms:
-                brand.synonyms.append(p)
-            # If brand with name as pattern already exists copy all its synonyms
-            p_brand = Brand.exist(p)
-            if p_brand:
-                brand.synonyms += [syn for syn in p_brand.synonyms if syn not in brand.synonyms]
-    return brand
 
 
 if __name__ == '__main__':
@@ -582,7 +594,7 @@ if __name__ == '__main__':
 
             sqn_without_brand = sqn
             if brand.name != Brand.UNKNOWN_BRAND_NAME:
-                sqn_without_brand = replace_brand(sqn_without_brand, brand)
+                sqn_without_brand = brand.replace_brand(sqn_without_brand)
 
             types[pfqn] = dict(weight=weight, fat=fat, pack=pack,
                                brand=brand.name,
@@ -606,10 +618,10 @@ if __name__ == '__main__':
         sqn_without_brand = sqn
         linked_manufacturers = {product_manufacturer} if product_manufacturer else no_brand_manufacturers
         for manufacturer in linked_manufacturers:
-            manufacturer_brand = findOrCreate_manufacturer_brand(manufacturer)
+            manufacturer_brand = Brand.findOrCreate_manufacturer_brand(manufacturer)
             if manufacturer_brand and manufacturer_brand != brand:
                 # Consider manufacturer as brand - replace its synonyms
-                sqn_without_brand = replace_brand(sqn_without_brand, manufacturer_brand)
+                sqn_without_brand = manufacturer_brand.replace_brand(sqn_without_brand)
                 if sqn != sqn_without_brand:
                     item["sqn"] = sqn_without_brand
                     item["brand_detected"] = True
