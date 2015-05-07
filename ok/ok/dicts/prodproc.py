@@ -361,6 +361,8 @@ def parse_pfqn(pfqn):
 
     return wl[0], fl[0], pl[0], cleanup_token_str(sqn)
 
+def remove_nbsp(s):
+    return None if s is None else s.replace(u'\u00a0', ' ') if isinstance(s, unicode) else s.replace('\xa0', ' ')
 
 if __name__ == '__main__':
     (prodcsvname, toprint, catcsvname, brandscsvname) = configure()
@@ -382,7 +384,7 @@ if __name__ == '__main__':
         for row in reader:
             prodrow = dict(zip(fields, row))
             item = ProductItem(prodrow)
-            pfqn = unicode(item["name"], "utf-8")
+            pfqn = remove_nbsp(unicode(item["name"], "utf-8"))
 
             if ignore_category_id_list and any(cats.is_product_under(item["id"], cat_id) for cat_id in ignore_category_id_list if cat_id):
                 continue
@@ -392,9 +394,9 @@ if __name__ == '__main__':
                 details = json.loads(item["details"])
                 """ @type details: dict of (unicode, unicode) """
 
-                brand = Brand.findOrCreate(details.get(ATTRIBUTE_BRAND, Brand.UNKNOWN_BRAND_NAME))
+                brand = Brand.findOrCreate(remove_nbsp(details.get(ATTRIBUTE_BRAND, Brand.UNKNOWN_BRAND_NAME)))
 
-                product_manufacturer = details.get(ATTRIBUTE_MANUFACTURER)
+                product_manufacturer = remove_nbsp(details.get(ATTRIBUTE_MANUFACTURER))
                 if product_manufacturer:
                     brand.manufacturers.add(product_manufacturer)
             else:
