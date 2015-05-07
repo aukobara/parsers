@@ -20,7 +20,7 @@ class Brand(object):
 
     @staticmethod
     def to_key(name):
-        return (name if isinstance(name, unicode) else unicode(name, "utf-8")).lower()
+        return (name if isinstance(name, unicode) else unicode(name, "utf-8")).strip().lower()
 
     @staticmethod
     def exist(name):
@@ -50,6 +50,31 @@ class Brand(object):
         self.generic_type = None
         self._no_brand = False
 
+    def add_synonym(self, *syns):
+        result = False
+        for syn in syns:
+            if not syn or Brand.to_key(syn) == Brand.to_key(self.name):
+                continue
+            norm_syn = syn.strip().lower()
+            if any(norm_syn == s.strip().lower() for s in self.synonyms):
+                continue
+            self.synonyms.append(norm_syn)
+            result = True
+
+        return result
+
+    def link_related(self, p_brand):
+        """
+        Make relationship between linked brands.
+        Minimal implementation: copy synonyms
+        TODO: Add more sophisticated link
+        @param p_brand:
+        @return:
+        """
+        self.add_synonym(p_brand.name)
+        self.add_synonym(*p_brand.synonyms)
+        pass
+
     @property
     def no_brand(self):
         return self._no_brand
@@ -71,6 +96,20 @@ class Brand(object):
 
     def __str__(self):
         return ("%s [synonyms: %s][m:%s]" % (self.name, "|".join(self.synonyms), "|".join(self.manufacturers))).encode("utf-8")
+
+    _false_positive_brand_matches ={
+        u'Абрико'.lower(): u'абрикос',
+        u'Аладушкин'.lower(): u'оладушки',
+        u'Добрый'.lower(): u'бодрый',
+        u'Юбилейное'.lower(): u'юбилейная',
+        u'Морозко'.lower(): u'марокко',
+        u'Дальневосточный'.lower(): u'дальневосточная',
+        u'Венеция'.lower(): u'венгрия',
+        u'Белоручка'.lower(): u'белочка'
+    }
+    @staticmethod
+    def check_false_positive_brand_match(brand_variant, sqn_token):
+        return Brand._false_positive_brand_matches.get(brand_variant.lower()) == sqn_token.lower()
 
     def replace_brand(self, s, rs=None, normalize_brands=True, normalize_result=True):
         """
@@ -95,17 +134,19 @@ class Brand(object):
             brand_variants += [translit(b.lower(), "ru") for b in brand_variants if re.match(u'[a-z]', b.lower())]
 
             # Add variants with spaces replaced to '-' and vice verse
-            brand_variants += [b.replace(u' ', u'-') for b in brand_variants if u' ' in b] +\
-                                [b.replace(u'-', u'') for b in brand_variants if u'-' in b] +\
-                                [b.replace(u'-', u' ') for b in brand_variants if u'-' in b]
+            brand_variants = add_string_combinations(brand_variants, (u' ', u'-'), (u'-', u''), (u'-', u' '))
 
             for b in brand_variants:
                 b_tokens = b.split(u' ', 1)
-                if len(b_tokens) > 1 or len(b_tokens[0]) <= 5: continue  # TODO: implement multi-tokens
+                if len(b_tokens) > 1 or len(b_tokens[0]) <= 5:
+                    continue  # TODO: implement multi-tokens
                 for s_token in s.split(' '):
                     if len(s_token) > 5:
                         dist = distance(b_tokens[0].lower(), s_token.lower())
                         if 0 < dist <= 2:
+                            if Brand.check_false_positive_brand_match(b_tokens[0], s_token):
+                                print "FOUND FALSE POSITIVE BRAND MATCH: brand variant[%s], sqn_token[%s], distance:[%d], sqn[%s]" % (b_tokens[0], s_token, dist, s)
+                                continue
                             print "FOUND SIMILAR: %s : %s in %s, brand: %s" % (b_tokens[0], s_token, s, str(self).decode("utf-8"))
                             if not any(s_token.lower() == b_i.lower() for b_i in brand_variants):
                                 brand_variants.append(s_token)
@@ -116,13 +157,12 @@ class Brand(object):
             while pos >= 0:
                 pre_char = result[pos-1] if pos > 0 else u""
                 post_char = result[pos+len(b)] if pos+len(b) < len(result) else u""
-                if not pre_char.isalnum() and (not post_char.isalnum() or (isenglish(b[-1]) and isrussian(post_char))):  # Brand name is bounded by non-alphanum
+                # Brand name is bounded by non-alphanum
+                if not pre_char.isalnum() and (not post_char.isalnum() or (isenglish(b[-1]) and isrussian(post_char))):
                     was = result[pos:pos+len(b)]
                     result = result[:pos] + rs + result[pos+len(b):]
                     pos += len(rs)
-                    if was.lower() != self.name.lower() and not any(was.lower() == syn.lower() for syn in self.synonyms):
-                        print "NEW SYNONYM FOR BRAND %s => %s, %s" % (was, s, str(self).decode("utf-8"))
-                        self.synonyms.append(was)
+                    if self.add_synonym(was): print "NEW SYNONYM FOR BRAND %s => %s, %s" % (was, s, str(self).decode("utf-8"))
                 else:
                     print u"Suspicious string [%s] may contain brand name [%s]" % (s, b)
                     pos += len(b)
@@ -140,21 +180,20 @@ class Brand(object):
         brand = cls.findOrCreate(manufacturer)
         brand.manufacturers.add(manufacturer)
         # Check for known patterns than findOrCreate brand with synonyms for determined patterns
-        re_main_group = u'(?:"|«)?(.+?)(?:"|»)?'
-        patterns = re.findall(u'^(?:ЗАО|ООО|ОАО)\s+(?:(?:"|«)(?:ТК|ТПК|Компания|ПО|МПК)\s+)?' + re_main_group + u'(?:\s*,\s*\S+)?\s*$', manufacturer, re.IGNORECASE)
+        re_main_group = u'(?:\s|"|«)?(.+?)(?:"|»)?'
+        patterns = re.findall(u'^(?:Филиал\s+)?(?:С-?)?(?:ЗАО|ООО|ОАО|ПАО|СП|Холдинговая\s+Компания|ХК)\s*(?:(?:"|«)(?:ТК|ТПК|Компания|Фирма|ПО|МПК)\s*)?' + re_main_group + u'(?:\s*,\s*\S+)?\s*$', manufacturer, re.IGNORECASE)
         if not patterns:
             # English version
-            patterns = re.findall(u'^(?:ZAO|OOO|OAO)\s+(?:(?:"|«)(?:TK|TPK|PO|MPK)\s+)?' + re_main_group + u'(?:\s*,\s*\S+)?\s*$', manufacturer)
+            patterns = re.findall(u'^(?:ZAO|OOO|OAO|PAO)\s*(?:(?:"|«)(?:TK|TPK|PO|MPK)\s*)?' + re_main_group + u'(?:\s*,\s*\S+)?\s*$', manufacturer)
         if patterns:
-            patterns = add_string_combinations(patterns, ('"', ''), ('-', ' '), ('-', ''))
+            patterns = add_string_combinations(patterns, (u'"', u''), (u'«', u''), (u'»', u''), (u'-', u' '), (u'-', u''))
             for p in patterns:
-                p = p.replace('"', '')
-                if p not in brand.synonyms:
-                    brand.synonyms.append(p)
+                p = re.sub(u'"|«|»', u'', p)
+                brand.add_synonym(p)
                 # If brand with name as pattern already exists copy all its synonyms
                 p_brand = cls.exist(p)
                 if p_brand:
-                    brand.synonyms += [syn for syn in p_brand.synonyms if syn not in brand.synonyms]
+                    brand.link_related(p_brand)
         return brand
 
     @staticmethod
