@@ -6,7 +6,7 @@ import json
 from sys import argv
 
 from ok.items import ProductItem
-from ok.dicts import cleanup_token_str
+from ok.dicts import cleanup_token_str, remove_nbsp
 from ok.dicts.brand import Brand
 from ok.dicts.catsproc import Cats
 
@@ -14,290 +14,6 @@ from ok.dicts.catsproc import Cats
 ATTRIBUTE_BRAND = u"Бренд:"
 ATTRIBUTE_MANUFACTURER = u"Изготовитель:"
 ATTRIBUTE_WEIGHT = u"Вес:"
-
-def configure():
-    prodcsvname = argv[1]
-    toprint = "producttypes"  # default
-    catcsvname = None # Don't pre-load categories by default
-    brandscsvname = None # Don't save brands by default
-    while len(argv) > 2:
-        opt = argv.pop(2)
-        if opt == "-p" and len(argv) > 2:
-            toprint = argv.pop(2)
-        elif opt == "-c" and len(argv) > 2:
-            catcsvname = argv.pop(2)
-        elif opt == "-out-brands-csv" and len(argv) > 2:
-            brandscsvname = argv.pop(2)
-        else:
-            raise Exception("Unknown options")
-
-    # Pre-load brand synonyms
-    Brand.findOrCreate(u"Не Бренд").no_brand = True
-    Brand.findOrCreate(u"Собственное производство").no_brand = True
-    Brand.findOrCreate(u"STANDARD").no_brand = True
-    Brand.findOrCreate(u"Мясо").no_brand = True
-    Brand.findOrCreate(u"Птица").no_brand = True
-    Brand.findOrCreate(u"PL NoName").no_brand = True
-    Brand.findOrCreate(u"PL NoName").synonyms += [u"PL FP"]
-
-    Brand.findOrCreate(u"О'КЕЙ").synonyms += [u"ОКЕЙ"]
-    Brand.findOrCreate(u"Kotany").synonyms += [u"Kotanyi"]
-    Brand.findOrCreate(u"Витамин").synonyms += [u"vитамин"]
-    Brand.findOrCreate(u"VITAMIN").synonyms += [u"Vитамин"]
-    Brand.findOrCreate(u"Хлебцы-Молодцы").generic_type = u"Хлебцы"
-    Brand.findOrCreate(u"Хлебцы-Молодцы").synonyms += [u"Хлебцы Молодцы"]
-    Brand.findOrCreate(u"Сиртаки").generic_type = u"Брынза"
-    Brand.findOrCreate(u"Чупа Чупс").generic_type = u"Чупа Чупс"
-    Brand.findOrCreate(u"Vitaland").synonyms += [u"Виталэнд", u"Виталанд"]
-    Brand.findOrCreate(u"Активиа").synonyms += [u"Активия"]
-    Brand.findOrCreate(u"TM Mlekara Subotica").synonyms += [u"Mlekara Subotica"]
-    Brand.findOrCreate(u"MLEKARA SABАС").synonyms += [u"Сырко"]
-    Brand.findOrCreate(u"Лайме").synonyms += [u"LAIME"]
-    Brand.findOrCreate(u"Laime").synonyms += [u"Лайме"]
-    Brand.findOrCreate(u"Laima").synonyms += [u"Лайма"]
-    Brand.findOrCreate(u"Galbani").synonyms += [u"Гальбани"]
-    Brand.findOrCreate(u"Santa-Maria").synonyms += [u"Santa Maria", u"Санта Мария"]
-    Brand.findOrCreate(u"Knorr").synonyms += [u"Кнорр", u"Чашка супа"]
-    Brand.findOrCreate(u"Gallina Blanca").synonyms += [u"Гал.Бланка"]
-    Brand.findOrCreate(u"Печем Дома").synonyms += [u"Печём дома"]
-    Brand.findOrCreate(u"Gr@ce!").synonyms += [u"ГРЭЙС!"]
-    Brand.findOrCreate(u"ГРЭЙС").synonyms += [u"ГРЭЙС!"]
-    Brand.findOrCreate(u"Green Ray").synonyms += [u"Грин Рэй"]
-    Brand.findOrCreate(u"Ciro").synonyms += [u"Cirio"]
-    Brand.findOrCreate(u"Lutik").synonyms += [u"Лютик"]
-    Brand.findOrCreate(u"Дмитровский молочный завод").synonyms += [u"Дмитровский МЗ", u"Дмитровская"]
-    Brand.findOrCreate(u"Jon West").synonyms += [u"Джон Вест"]
-    Brand.findOrCreate(u"Морской Котик").synonyms += [u"МК"]
-    Brand.findOrCreate(u"4 сезона").synonyms += [u"4Сезона"]
-    Brand.findOrCreate(u"Четыре Сезона").synonyms += [u"4 Сезона"]
-    Brand.findOrCreate(u"Heinz").synonyms += [u"Хайнц"]
-    Brand.findOrCreate(u"HP").synonyms += [u"Хайнц"]
-    Brand.findOrCreate(u"Агроальянс").synonyms += [u"Агро-Альянс"]
-    Brand.findOrCreate(u"Рюген Фиш").synonyms += [u"Rugen Fisch"]
-    Brand.findOrCreate(u"Санта-Бремор").synonyms += [u"Санта Бремор", u"Бухта Изобилия"]
-    Brand.findOrCreate(u"Royal Selection Belberri").synonyms += [u"Belberry"]
-    Brand.findOrCreate(u"Рот Фронт").synonyms += [u"Рот-Фронт"]
-    Brand.findOrCreate(u"Ложкарев").synonyms += [u"Ложкарёвъ", u"Чудо-малыши", u"Шельф", u"Любимые"]
-    Brand.findOrCreate(u"Бутер хлеб").synonyms += [u"Бутерхлеб"]
-    Brand.findOrCreate(u"Хлебный дом").synonyms += [u"Fazer"]
-    Brand.findOrCreate(u"Fazer").synonyms += [u"Фазер"]
-    Brand.findOrCreate(u"Harry`s").synonyms += [u"American Sandwich"]
-    Brand.findOrCreate(u"Коломенское").synonyms += [u"Коломенский"]
-    Brand.findOrCreate(u"Ломайка").synonyms += [u"Коломенский"]
-    Brand.findOrCreate(u"Ломайка").generic_type = u"Ломайка"
-    Brand.findOrCreate(u"Dr.Schar").synonyms += [u"Schar"]
-    Brand.findOrCreate(u"BLOCKBUSTER").synonyms += [u"Блокбастер"]
-    Brand.findOrCreate(u"Finn Crisp").synonyms += [u"Финн Крисп"]
-    Brand.findOrCreate(u"Dr.Korner").synonyms += [u"Др Корнер"]
-    Brand.findOrCreate(u"Сэн Сой").synonyms += [u"Сэн-Сой"]
-    Brand.findOrCreate(u"Sen Soy").synonyms += [u"Сэн-Сой"]
-    Brand.findOrCreate(u"DENKER").synonyms += [u"Дэнкер"]
-    Brand.findOrCreate(u"Lipton").synonyms += [u"Липтон"]
-    Brand.findOrCreate(u"Greenfield").synonyms += [u"Гринфилд"]
-    Brand.findOrCreate(u"Maitre").synonyms += [u"Мэтр"]
-    Brand.findOrCreate(u"Tess").synonyms += [u"Тесс"]
-    Brand.findOrCreate(u"Curtis").synonyms += [u"Кертис"]
-    Brand.findOrCreate(u"BERNLEY").synonyms += [u"Бернли"]
-    Brand.findOrCreate(u"Акбар").synonyms += [u"Бернли", u"English Classic"]
-    Brand.findOrCreate(u"Hillway").synonyms += [u"Хилвей"]
-    Brand.findOrCreate(u"Чебуречье").synonyms += [u"Вилон"]
-    Brand.findOrCreate(u"Петелино").synonyms += [u"Петелинка"]
-    Brand.findOrCreate(u"Российский").synonyms += [u"Россия щедрая душа"]
-    Brand.findOrCreate(u"Фабрика Крупской").synonyms += [u"Ф-ка Крупской", u"ф-ка им.Крупской"]
-    Brand.findOrCreate(u"Lindt").synonyms += [u"Линдт", u"Lintd"]
-    Brand.findOrCreate(u"Kinder").synonyms += [u"Киндер"]
-    Brand.findOrCreate(u"Kinder").generic_type = u"Киндер"
-    Brand.findOrCreate(u"Café Tasse").synonyms += [u"Кафе Тассе"]
-    Brand.findOrCreate(u"Nesquick").synonyms += [u"Несквик", u"Nesquik"]
-    Brand.findOrCreate(u"NESQUIK").synonyms += [u"Несквик"]
-    Brand.findOrCreate(u"Nestle").synonyms += [u"Нестле", u"Несквик"]
-    Brand.findOrCreate(u"Ritter Sport").synonyms += [u"Р/Спорт"]
-    Brand.findOrCreate(u"Alpen Gold").synonyms += [u"Альпен Гольд"]
-    Brand.findOrCreate(u"Tassimo").synonyms += [u"Тассимо"]
-    Brand.findOrCreate(u"Mars").synonyms += [u"Марс", u"Милки Вей"]
-    Brand.findOrCreate(u"Snickers").synonyms += [u"Сникерс"]
-    Brand.findOrCreate(u'ЯЙЦА "ЯРКОVО"').synonyms += [u"Ярково", u"Роскар"]
-    Brand.findOrCreate(u'ЯЙЦА "ЯРКОVО"  Столовые 1 категории (25)').synonyms += [u"Ярково", u"Роскар"]
-    Brand.findOrCreate(u"Villars").synonyms += [u"Вилларс"]
-    Brand.findOrCreate(u"Milka").synonyms += [u"Милка"]
-    Brand.findOrCreate(u"Мясной дом БОРОДИНА").synonyms += [u"МД Бородина"]
-    Brand.findOrCreate(u"Домашнее БИСТРО").synonyms += [u"Дом.Бистро"]
-    Brand.findOrCreate(u"St.Dalfour").synonyms += [u"СтДальфор", u"St.Dalfou", u"St. Dalfour"]
-    Brand.findOrCreate(u"Dolmio").synonyms += [u"Долмио"]
-    Brand.findOrCreate(u"Dolmio").generic_type = u"Долмио"  # What is this basic type?
-    Brand.findOrCreate(u"Alela").synonyms += [u"Алела", u"Алурэ"]
-    Brand.findOrCreate(u"Саф-Момент").synonyms += [u"Саф Момент"]
-    Brand.findOrCreate(u"Iberica").synonyms += [u"Иберика"]
-    Brand.findOrCreate(u"Mamba").synonyms += [u"Мамба"]
-    Brand.findOrCreate(u"FIT").synonyms += [u"ДжоФит"]
-    Brand.findOrCreate(u"Bio Баланс").synonyms += [u"Био-баланс", u"Юни Милк"]
-    Brand.findOrCreate(u"Balsen").synonyms += [u"Бальзен"]
-    Brand.findOrCreate(u"Брест- Литовск").synonyms += [u"Брест-Литовск", u"Брест-Литовский"]
-    Brand.findOrCreate(u"Альтеро").synonyms += [u"Altero"]
-    Brand.findOrCreate(u"Альтеро").synonyms += [u"Altero"]
-    Brand.findOrCreate(u"Австралийский Торговый Дом").synonyms += [u"АТД"]
-    Brand.findOrCreate(u"Natura").synonyms += [u"Натура"]
-    Brand.findOrCreate(u"DANONE").synonyms += [u"Данон"]
-    Brand.findOrCreate(u"Б.Ю. Александров").synonyms += [u"Б.Ю.Александров"]
-    Brand.findOrCreate(u"Anchor").synonyms += [u"ТМ Анкор", u"Анкор"]
-    Brand.findOrCreate(u"ТМ Аланталь").synonyms += [u"Аланталь", u"МЗ Порховский"]
-    Brand.findOrCreate(u"PRESIDENT").synonyms += [u"Президент"]
-    Brand.findOrCreate(u"Margot Fromages").synonyms += [u"Margot"]
-    Brand.findOrCreate(u"Almette").synonyms += [u"Альметте"]
-    Brand.findOrCreate(u"VALIO").synonyms += [u"Виола", u"Валио", u"Гефилус", u"Gefilus"]
-    Brand.findOrCreate(u"Viola").synonyms += [u"Виола", u"Валио"]
-    Brand.findOrCreate(u"Dr.Oetker").synonyms += [u"Dr. Oetker"]
-    Brand.findOrCreate(u"Mr.Сливкин").synonyms += [u"Mr. Сливкин"]
-    Brand.findOrCreate(u"ОКЕАН ТРК").synonyms += [u"Океан"]
-    Brand.findOrCreate(u"MacChocolate").synonyms += [u"МакШоколад"]
-    Brand.findOrCreate(u"Вдохновение").synonyms += [u"Бабаевский"]
-    Brand.findOrCreate(u"Бабаевский").synonyms += [u"Рот Фронт"]
-    Brand.findOrCreate(u"АХА").synonyms += [u"AXA"]
-    Brand.findOrCreate(u"Ясно Солнышко").synonyms += [u"ЯС"]
-    Brand.findOrCreate(u"Моя Семья").synonyms += [u"МС"]
-    Brand.findOrCreate(u"Фонте Аква Fonte").synonyms += [u"Fonte"]
-    Brand.findOrCreate(u"ОСТАNКИНО").synonyms += [u"Останкино"]
-    Brand.findOrCreate(u"Останкинский молочный комбинат").synonyms += [u"Останкино", u"Останкинское", u"по-Останкински", u"Останкинские", u"Останкинская", u"Останкинский"]
-    Brand.findOrCreate(u"Останкино").synonyms += Brand.findOrCreate(u"Останкинский молочный комбинат").synonyms
-    Brand.findOrCreate(u"Останкинское").synonyms += Brand.findOrCreate(u"Останкинский молочный комбинат").synonyms
-    Brand.findOrCreate(u"Рублёвский").synonyms += [u"Рублевский"]
-    Brand.findOrCreate(u"колбасы и деликатесы Рублевские").synonyms += [u"Рублёвский", u"Рублевские"]
-    Brand.findOrCreate(u"Клинский").synonyms += [u"Клинские МК", u"КМК"]
-    Brand.findOrCreate(u"АПК \"Черкизовский\"").synonyms += [u"Черкизовский МК"]
-    Brand.findOrCreate(u"Merci").synonyms += [u"Мерси"]
-    Brand.findOrCreate(u"Ferrero").synonyms += [u"Ферреро Роше", u"Ферреро Рошер"]
-    Brand.findOrCreate(u"Cote D'or").synonyms += [u"Кот Дор"]
-    Brand.findOrCreate(u"Haribo").synonyms += [u"Харибо"]
-    Brand.findOrCreate(u"Toffifee").synonyms += [u"Тоффифе"]
-    Brand.findOrCreate(u"FLUIDE").synonyms += [u"Флюид", u"СладКо"]
-    Brand.findOrCreate(u"Kuhne").synonyms += [u"Кюне"]
-    Brand.findOrCreate(u"Baleno").synonyms += [u"Балено"]
-    Brand.findOrCreate(u"Меридиан").synonyms += [u"Мирамар"]
-    Brand.findOrCreate(u"Приазовская").synonyms += [u"Троекурово"]
-    Brand.findOrCreate(u"Биг Ланч").synonyms += [u"БигЛанч"]
-    Brand.findOrCreate(u"BIGBON").synonyms += [u"БигБон"]
-    Brand.findOrCreate(u"DELICADOS").synonyms += [u"Деликадос"]
-    Brand.findOrCreate(u"Меркатус Напитки из Черноголовки").synonyms += [u"Напитки из Черноголовки"]
-    Brand.findOrCreate(u"Frukto").synonyms += [u"Фруктомания"]
-    Brand.findOrCreate(u"Alaeddin").synonyms += [u"Алладин"]
-    Brand.findOrCreate(u"Тысяча Озер").synonyms += [u"Тысяча озёр"]
-    Brand.findOrCreate(u"3 Glocken").synonyms += [u"3Glocken"]
-    Brand.findOrCreate(u"MacCoffee").synonyms += [u"МакКофе"]
-    Brand.findOrCreate(u"MacCoffee").generic_type = u"Кофе"
-    Brand.findOrCreate(u"Саратовский").synonyms += [u"Саратововский"]
-    Brand.findOrCreate(u"ITLV").synonyms += [u"ИТЛВ"]
-    Brand.findOrCreate(u"Рузское молоко").synonyms += [u"Рузское", u"Рузский", u"Рузская", u"Рузские"]
-    Brand.findOrCreate(u"Из Вологды").synonyms += [u"Северное молоко"]
-    Brand.findOrCreate(u"Омский завод плавленых сыров").synonyms += [u"Ичалковское"]
-    Brand.findOrCreate(u"Ичалки").synonyms += [u"Ичалковский"]
-    Brand.findOrCreate(u"Очаково").synonyms += [u"Очаковский"]
-    Brand.findOrCreate(u"Первая Свежесть").synonyms += [u"Элинар"]
-    Brand.findOrCreate(u"Надежда КФ").synonyms += [u"Коровалетта Молоконти"]
-    Brand.findOrCreate(u"Доль Ким").synonyms += [u"ДольКим"]
-    Brand.findOrCreate(u"ГИАГИНСКИЙ молзавод").synonyms += [u"Гиагинский МЗ"]
-    Brand.findOrCreate(u"Garcia Baquero").synonyms += [u"Гарсия Бакеро"]
-    Brand.findOrCreate(u"Сыры \"Красногвардейские\"").synonyms += [u"Адыгея КМЗ", u"КМЗ"]
-    Brand.findOrCreate(u"Arla").synonyms += [u"Арла", u"Апетина"]
-    Brand.findOrCreate(u"Apetina").synonyms += [u"Апетина"]
-    Brand.findOrCreate(u"Locatelli").synonyms += [u"Локателли"]
-    Brand.findOrCreate(u"Савушкин").synonyms += [u"101 Зерно"]
-    Brand.findOrCreate(u"Emmi").synonyms += [u"Эмми", u"Эмми деликат"]
-    Brand.findOrCreate(u"4LIFE").synonyms += [u"4 Life"]
-    Brand.findOrCreate(u"DROGHERIA E ALIMENTARI").synonyms += [u"Drogheria"]
-    Brand.findOrCreate(u"Фруктовый  сад").synonyms += [u"Фруктовый Сад"]
-    Brand.findOrCreate(u"J-7").synonyms += [u"J7"]
-    Brand.findOrCreate(u"ВБД J-7 Фрустайл").synonyms += [u"J7"]
-    Brand.findOrCreate(u"Tropicana").synonyms += [u"Тропикана"]
-    Brand.findOrCreate(u"Coca-Cola").synonyms += [u"Кока Кола"]
-    Brand.findOrCreate(u"Coca-Cola").generic_type = u"Coca-Cola"
-    Brand.findOrCreate(u"7-UP").synonyms += [u"Севен Ап"]
-    Brand.findOrCreate(u"7-UP").generic_type = u"7-UP"
-    Brand.findOrCreate(u"Морозко").synonyms += [u"ОКЕЙ", u"Цезарь", u"Морозко Green", u"La Trattoria"]
-    Brand.findOrCreate(u"Звездный").synonyms += [u"Морозко"]
-    Brand.findOrCreate(u"Франко Оллиани").synonyms += [u"Olliani"]
-    Brand.findOrCreate(u"Maestro de Oliva").synonyms += [u"Маэстро де Олива"]
-    Brand.findOrCreate(u"Нутелла").synonyms += [u"Nutella"]
-    Brand.findOrCreate(u"Финети").synonyms += [u"Финетти"]
-    Brand.findOrCreate(u"Белевская пастила").synonyms += [u"Белевская"]
-    Brand.findOrCreate(u"Белевская пастила").synonyms += [u"Белевская"]
-    Brand.findOrCreate(u"Hame").synonyms += [u"Хаме"]
-    Brand.findOrCreate(u"Равиолло").synonyms += [u"Снежная страна"]
-    Brand.findOrCreate(u"Белебеевский МК").synonyms += [u"Белебей"]
-    Brand.findOrCreate(u"Bonaqua").synonyms += [u"БонАква"]
-    Brand.findOrCreate(u"Sprite").synonyms += [u"Спрайт"]
-    Brand.findOrCreate(u"Fanta").synonyms += [u"Фанта"]
-    Brand.findOrCreate(u"Schweppes").synonyms += [u"Швеппс"]
-    Brand.findOrCreate(u"Nescafe").synonyms += [u"Нескафе", u"Нескафе Голд"]
-    Brand.findOrCreate(u"Jacobs").synonyms += [u"Якобс", u"Якобс Монарх"]
-    Brand.findOrCreate(u"Русская нива").synonyms += [u"Частная галерея"]
-    Brand.findOrCreate(u"Maggi").synonyms += [u"Смесь Магги на второе", u"Магги"]
-    Brand.findOrCreate(u"Maggi").generic_type = u"Приправа"
-    Brand.findOrCreate(u"Петрохолод").synonyms += [u"Идеальная пара"]
-    Brand.findOrCreate(u"Костровок").synonyms += [u"Идея на закуску"]
-    Brand.findOrCreate(u'Tchibo').synonyms += [u"Чибо", u"Эксклюзив", u"Голд Селекшен", u"Майлд", u"Интенс"]
-    Brand.findOrCreate(u'Tchibo Manufacturing Poland Sp.z.o.o.').synonyms += [u'Tchibo'] + Brand.findOrCreate(u'Tchibo').synonyms
-
-    # Manufacturer's brands
-    Brand.findOrCreate(u"ООО \"Эхо\"").synonyms += [u"Белоручка"]
-    Brand.findOrCreate(u"Arla Foods amba").synonyms += [u"Арла"]
-    Brand.findOrCreate(u"Citterio").synonyms += [u"Читтерио"]
-    Brand.findOrCreate(u"DP \"Artemsil`\"").synonyms += [u"Артем"]
-    Brand.findOrCreate(u"Dolceria Alba S.r.l").synonyms += [u"Laime"]
-    Brand.findOrCreate(u"Frozen Fish International GmbH").synonyms += [u"Iglo"]
-    Brand.findOrCreate(u"Вилон").synonyms += [u"Чебуречье", u"Вкусный Суп", u"Обожамс", u"Сытоедов"]
-    Brand.findOrCreate(u"VILON").synonyms += [u"Вилон"] + Brand.findOrCreate(u"Вилон").synonyms
-    Brand.findOrCreate(u"Tulip").synonyms += [u"Tulip"]
-    Brand.findOrCreate(u"WORKSHOP I SEAPRODEX, Вьетнам").synonyms += [u"Emborg"]
-    Brand.findOrCreate(u"Тай Юнион Фрозен Продактс Паблик").synonyms += [u"Emborg"]
-    Brand.findOrCreate(u'ЗАО "Дедовский хлеб"').synonyms += [u"Дедовский хлеб"]
-    Brand.findOrCreate(u'ЗАО "ИТА Северная Компания"').synonyms += [u"СК"]
-    Brand.findOrCreate(u'ЗАО "Краснобор", Россия').synonyms += [u"Краснобор"]
-    Brand.findOrCreate(u'ЗАО "Приосколье", Россия').synonyms += [u"ГВУ Приосколье"]
-    Brand.findOrCreate(u'ЗАО "Русская рыбная компания", Россия').synonyms += [u"РРК"]
-    Brand.findOrCreate(u'ЗАО "Русское море"').synonyms += [u"Русское море"]
-    Brand.findOrCreate(u'ЗАО "СевероВосточная компания", Россия').synonyms += [u"PLESK"]
-    Brand.findOrCreate(u'ОАО "Березовский мясоконсервный комбинат"').synonyms += [u"Береза"]
-    Brand.findOrCreate(u'ОАО "Маслосырзавод "Порховский"').synonyms += [u"МЗ Порховский"]
-    Brand.findOrCreate(u'ООО "Элинар-Бройлер"').synonyms += [u"Элинар"]
-    Brand.findOrCreate(u'ООО "Элинар-Бройлер", Россия').synonyms += [u"Элинар"]
-    Brand.findOrCreate(u'Талосто-Продукты').synonyms += [u"Мастерица", u"Талосто", u"Талосто-3000", u"Ля Фам", u"Без хлопот", u'Венеция']
-    Brand.findOrCreate(u'Талосто-3000').synonyms += [u"Талосто-Продукты"] + Brand.findOrCreate(u'Талосто-Продукты').synonyms
-    Brand.findOrCreate(u'Проморе').synonyms += [u"NORTON"]
-    Brand.findOrCreate(u"RONGGHENG SANY FOODSTUFF Co. Ltd").synonyms += [u"NORTON"]
-    # Implicit brand - neither defined as explicit brand but used in no-brand products
-    Brand.findOrCreate(u"Не Бренд").manufacturers.add(u"Белая Дача")
-    Brand.findOrCreate(u"Белая Дача").synonyms += [u"Белая Дача"]
-    Brand.findOrCreate(u"Пчеловод").synonyms += [u"Дальневосточный", u"Алтайский", u"Таёжный"]
-    Brand.findOrCreate(u"Агама Роял Гринланд").synonyms += [u"Бухта изобилия", u"Agama", u"Агама"]
-    Brand.findOrCreate(u"Лагуна Койл").synonyms += [u"Русский Холод", u"СССР", u"Юбилейное", u"Любимое", u"Юпитер Гигант", u"Лакомка", u"Энерго"]
-    Brand.findOrCreate(u"Мясной стандарт").synonyms += [u"Дары Артемиды", u"Максума"]
-    Brand.findOrCreate(u"Мираторг").synonyms += [u"Vитамин", u"Мирандия", u"GurMama", u"Садия"]
-    Brand.findOrCreate(u"Мираторг-Запад").synonyms += [u"Мираторг"] + Brand.findOrCreate(u"Мираторг").synonyms
-    Brand.findOrCreate(u"Садия").synonyms += [u"Мираторг"]
-    Brand.findOrCreate(u"Вичюнай-Русь").synonyms += [u"VICI", u"Любо есть"]
-    Brand.findOrCreate(u"Вичюнай Русь").synonyms += [u"Вичюнай-Русь"] + Brand.findOrCreate(u"Вичюнай-Русь").synonyms
-    Brand.findOrCreate(u"Белорусский вкус").synonyms += [u"Мясной Двор"]
-    Brand.findOrCreate(u"Невские сыры").synonyms += [u"ГОСТ 52253"]
-    Brand.findOrCreate(u"Мясная империя").synonyms += [u"Московский", u"ГОСТ"]
-    Brand.findOrCreate(u"Золотой Петушок").synonyms += [u"ЗП", u"Золотой Петушок", u'Добротный Продукт']
-    Brand.findOrCreate(u"Продукты питания Комбинат").synonyms += Brand.findOrCreate(u"Золотой Петушок").synonyms
-    Brand.findOrCreate(u"Мясокомбинат Всеволожский").synonyms += [u"Самсон"]
-    Brand.findOrCreate(u"Птицефабрика Калужская").synonyms += [u"Рококо"]
-    Brand.findOrCreate(u"ЕВРОДОН").synonyms += [u"ГВУ Индолина"]
-    Brand.findOrCreate(u"ПРОДУКТЫ ОТ ИЛЬИНОЙ").synonyms += [u"От Ильиной"]
-    Brand.findOrCreate(u"Колпинский, Ильина").synonyms += [u"От Ильиной"]
-    Brand.findOrCreate(u"Айс Продукт").synonyms += [u"От Ильиной"]
-    Brand.findOrCreate(u"Рыбообрабатывающий комбинат №1").synonyms += [u"Аморе", u"РОК1", u"РОК-1"]
-    Brand.findOrCreate(u"РОК-1").synonyms += Brand.findOrCreate(u"Рыбообрабатывающий комбинат №1").synonyms
-    Brand.findOrCreate(u"а'море").synonyms += Brand.findOrCreate(u"Рыбообрабатывающий комбинат №1").synonyms
-    Brand.findOrCreate(u'БРПИ').synonyms += [u"Баскин Роббинс", u"Baskin Robbins"]
-    Brand.findOrCreate(u'Baskin Robbins').synonyms += Brand.findOrCreate(u'БРПИ').synonyms
-    Brand.findOrCreate(u'Балтийский берег').synonyms += [u"Балтийский Берег", u"По-царски", u"ББ", u"Балт Берег"]
-    Brand.findOrCreate(u'Орими трейд').synonyms += [u"Jardin", u'Жардин', u"Орими", u"Супремо", u"Суматра Мандхелинг", u"Десерт Кап", u'Стиль ди Милано', u'Клауд Форест']
-    Brand.findOrCreate(u'Jardin').synonyms += Brand.findOrCreate(u'Орими трейд').synonyms
-
-
-    return (prodcsvname, toprint, catcsvname, brandscsvname)
 
 # prefix can be consumed by re parser and must be returned in sub - must be always 1st Match
 RE_TEMPLATE_PFQN_PRE = u'(?:\s|\.|,|\()'
@@ -361,17 +77,36 @@ def parse_pfqn(pfqn):
 
     return wl[0], fl[0], pl[0], cleanup_token_str(sqn)
 
-def remove_nbsp(s):
-    return None if s is None else s.replace(u'\u00a0', ' ') if isinstance(s, unicode) else s.replace('\xa0', ' ')
-
 if __name__ == '__main__':
-    (prodcsvname, toprint, catcsvname, brandscsvname) = configure()
+
+    opts = argv[:]
+    prodcsvname = opts[1]
+    toprint = "producttypes"  # default
+    cat_csvname = None  # Don't pre-load categories by default
+    brands_in_csvname = None  # Don't load brands by default
+    brands_out_csvname = None  # Don't save brands by default
+    while len(opts) > 2:
+        opt = opts.pop(2)
+        if opt == "-p" and len(opts) > 2:
+            toprint = opts.pop(2)
+        elif opt == "-c" and len(opts) > 2:
+            cat_csvname = opts.pop(2)
+        elif opt == "-in-brands-csv" and len(opts) > 2:
+            brands_in_csvname = opts.pop(2)
+        elif opt == "-out-brands-csv" and len(opts) > 2:
+            brands_out_csvname = opts.pop(2)
+        else:
+            raise Exception("Unknown options")
 
     cats = Cats()
-    if catcsvname is not None:
-        cats.load(catcsvname)
-        print "Categories've been loaded from '%s': %d" % (catcsvname, len(cats))
+    if cat_csvname is not None:
+        cats.from_csv(cat_csvname)
+        print "Categories've been loaded from '%s': %d" % (cat_csvname, len(cats))
     ignore_category_id_list = [cats.find_by_title(u"Алкогольные напитки"), cats.find_by_title(u"Скидки")]
+
+    if brands_in_csvname is not None:
+        Brand.from_csv(brands_in_csvname)
+        print "Brands and manufacturers 've been loaded from '%s': %d" % (brands_in_csvname, len(Brand.all()))
 
     types = dict()
     """ @type types: dict of (unicode, dict[str, unicode]) """
@@ -420,11 +155,10 @@ if __name__ == '__main__':
                                product_manufacturer=product_manufacturer)
 
     # Process manufacturers as brands
-    no_brand_manufacturers = {m for b_name in Brand.no_brand_names() for m in Brand.findOrCreate(b_name).manufacturers}
 
     for pfqn, item in types.iteritems():
-        if not item["product_manufacturer"] and item["brand"] not in Brand.no_brand_names():
-            # Cannot guess about manufacturer for real brand
+        # Here process manufacturers only where present.
+        if not item["product_manufacturer"]:
             # TODO: Try to link the same manufacturer names with different spelling by brand name
             continue
 
@@ -433,15 +167,56 @@ if __name__ == '__main__':
         sqn = item["sqn"]
 
         sqn_without_brand = sqn
-        linked_manufacturers = {product_manufacturer} if product_manufacturer else no_brand_manufacturers
+        sqn_last_change = sqn_without_brand
+        linked_manufacturers = {product_manufacturer} # TODO: Try other brands of the same or related manufacturers
         for manufacturer in linked_manufacturers:
             manufacturer_brand = Brand.findOrCreate_manufacturer_brand(manufacturer)
             if manufacturer_brand and manufacturer_brand != brand:
                 # Consider manufacturer as brand - replace its synonyms
                 sqn_without_brand = manufacturer_brand.replace_brand(sqn_without_brand)
-                if sqn != sqn_without_brand:
+                if sqn_last_change != sqn_without_brand:
                     item["sqn"] = sqn_without_brand
                     item["brand_detected"] = True
+                    sqn_last_change = sqn_without_brand
+
+    enabled_brand_guesses = False
+    if enabled_brand_guesses:
+        no_brand_manufacturers = {m for b_name in Brand.no_brand_names() for m in Brand.findOrCreate(b_name).manufacturers}
+        no_brand_replacements = []
+        for pfqn, item in types.iteritems():
+            # Here try to guess about no-brand products w/o manufacturers.
+            # Iterate through all known no-brand manufacturers and try to apply them and check what happens
+            # Later it will be possible to extend for all products
+            if item["product_manufacturer"] or item["brand"] not in Brand.no_brand_names():
+                continue
+
+            sqn = item["sqn"]
+
+            sqn_without_brand = sqn
+            sqn_last_change = sqn_without_brand
+            for manufacturer in no_brand_manufacturers:
+                manufacturer_brand = Brand.findOrCreate_manufacturer_brand(manufacturer)
+                # Consider manufacturer as brand - replace its synonyms
+                sqn_without_brand = manufacturer_brand.replace_brand(sqn_without_brand)
+                if sqn_last_change != sqn_without_brand:
+                    item["sqn"] = sqn_without_brand
+                    item["brand_detected"] = True
+                    no_brand_replacements.append((sqn_last_change, sqn_without_brand))
+                    sqn_last_change = sqn_without_brand
+
+        for repl in no_brand_replacements:
+            print "NO BRAND REPLACEMENT: OLD: %s, NEW: %s" % repl
+        print "NO BRAND GUESS REPLACEMENTS: %d" % len(no_brand_replacements)
+
+    # ########### SAVE RESULTS ####################
+
+    if brands_out_csvname:
+        with open(brands_out_csvname, 'wb') as f:
+            f.truncate()
+            Brand.to_csv(f)
+        print "Stored %d brands to csv[%s]" % (len(Brand.all()), brands_out_csvname)
+
+    # ############ PRINT RESULTS ##################
 
     if toprint == "brands":
         manufacturers = dict()
@@ -527,11 +302,5 @@ if __name__ == '__main__':
 
     else:
         raise Exception("Unknown print type [%s]" % toprint)
-
-    if brandscsvname:
-        with open(brandscsvname, 'wb') as f:
-            f.truncate()
-            Brand.to_csv(f)
-        print "Stored %d brands to csv[%s]" % (len(Brand.all()), brandscsvname)
 
 

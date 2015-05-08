@@ -38,7 +38,7 @@ def isrussian(s):
 
 def add_string_combinations(patterns, *repl):
     # Collect all possible pattern combinations
-    result = patterns[:]
+    result = list(patterns)
     p_modified = True
     while p_modified:
         p_modified = False
@@ -51,3 +51,7 @@ def add_string_combinations(patterns, *repl):
                 result.append(p1)
                 p_modified = True
     return result
+
+
+def remove_nbsp(s):
+    return None if s is None else s.replace(u'\u00a0', ' ') if isinstance(s, unicode) else s.replace('\xa0', ' ')

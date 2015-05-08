@@ -58,6 +58,7 @@ class Brand(object):
             norm_syn = syn.strip().lower()
             if any(norm_syn == s.strip().lower() for s in self.synonyms):
                 continue
+            self.__variants_cache = None
             self.synonyms.append(norm_syn)
             result = True
 
@@ -91,6 +92,16 @@ class Brand(object):
             Brand._no_brand_names_cache = list([brand.name for brand in Brand.all() if brand.no_brand])
         return Brand._no_brand_names_cache
 
+    @staticmethod
+    def init_standard_no_brands():
+        Brand.findOrCreate(u"Не Бренд").no_brand = True
+        Brand.findOrCreate(u"Собственное производство").no_brand = True
+        Brand.findOrCreate(u"STANDARD").no_brand = True
+        Brand.findOrCreate(u"Мясо").no_brand = True
+        Brand.findOrCreate(u"Птица").no_brand = True
+        Brand.findOrCreate(u"PL NoName").no_brand = True
+        Brand.findOrCreate(u"PL NoName").add_synonym(u"PL FP")
+
     def __eq__(self, other):
         return isinstance(other, Brand) and self.name == other.name
 
@@ -105,12 +116,22 @@ class Brand(object):
         u'Морозко'.lower(): u'марокко',
         u'Дальневосточный'.lower(): u'дальневосточная',
         u'Венеция'.lower(): u'венгрия',
-        u'Белоручка'.lower(): u'белочка'
+        u'Белоручка'.lower(): u'белочка',
+        u'салют'.lower(): u'салат',
+        u'айсберри'.lower(): u'айсберг',
+        u'рузскии'.lower(): u'русский',
+        u'Черока'.lower(): u'черника',
+        u'таежный'.lower(): u'темный',
+        u'ОРЕХПРОМ'.lower(): u'орехом',
+        u'Слада'.lower(): u'сладкая',
+        u'КАРТОН'.lower(): u'картоф',
     }
     @staticmethod
     def check_false_positive_brand_match(brand_variant, sqn_token):
         return Brand._false_positive_brand_matches.get(brand_variant.lower()) == sqn_token.lower()
 
+    __variants_cache = None
+    __distance_cache = dict()
     def replace_brand(self, s, rs=None, normalize_brands=True, normalize_result=True):
         """
         Replace brand name in string s to rs. Only full words will be replaced.
@@ -128,28 +149,40 @@ class Brand(object):
             rs = " " if not self.generic_type else u" " + self.generic_type + u" "
         result = s
 
-        brand_variants = [self.name] + self.synonyms
         if normalize_brands:
-            brand_variants = map(cleanup_token_str, brand_variants)
-            brand_variants += [translit(b.lower(), "ru") for b in brand_variants if re.match(u'[a-z]', b.lower())]
+            if self.__variants_cache is None:
+                brand_variants = set(cleanup_token_str(b) for b in [self.name.lower()] + self.synonyms)
+                brand_variants.update([translit(b, "ru") for b in brand_variants if re.match(u'[a-z]', b)])
 
-            # Add variants with spaces replaced to '-' and vice verse
-            brand_variants = add_string_combinations(brand_variants, (u' ', u'-'), (u'-', u''), (u'-', u' '))
+                # Add variants with spaces replaced to '-' and vice verse
+                brand_variants.update(add_string_combinations(brand_variants, (u' ',u'-'), (u'-',u''), (u'-',u' '),
+                                                         (u'е',u'ё'), (u'и',u'й'), (u'ё',u'е'), (u'й',u'и')))
+            else:
+                brand_variants = self.__variants_cache
 
-            for b in brand_variants:
-                b_tokens = b.split(u' ', 1)
-                if len(b_tokens) > 1 or len(b_tokens[0]) <= 5:
-                    continue  # TODO: implement multi-tokens
-                for s_token in s.split(' '):
-                    if len(s_token) > 5:
-                        dist = distance(b_tokens[0].lower(), s_token.lower())
-                        if 0 < dist <= 2:
+            for s_token in s.split(' '):
+                if len(s_token) > 4:
+                    similar_found = None
+                    for b in brand_variants:
+                        b_tokens = b.split(u' ', 1)
+                        if len(b_tokens) > 1 or len(b_tokens[0]) <= 4:
+                            continue  # TODO: implement multi-tokens
+                        if Brand.__distance_cache.has_key(b_tokens[0] + u'~*~' + s_token):
+                            dist = Brand.__distance_cache.get(b_tokens[0] + u'~*~' + s_token)
+                        else:
+                            dist = distance(b_tokens[0], s_token)
+                            Brand.__distance_cache[b_tokens[0] + u'~*~' + s_token] = dist
+                        if 0 < dist <= (2 if len(s_token) > 5 else 1):
                             if Brand.check_false_positive_brand_match(b_tokens[0], s_token):
                                 print "FOUND FALSE POSITIVE BRAND MATCH: brand variant[%s], sqn_token[%s], distance:[%d], sqn[%s]" % (b_tokens[0], s_token, dist, s)
-                                continue
-                            print "FOUND SIMILAR: %s : %s in %s, brand: %s" % (b_tokens[0], s_token, s, str(self).decode("utf-8"))
-                            if not any(s_token.lower() == b_i.lower() for b_i in brand_variants):
-                                brand_variants.append(s_token)
+                            else:
+                                print "FOUND SIMILAR: %s : %s in %s, brand: %s" % (b_tokens[0], s_token, s, self.name)
+                                similar_found = s_token
+                            break  # Ignore all remaining brand variants because sqn token has been already matched
+                    if similar_found:
+                        brand_variants.add(similar_found)
+        else:
+            brand_variants = set([self.name] + self.synonyms)
 
         # Start with longest brand names to avoid double processing of shortened names
         for b in sorted(brand_variants, key=len, reverse=True):
@@ -197,14 +230,37 @@ class Brand(object):
         return brand
 
     @staticmethod
-    def to_csv(csvfile):
+    def to_csv(csv_filename):
         header = ['name','no_brand','generic','synonyms','manufacturers']
-        writer = csv.DictWriter(csvfile, header)
+        writer = csv.DictWriter(csv_filename, header)
         writer.writeheader()
         for b in Brand.all():
             writer.writerow({'name': b.name.encode("utf-8"),
                              'no_brand': b.no_brand,
                              'generic': b.generic_type.encode("utf-8") if b.generic_type else None,
-                             'synonyms': u'|'.join(sorted(b.synonyms)).encode("utf-8"),
+                             'synonyms': u'|'.join(sorted(syn.lower() for syn in b.synonyms)).encode("utf-8"),
                              'manufacturers': u'|'.join(sorted(b.manufacturers)).encode("utf-8")
                              })
+        pass
+
+    @staticmethod
+    def from_csv(csv_filename):
+
+        Brand.init_standard_no_brands()
+
+        # Pre-load brand synonyms
+        with open(csv_filename, "rb") as f:
+            reader = csv.reader(f)
+            fields = next(reader)
+            for row in reader:
+                brand_row = dict(zip(fields,row))
+                brand = Brand.findOrCreate(brand_row["name"])
+                brand.no_brand = brand_row.get("no_brand", "False").lower() == "true"
+                brand.generic_type = brand_row.get("generic").decode("utf-8") if brand_row.has_key("generic") else None
+                synonyms_s = brand_row.get("synonyms", "").decode("utf-8")
+                if synonyms_s:
+                    brand.add_synonym(*(synonyms_s.split(u'|')))
+                manufacturers_s = brand_row.get("manufacturers", "").decode("utf-8")
+                if manufacturers_s:
+                    brand.manufacturers = set(manufacturers_s.split(u'|'))
+        pass

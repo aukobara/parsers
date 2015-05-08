@@ -17,7 +17,7 @@ class Cats(dict):
         self.parentIdx = dict()
         """ @type parentIIdx: dict of (str, list[str]) """
 
-    def load(self, catcsvname):
+    def from_csv(self, catcsvname):
         with open(catcsvname, "rb") as f:
             reader = csv.reader(f)
             fields = next(reader)
@@ -64,9 +64,9 @@ class Cats(dict):
         return result
 
 if __name__ == '__main__':
-    catcsvname = argv[1]
+    cat_csvname = argv[1]
     cats = Cats()
-    cats.load(catcsvname)
+    cats.from_csv(cat_csvname)
 
     line = [cats[ROOT_CAT_ITEM["id"]]]
     while line:
