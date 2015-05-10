@@ -27,15 +27,12 @@ RE_TEMPLATE_PFQN_WEIGHT_FULL = u'(\D)(' +\
                 u'(?:(?:х|\*|x|/)\d+(?:\s*шт)?)?' +\
                 u')' + RE_TEMPLATE_PFQN_POST
 RE_TEMPLATE_PFQN_WEIGHT_SHORT = u'(\D' + RE_TEMPLATE_PFQN_PRE + u')((?:кг|г|л|мл|гр)\.?)' + RE_TEMPLATE_PFQN_POST
-__pfqn_re_weight_full = re.compile(RE_TEMPLATE_PFQN_WEIGHT_FULL)
-__pfqn_re_weight_short = re.compile(RE_TEMPLATE_PFQN_WEIGHT_SHORT)
 
 RE_TEMPLATE_PFQN_FAT_MDZH = u'(?:\s*(?:с\s)?м\.?д\.?ж\.? в сух(?:ом)?\.?\s?вещ(?:-|ест)ве\s*' + \
                             u'|\s*массовая доля жира в сухом веществе\s*)?'
 RE_TEMPLATE_PFQN_FAT = u'(' + RE_TEMPLATE_PFQN_PRE + u')(' + RE_TEMPLATE_PFQN_FAT_MDZH + \
                        u'(?:\d+(?:[\.,]\d+)?%?-)?\d+(?:[\.,]\d+)?\s*%(?:\s*жирн(?:\.|ости)?)?' + \
                        RE_TEMPLATE_PFQN_FAT_MDZH + u")" + RE_TEMPLATE_PFQN_POST
-__pfqn_re_fat = re.compile(RE_TEMPLATE_PFQN_FAT)
 
 RE_TEMPLATE_PFQN_PACK = u'(' + RE_TEMPLATE_PFQN_PRE + u')' \
                         u'(т/пак|ж/б|ст/б|м/у|с/б|ст\\\б|ст/бут|пл/б|пл/бут|пэтбутылка|пл|кор\.?' + \
@@ -44,38 +41,205 @@ RE_TEMPLATE_PFQN_PACK = u'(' + RE_TEMPLATE_PFQN_PRE + u')' \
                         u'вакуум|нарезка|нар|стакан|ванночка|в\sванночке|дой-пак|дой/пак|пюр-пак|пюр\sпак|' + \
                         u'зип|зип-пакет|д/пак|п/пак|пл\.упаковка|пэт|пакет|туба|ведро|бан|лоток|фольга' + \
                         u'|фас(?:ованные)?|н/подл\.?|ф/пакет|0[.,]5|0[.,]75|0[.,]33)' + RE_TEMPLATE_PFQN_POST
-__pfqn_re_pack = re.compile(RE_TEMPLATE_PFQN_PACK)
 
-def parse_pfqn(pfqn):
-    """
-    Parse Full Product Name and return name parts: weight, fat, pack and SQN
-    SQN is shorten product type name without above attributes and with normilized spaces and non word symbols
-    If some attributes have multiple values - return concatenated string with " + " delimiter
-    (see @cleanup_token_str)
-    @param unicode pfqn: Full Product Name
-    @rtype: (unicode, unicode, unicode, unicode)
-    """
-    sqn = pfqn.lower()
 
-    def _add_match(ll, match):
-        _pre = match.group(1)
-        _m = match.group(2)
-        ll[0] = (ll[0] + u" + " if ll[0] else "") + _m.strip()
-        return _pre
+class Product(dict):
 
-    # weight - if has digit should be bounded by non-Digit, if has no digit - than unit only is acceptable but as token
-    wl = [u""]
-    sqn = re.sub(__pfqn_re_weight_full, lambda g: _add_match(wl, g), sqn)
-    if not wl[0]:
-        sqn = re.sub(__pfqn_re_weight_short, lambda g: _add_match(wl, g), sqn )
-    # fat
-    fl=[u""]
-    sqn = re.sub(__pfqn_re_fat, lambda g: _add_match(fl, g), sqn )
-    # pack
-    pl=[u""]
-    sqn = re.sub(__pfqn_re_pack, lambda g: _add_match(pl, g), sqn )
+    @property
+    def pfqn(self):
+        """
+        @rtype: unicode
+        """
+        return self["pfqn"]
 
-    return wl[0], fl[0], pl[0], cleanup_token_str(sqn)
+    @pfqn.setter
+    def pfqn(self, pfqn):
+        self["pfqn"] = pfqn
+
+    @property
+    def sqn(self):
+        """
+        @rtype: unicode
+        """
+        return self["sqn"]
+
+    @sqn.setter
+    def sqn(self, sqn):
+        self["sqn"] = sqn
+
+class ProductFQNParser(object):
+
+    __pfqn_re_weight_full = re.compile(RE_TEMPLATE_PFQN_WEIGHT_FULL)
+    __pfqn_re_weight_short = re.compile(RE_TEMPLATE_PFQN_WEIGHT_SHORT)
+    __pfqn_re_fat = re.compile(RE_TEMPLATE_PFQN_FAT)
+    __pfqn_re_pack = re.compile(RE_TEMPLATE_PFQN_PACK)
+
+    def __init__(self):
+        self.types = dict()
+        """ @type types: dict of (unicode, Product) """
+        self.weights = dict()
+        self.fats = dict()
+        self.packs = dict()
+
+        self.ignore_category_id_list = None
+        self.cats = Cats()
+
+    def use_cats_from_csv(self, cat_csvname):
+        self.cats.from_csv(cat_csvname)
+
+    def ignore_cats(self, *ignore_cat_names):
+        for cat_name in ignore_cat_names:
+            id = self.cats.find_by_title(cat_name)
+            if id:
+                self.ignore_category_id_list = self.ignore_category_id_list or []
+                self.ignore_category_id_list.append(id)
+
+    @staticmethod
+    def parse_pfqn(pfqn):
+        """
+        Parse Full Product Name and return name parts: weight, fat, pack and SQN
+        SQN is shorten product type name without above attributes and with normilized spaces and non word symbols
+        If some attributes have multiple values - return concatenated string with " + " delimiter
+        (see @cleanup_token_str)
+        @param unicode pfqn: Full Product Name
+        @rtype: (unicode, unicode, unicode, unicode)
+        """
+        sqn = pfqn.lower()
+
+        def _add_match(ll, match):
+            _pre = match.group(1)
+            _m = match.group(2)
+            ll[0] = (ll[0] + u" + " if ll[0] else "") + _m.strip()
+            return _pre
+
+        # weight - if has digit should be bounded by non-Digit, if has no digit - than unit only is acceptable but as token
+        wl = [u""]
+        sqn = re.sub(ProductFQNParser.__pfqn_re_weight_full, lambda g: _add_match(wl, g), sqn)
+        if not wl[0]:
+            sqn = re.sub(ProductFQNParser.__pfqn_re_weight_short, lambda g: _add_match(wl, g), sqn )
+        # fat
+        fl=[u""]
+        sqn = re.sub(ProductFQNParser.__pfqn_re_fat, lambda g: _add_match(fl, g), sqn )
+        # pack
+        pl=[u""]
+        sqn = re.sub(ProductFQNParser.__pfqn_re_pack, lambda g: _add_match(pl, g), sqn )
+
+        return wl[0], fl[0], pl[0], cleanup_token_str(sqn)
+
+    def extract_product(self, pfqn, brand=None, product_manufacturer=None, product_cls=Product):
+        """
+        Parse PFQN and build new instance of Product. If brand is specified and non UNKNOWN - replace brand in PFQN
+        As side effects - count weight, fat, pack constants in internal storage.
+        Save reference to new Product in types
+        @param unicode pfqn: PFQN
+        @param Brand|None brand: known brand
+        @param unicode|None product_manufacturer: known manufacturer
+        @param product_cls: class of new Product instance. By default, Product. It can be any dict subclass
+        @rtype: Product|dict
+        """
+        (weight, fat, pack, sqn) = ProductFQNParser.parse_pfqn(pfqn)
+
+        def __fill_fqn_dict(d, item):
+            for k in item.split(u" + "): d[k] = d.get(k, 0) + 1
+
+        __fill_fqn_dict(self.weights, weight)
+        __fill_fqn_dict(self.fats, fat)
+        __fill_fqn_dict(self.packs, pack)
+
+        sqn_without_brand = sqn
+        if brand and brand.name != Brand.UNKNOWN_BRAND_NAME:
+            sqn_without_brand = brand.replace_brand(sqn_without_brand)
+
+        product = product_cls(pfqn=pfqn, weight=weight, fat=fat, pack=pack, brand=brand.name, sqn=sqn_without_brand,
+                          brand_detected=sqn != sqn_without_brand, product_manufacturer=product_manufacturer)
+        self.types[pfqn] = product  # TODO: Check if types already contain specified PFQN
+        return product
+
+    def from_csv(self, prodcsvname):
+        with open(prodcsvname, "rb") as f:
+            reader = csv.reader(f)
+            fields = next(reader)
+            for row in reader:
+                prodrow = dict(zip(fields, row))
+                item = ProductItem(prodrow)
+                pfqn = remove_nbsp(unicode(item["name"], "utf-8"))
+
+                if self.ignore_category_id_list and any(self.cats.is_product_under(item["id"], cat_id) for cat_id in self.ignore_category_id_list if cat_id):
+                    continue
+
+                product_manufacturer = None
+                if item.get("details"):
+                    details = json.loads(item["details"])
+                    """ @type details: dict of (unicode, unicode) """
+
+                    brand = Brand.findOrCreate(remove_nbsp(details.get(ATTRIBUTE_BRAND, Brand.UNKNOWN_BRAND_NAME)))
+
+                    product_manufacturer = remove_nbsp(details.get(ATTRIBUTE_MANUFACTURER))
+                    if product_manufacturer:
+                        brand.manufacturers.add(product_manufacturer)
+                else:
+                    brand = Brand.findOrCreate(Brand.UNKNOWN_BRAND_NAME)
+
+                self.extract_product(pfqn, brand, product_manufacturer)
+
+    def process_manufacturers_as_brands(self):
+        """
+        Process manufacturers as brands
+        @return tuples of sqn like (before_replacement, after_replacement)
+        @rtype: list[tuple(unicode,unicode)]
+        """
+        manufacturer_replacements = []
+        for product in self.types.itervalues():
+            # Here process manufacturers only where present.
+            if not product["product_manufacturer"]:
+                # TODO: Try to link the same manufacturer names with different spelling by brand name
+                continue
+
+            product_manufacturer = product["product_manufacturer"]
+            brand = Brand.exist(product["brand"])
+
+            sqn_without_brand = product.sqn
+            sqn_last_change = sqn_without_brand
+            linked_manufacturers = {product_manufacturer}  # TODO: Try other brands of the same or related manufacturers
+            for manufacturer in linked_manufacturers:
+                manufacturer_brand = Brand.findOrCreate_manufacturer_brand(manufacturer)
+                if manufacturer_brand and manufacturer_brand != brand:
+                    # Consider manufacturer as brand - replace its synonyms
+                    sqn_without_brand = manufacturer_brand.replace_brand(sqn_without_brand)
+                    if sqn_last_change != sqn_without_brand:
+                        product.sqn = sqn_without_brand
+                        product["brand_detected"] = True
+                        manufacturer_replacements.append((sqn_last_change, sqn_without_brand))
+                        sqn_last_change = sqn_without_brand
+        return manufacturer_replacements
+
+    def guess_no_brand_manufacturers(self):
+        """
+        Here try to guess about no-brand products w/o manufacturers.
+        Iterate through all known no-brand manufacturers and try to apply them and check what happens
+        Later it will be possible to extend for all products
+        @return tuples of sqn like (before_replacement, after_replacement)
+        @rtype: list[tuple(unicode,unicode)]
+        """
+        no_brand_replacements = []
+        no_brand_manufacturers = {m for b_name in Brand.no_brand_names() for m in Brand.findOrCreate(b_name).manufacturers}
+        for product in self.types.itervalues():
+            if product["product_manufacturer"] or product["brand"] not in Brand.no_brand_names():
+                continue
+
+            sqn_without_brand = product.sqn
+            sqn_last_change = sqn_without_brand
+            for manufacturer in no_brand_manufacturers:
+                manufacturer_brand = Brand.findOrCreate_manufacturer_brand(manufacturer)
+                # Consider manufacturer as brand - replace its synonyms
+                sqn_without_brand = manufacturer_brand.replace_brand(sqn_without_brand)
+                if sqn_last_change != sqn_without_brand:
+                    product.sqn = sqn_without_brand
+                    product["brand_detected"] = True
+                    no_brand_replacements.append((sqn_last_change, sqn_without_brand))
+                    sqn_last_change = sqn_without_brand
+        return no_brand_replacements
+
 
 if __name__ == '__main__':
 
@@ -98,112 +262,23 @@ if __name__ == '__main__':
         else:
             raise Exception("Unknown options")
 
-    cats = Cats()
+    pfqnParser = ProductFQNParser()
+
     if cat_csvname is not None:
-        cats.from_csv(cat_csvname)
-        print "Categories've been loaded from '%s': %d" % (cat_csvname, len(cats))
-    ignore_category_id_list = [cats.find_by_title(u"Алкогольные напитки"), cats.find_by_title(u"Скидки")]
+        pfqnParser.use_cats_from_csv(cat_csvname)
+        print "Categories've been loaded from '%s': %d" % (cat_csvname, len(pfqnParser.cats))
+    pfqnParser.ignore_cats(u"Алкогольные напитки", u"Скидки")
 
     if brands_in_csvname is not None:
         Brand.from_csv(brands_in_csvname)
         print "Brands and manufacturers 've been loaded from '%s': %d" % (brands_in_csvname, len(Brand.all()))
 
-    types = dict()
-    """ @type types: dict of (unicode, dict[str, unicode]) """
-    weights = dict()
-    fats = dict()
-    packs = dict()
-    with open(prodcsvname, "rb") as f:
-        reader = csv.reader(f)
-        fields = next(reader)
-        for row in reader:
-            prodrow = dict(zip(fields, row))
-            item = ProductItem(prodrow)
-            pfqn = remove_nbsp(unicode(item["name"], "utf-8"))
-
-            if ignore_category_id_list and any(cats.is_product_under(item["id"], cat_id) for cat_id in ignore_category_id_list if cat_id):
-                continue
-
-            product_manufacturer = None
-            if item.get("details"):
-                details = json.loads(item["details"])
-                """ @type details: dict of (unicode, unicode) """
-
-                brand = Brand.findOrCreate(remove_nbsp(details.get(ATTRIBUTE_BRAND, Brand.UNKNOWN_BRAND_NAME)))
-
-                product_manufacturer = remove_nbsp(details.get(ATTRIBUTE_MANUFACTURER))
-                if product_manufacturer:
-                    brand.manufacturers.add(product_manufacturer)
-            else:
-                brand = Brand.findOrCreate(Brand.UNKNOWN_BRAND_NAME)
-
-            (weight, fat, pack, sqn) = parse_pfqn(pfqn)
-            def __fill_fqn_dict(d, item):
-                for k in item.split(u" + "): d[k] = d.get(k, 0) + 1
-            __fill_fqn_dict(weights, weight)
-            __fill_fqn_dict(fats, fat)
-            __fill_fqn_dict(packs, pack)
-
-            sqn_without_brand = sqn
-            if brand.name != Brand.UNKNOWN_BRAND_NAME:
-                sqn_without_brand = brand.replace_brand(sqn_without_brand)
-
-            types[pfqn] = dict(weight=weight, fat=fat, pack=pack,
-                               brand=brand.name,
-                               sqn=sqn_without_brand,
-                               brand_detected=sqn != sqn_without_brand,
-                               product_manufacturer=product_manufacturer)
-
-    # Process manufacturers as brands
-
-    for pfqn, item in types.iteritems():
-        # Here process manufacturers only where present.
-        if not item["product_manufacturer"]:
-            # TODO: Try to link the same manufacturer names with different spelling by brand name
-            continue
-
-        product_manufacturer = item["product_manufacturer"]
-        brand = Brand.exist(item["brand"])
-        sqn = item["sqn"]
-
-        sqn_without_brand = sqn
-        sqn_last_change = sqn_without_brand
-        linked_manufacturers = {product_manufacturer} # TODO: Try other brands of the same or related manufacturers
-        for manufacturer in linked_manufacturers:
-            manufacturer_brand = Brand.findOrCreate_manufacturer_brand(manufacturer)
-            if manufacturer_brand and manufacturer_brand != brand:
-                # Consider manufacturer as brand - replace its synonyms
-                sqn_without_brand = manufacturer_brand.replace_brand(sqn_without_brand)
-                if sqn_last_change != sqn_without_brand:
-                    item["sqn"] = sqn_without_brand
-                    item["brand_detected"] = True
-                    sqn_last_change = sqn_without_brand
+    pfqnParser.from_csv(prodcsvname)
+    pfqnParser.process_manufacturers_as_brands()
 
     enabled_brand_guesses = False
     if enabled_brand_guesses:
-        no_brand_manufacturers = {m for b_name in Brand.no_brand_names() for m in Brand.findOrCreate(b_name).manufacturers}
-        no_brand_replacements = []
-        for pfqn, item in types.iteritems():
-            # Here try to guess about no-brand products w/o manufacturers.
-            # Iterate through all known no-brand manufacturers and try to apply them and check what happens
-            # Later it will be possible to extend for all products
-            if item["product_manufacturer"] or item["brand"] not in Brand.no_brand_names():
-                continue
-
-            sqn = item["sqn"]
-
-            sqn_without_brand = sqn
-            sqn_last_change = sqn_without_brand
-            for manufacturer in no_brand_manufacturers:
-                manufacturer_brand = Brand.findOrCreate_manufacturer_brand(manufacturer)
-                # Consider manufacturer as brand - replace its synonyms
-                sqn_without_brand = manufacturer_brand.replace_brand(sqn_without_brand)
-                if sqn_last_change != sqn_without_brand:
-                    item["sqn"] = sqn_without_brand
-                    item["brand_detected"] = True
-                    no_brand_replacements.append((sqn_last_change, sqn_without_brand))
-                    sqn_last_change = sqn_without_brand
-
+        no_brand_replacements = pfqnParser.guess_no_brand_manufacturers()
         for repl in no_brand_replacements:
             print "NO BRAND REPLACEMENT: OLD: %s, NEW: %s" % repl
         print "NO BRAND GUESS REPLACEMENTS: %d" % len(no_brand_replacements)
@@ -241,7 +316,7 @@ if __name__ == '__main__':
         nobrand_count = 0
         m_count = dict()
         # for t, d in sorted(types.iteritems(), key=lambda t: t[1]["sqn"].split(" ", 1)[0]):
-        for t, d in sorted(types.iteritems(), key=lambda t: t[1]["product_manufacturer"]):
+        for t, d in sorted(pfqnParser.types.iteritems(), key=lambda t: t[1]["product_manufacturer"]):
             if not d["brand_detected"] and (d["brand"] in Brand.no_brand_names()):
                 # print '%s   => brand: %s, prod_man: %s, weight: %s, fat: %s, pack: %s, fqn: %s' % \
                 #       (d["sqn"], d["brand"], d["product_manufacturer"], d["weight"], d["fat"], d["pack"], t)
@@ -254,14 +329,14 @@ if __name__ == '__main__':
                 m_count[d["brand"]] += 1
                 ptypes_count += 1
         print
-        print "Total product types: %d [notintype: %d, nobrand: %d]" % (len(types), ptypes_count, nobrand_count)
+        print "Total product types: %d [notintype: %d, nobrand: %d]" % (len(pfqnParser.types), ptypes_count, nobrand_count)
         print
         for m, c in sorted(m_count.iteritems(), key=lambda t:t[1], reverse=True):
             print "%d : %s" % (c, m)
 
     elif toprint == "typetuples":
         types2 = dict()
-        for t, d in sorted(types.iteritems(), key=lambda t: t[1]["sqn"].split(" ", 1)[0]):
+        for t, d in sorted(pfqnParser.types.iteritems(), key=lambda t: t[1]["sqn"].split(" ", 1)[0]):
             words = re.split(u'\s+', d["sqn"])
             first_word = words.pop(0)
             if not words:
@@ -287,13 +362,13 @@ if __name__ == '__main__':
             print "    %d: %d" % (num, num_tuples[num])
 
     elif toprint == "weights":
-        for dict_i in (weights, fats, packs):
+        for dict_i in (pfqnParser.weights, pfqnParser.fats, pfqnParser.packs):
             print "#" * 20
             print "\r\n".join(["%s [%d]" % (k, v) for k,v in sorted(dict_i.iteritems(), key=lambda t:t[1], reverse=True)])
 
         print "NO-WEIGHT Product Types " + "=" *60
         c = 0
-        for t, d in types.iteritems():
+        for t, d in pfqnParser.types.iteritems():
             if not d["weight"]:
                 print t,
                 print '     => fat: %s, pack: %s' % (d["fat"], d["pack"]) if d["fat"] or d["pack"] else ""
