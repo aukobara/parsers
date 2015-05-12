@@ -35,7 +35,7 @@ RE_TEMPLATE_PFQN_FAT = u'(' + RE_TEMPLATE_PFQN_PRE + u')(' + RE_TEMPLATE_PFQN_FA
                        RE_TEMPLATE_PFQN_FAT_MDZH + u")" + RE_TEMPLATE_PFQN_POST
 
 RE_TEMPLATE_PFQN_PACK = u'(' + RE_TEMPLATE_PFQN_PRE + u')' \
-                        u'(т/пак|ж/б|ст/б|м/у|с/б|ст\\\б|ст/бут|пл/б|пл/бут|пэтбутылка|пл|кор\.?' + \
+                        u'(т/пак|ж/б|ст/б|м/у|с/б|ст\\\б|ст/бут|пл/б|пл/бут|пэтбутылка|пл|кор\.?|коробка' + \
                         u'|\d*\s*пак\.?|\d+\s*таб|\d+\s*саше|\d+\s*пир(?:\.|амидок)?' + \
                         u'|(?:\d+\s*)?шт\.?|упак\.?|уп\.?|в/у|п/э|жесть|' \
                         u'вакуум|нарезка|нар|стакан|ванночка|в\sванночке|дой-пак|дой/пак|пюр-пак|пюр\sпак|' + \
@@ -180,7 +180,7 @@ class ProductFQNParser(object):
                     if product_manufacturer:
                         brand.manufacturers.add(product_manufacturer)
                         manufacturer_brand = Brand.findOrCreate_manufacturer_brand(product_manufacturer)
-                        if not brand.no_brand:
+                        if not brand.no_brand and brand != manufacturer_brand:
                             manufacturer_brand.link_related(brand)
                 else:
                     brand = Brand.findOrCreate(Brand.UNKNOWN_BRAND_NAME)
@@ -237,7 +237,7 @@ class ProductFQNParser(object):
             for manufacturer in no_brand_manufacturers:
                 manufacturer_brand = Brand.findOrCreate_manufacturer_brand(manufacturer)
                 # Consider manufacturer as brand - replace its synonyms
-                sqn_without_brand = manufacturer_brand.replace_brand(sqn_without_brand)
+                sqn_without_brand = manufacturer_brand.replace_brand(sqn_without_brand, add_new_synonyms=False)
                 if sqn_last_change != sqn_without_brand:
                     product.sqn = sqn_without_brand
                     product["brand_detected"] = True
@@ -292,13 +292,13 @@ if __name__ == '__main__':
     pfqnParser.ignore_cats(u"Алкогольные напитки", u"Скидки")
 
     if brands_in_csvname is not None:
-        Brand.from_csv(brands_in_csvname)
-        print "Brands and manufacturers 've been loaded from '%s': %d" % (brands_in_csvname, len(Brand.all()))
+        (total, new_brands) = Brand.from_csv(brands_in_csvname)
+        print "Brands and manufacturers 've been loaded from '%s': %d (of %d)" % (brands_in_csvname, new_brands, total)
 
     pfqnParser.from_csv(prodcsvname)
     pfqnParser.process_manufacturers_as_brands()
 
-    enabled_brand_guesses = False
+    enabled_brand_guesses = True
     if enabled_brand_guesses:
         no_brand_replacements = pfqnParser.guess_no_brand_manufacturers()
         for repl in no_brand_replacements:
