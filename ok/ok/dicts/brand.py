@@ -34,11 +34,11 @@ class Brand(object):
         return exist or cls(name)
 
     @staticmethod
-    def all():
+    def all(skip_no_brand=False):
         """
         @rtype: list[Brand]
         """
-        return sorted(Brand._brands.values(), key=lambda b: b.name)
+        return sorted([b for b in Brand._brands.values() if not skip_no_brand or not b.no_brand], key=lambda b: b.name)
 
     def __init__(self, name=UNKNOWN_BRAND_NAME):
         self.name = name if isinstance(name, unicode) else unicode(name, "utf-8")
@@ -49,6 +49,7 @@ class Brand(object):
         self.synonyms = []  # TODO: refactor to use set instead of list
         self.generic_type = None
         self._no_brand = False
+        self.linked_brands = set()
 
     def add_synonym(self, *syns):
         result = False
@@ -64,16 +65,24 @@ class Brand(object):
 
         return result
 
+    def get_synonyms(self, copy_related=True):
+        if copy_related:
+            result = [b for linked in [self] + map(Brand.exist, self.linked_brands)
+                      for b in [linked.name.lower()] + linked.synonyms]
+        else:
+            result = [self.name.lower()] + self.synonyms
+        return result
+
     def link_related(self, p_brand):
         """
         Make relationship between linked brands.
-        Minimal implementation: copy synonyms
-        TODO: Add more sophisticated link
-        @param p_brand:
-        @return:
+        @param Brand p_brand: to link
         """
-        self.add_synonym(p_brand.name)
-        self.add_synonym(*p_brand.synonyms)
+        if Brand.to_key(p_brand.name) not in self.linked_brands:
+            self.__variants_cache = None
+            p_brand.__variants_cache = None
+            self.linked_brands.add(Brand.to_key(p_brand.name))
+            p_brand.linked_brands.add(Brand.to_key(self.name))
         pass
 
     @property
@@ -114,6 +123,7 @@ class Brand(object):
         u'Добрый'.lower(): u'бодрый',
         u'Юбилейное'.lower(): u'юбилейная',
         u'Морозко'.lower(): u'марокко',
+        u'Морозко'.lower(): u'молоко',
         u'Дальневосточный'.lower(): u'дальневосточная',
         u'Венеция'.lower(): u'венгрия',
         u'Белоручка'.lower(): u'белочка',
@@ -125,19 +135,24 @@ class Brand(object):
         u'ОРЕХПРОМ'.lower(): u'орехом',
         u'Слада'.lower(): u'сладкая',
         u'КАРТОН'.lower(): u'картоф',
+        u'ОРИМИ'.lower(): u'крими',
+        u'малком'.lower(): (u'молоком',u'маком'),
+        u'яблоко'.lower(): u'молоко',
+        u'царская'.lower(): u'морская',
     }
     @staticmethod
     def check_false_positive_brand_match(brand_variant, sqn_token):
-        return Brand._false_positive_brand_matches.get(brand_variant.lower()) == sqn_token.lower()
+        matches = Brand._false_positive_brand_matches.get(brand_variant.lower())
+        return sqn_token.lower() in matches if isinstance(matches, tuple) else matches == sqn_token.lower()
 
     __variants_cache = None
     __distance_cache = dict()
-    def replace_brand(self, s, rs=None, normalize_brands=True, normalize_result=True):
+    def replace_brand(self, s, rs=None, normalize_brands=True, normalize_result=True, add_new_synonyms=True):
         """
         Replace brand name in string s to rs. Only full words will be replaced.
         Brand synonyms are iterated to check different variants.
         Quotation are treated as part of brand name substring.
-        TODO: Check spelling errors and translitiration
+        TODO: Amend brand_variants structure to keep explanation of variant origin (linked, translitiration, spelling, etc)
         @param unicode s: original string
         @param unicode rs: replacement. If None - use brand.generic_type if not Null or space otherwise
         @param bool normalize_brands: if True call @cleanup_token_str for each brand and synonym
@@ -149,18 +164,22 @@ class Brand(object):
             rs = " " if not self.generic_type else u" " + self.generic_type + u" "
         result = s
 
+        variant_spelling_origin = dict()
         if normalize_brands:
             if self.__variants_cache is None:
-                brand_variants = set(cleanup_token_str(b) for b in [self.name.lower()] + self.synonyms)
+                brand_variants = set(map(cleanup_token_str, self.get_synonyms()))
                 brand_variants.update([translit(b, "ru") for b in brand_variants if re.match(u'[a-z]', b)])
 
                 # Add variants with spaces replaced to '-' and vice verse
                 brand_variants.update(add_string_combinations(brand_variants, (u' ',u'-'), (u'-',u''), (u'-',u' '),
                                                          (u'е',u'ё'), (u'и',u'й'), (u'ё',u'е'), (u'й',u'и')))
+                self.__variants_cache = set(brand_variants)
             else:
-                brand_variants = self.__variants_cache
+                brand_variants = set(self.__variants_cache)
 
             for s_token in s.split(' '):
+                if s_token in brand_variants:
+                    continue
                 if len(s_token) > 4:
                     similar_found = None
                     for b in brand_variants:
@@ -176,13 +195,13 @@ class Brand(object):
                             if Brand.check_false_positive_brand_match(b_tokens[0], s_token):
                                 print "FOUND FALSE POSITIVE BRAND MATCH: brand variant[%s], sqn_token[%s], distance:[%d], sqn[%s]" % (b_tokens[0], s_token, dist, s)
                             else:
-                                print "FOUND SIMILAR: %s : %s in %s, brand: %s" % (b_tokens[0], s_token, s, self.name)
                                 similar_found = s_token
+                                variant_spelling_origin[similar_found] = b_tokens[0]
                             break  # Ignore all remaining brand variants because sqn token has been already matched
-                    if similar_found:
+                    if similar_found and not any(Brand.check_false_positive_brand_match(b, similar_found) for b in brand_variants) :
                         brand_variants.add(similar_found)
         else:
-            brand_variants = set([self.name] + self.synonyms)
+            brand_variants = set(self.get_synonyms())
 
         # Start with longest brand names to avoid double processing of shortened names
         for b in sorted(brand_variants, key=len, reverse=True):
@@ -195,7 +214,9 @@ class Brand(object):
                     was = result[pos:pos+len(b)]
                     result = result[:pos] + rs + result[pos+len(b):]
                     pos += len(rs)
-                    if self.add_synonym(was): print "NEW SYNONYM FOR BRAND %s => %s, %s" % (was, s, str(self).decode("utf-8"))
+                    if add_new_synonyms and self.add_synonym(was):
+                        print u"NEW SYNONYM FOR BRAND %s(%s) => %s, %s" % \
+                              (was, variant_spelling_origin.get(was, u""), s, str(self).decode("utf-8"))
                 else:
                     print u"Suspicious string [%s] may contain brand name [%s]" % (s, b)
                     pos += len(b)
@@ -224,6 +245,7 @@ class Brand(object):
                 p = re.sub(u'"|«|»', u'', p)
                 brand.add_synonym(p)
                 # If brand with name as pattern already exists copy all its synonyms
+                # TODO: Also link brand with different name spelling but the same manufacturer pattern
                 p_brand = cls.exist(p)
                 if p_brand:
                     brand.link_related(p_brand)
@@ -231,7 +253,7 @@ class Brand(object):
 
     @staticmethod
     def to_csv(csv_filename):
-        header = ['name','no_brand','generic','synonyms','manufacturers']
+        header = ['name','no_brand','generic','synonyms','manufacturers']  # ,'linked'
         writer = csv.DictWriter(csv_filename, header)
         writer.writeheader()
         for b in Brand.all():
@@ -239,7 +261,8 @@ class Brand(object):
                              'no_brand': b.no_brand,
                              'generic': b.generic_type.encode("utf-8") if b.generic_type else None,
                              'synonyms': u'|'.join(sorted(syn.lower() for syn in b.synonyms)).encode("utf-8"),
-                             'manufacturers': u'|'.join(sorted(b.manufacturers)).encode("utf-8")
+                             'manufacturers': u'|'.join(sorted(b.manufacturers)).encode("utf-8"),
+                             # 'linked': u'|'.join(sorted(b.linked_brands)).encode("utf-8")
                              })
         pass
 
@@ -263,4 +286,7 @@ class Brand(object):
                 manufacturers_s = brand_row.get("manufacturers", "").decode("utf-8")
                 if manufacturers_s:
                     brand.manufacturers = set(manufacturers_s.split(u'|'))
+                linked_s = brand_row.get("linked", "").decode("utf-8")
+                if linked_s:
+                    brand.linked_brands = set(map(Brand.to_key, linked_s.split(u'|')))
         pass

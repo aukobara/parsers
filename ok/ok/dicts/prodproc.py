@@ -126,18 +126,18 @@ class ProductFQNParser(object):
 
         return wl[0], fl[0], pl[0], cleanup_token_str(sqn)
 
-    def extract_product(self, pfqn, brand=None, product_manufacturer=None, product_cls=Product):
+    def extract_product(self, pfqn, brand=None, manufacturer_brand=None, product_cls=Product):
         """
         Parse PFQN and build new instance of Product. If brand is specified and non UNKNOWN - replace brand in PFQN
         As side effects - count weight, fat, pack constants in internal storage.
         Save reference to new Product in types
         @param unicode pfqn: PFQN
         @param Brand|None brand: known brand
-        @param unicode|None product_manufacturer: known manufacturer
+        @param Brand|None manufacturer_brand: known manufacturer
         @param product_cls: class of new Product instance. By default, Product. It can be any dict subclass
         @rtype: Product|dict
         """
-        (weight, fat, pack, sqn) = ProductFQNParser.parse_pfqn(pfqn)
+        (weight, fat, pack, sqn) = self.parse_pfqn(pfqn)
 
         def __fill_fqn_dict(d, item):
             for k in item.split(u" + "): d[k] = d.get(k, 0) + 1
@@ -150,8 +150,10 @@ class ProductFQNParser(object):
         if brand and brand.name != Brand.UNKNOWN_BRAND_NAME:
             sqn_without_brand = brand.replace_brand(sqn_without_brand)
 
-        product = product_cls(pfqn=pfqn, weight=weight, fat=fat, pack=pack, brand=brand.name, sqn=sqn_without_brand,
-                          brand_detected=sqn != sqn_without_brand, product_manufacturer=product_manufacturer)
+        product = product_cls(pfqn=pfqn, weight=weight, fat=fat, pack=pack,
+                              brand=brand.name if brand else Brand.UNKNOWN_BRAND_NAME,
+                              sqn=sqn_without_brand, brand_detected=sqn != sqn_without_brand,
+                              product_manufacturer=manufacturer_brand.name if manufacturer_brand else None)
         self.types[pfqn] = product  # TODO: Check if types already contain specified PFQN
         return product
 
@@ -167,7 +169,7 @@ class ProductFQNParser(object):
                 if self.ignore_category_id_list and any(self.cats.is_product_under(item["id"], cat_id) for cat_id in self.ignore_category_id_list if cat_id):
                     continue
 
-                product_manufacturer = None
+                manufacturer_brand = None
                 if item.get("details"):
                     details = json.loads(item["details"])
                     """ @type details: dict of (unicode, unicode) """
@@ -177,10 +179,13 @@ class ProductFQNParser(object):
                     product_manufacturer = remove_nbsp(details.get(ATTRIBUTE_MANUFACTURER))
                     if product_manufacturer:
                         brand.manufacturers.add(product_manufacturer)
+                        manufacturer_brand = Brand.findOrCreate_manufacturer_brand(product_manufacturer)
+                        if not brand.no_brand:
+                            manufacturer_brand.link_related(brand)
                 else:
                     brand = Brand.findOrCreate(Brand.UNKNOWN_BRAND_NAME)
 
-                self.extract_product(pfqn, brand, product_manufacturer)
+                self.extract_product(pfqn, brand, manufacturer_brand)
 
     def process_manufacturers_as_brands(self):
         """
@@ -240,6 +245,23 @@ class ProductFQNParser(object):
                     sqn_last_change = sqn_without_brand
         return no_brand_replacements
 
+    def guess_unknown_brands(self):
+        """
+        Here try to guess about products where brand has not been detected after scan of brand and manufacturer.
+        This method will not change anything but print it's hypothesis that can be accepted manually
+        @return tuples of sqn like (before_replacement, after_replacement)
+        @rtype: list[tuple(unicode,unicode)]
+        """
+        for product in self.types.itervalues():
+            if product["brand_detected"]:
+                continue
+
+            for brand in Brand.all(skip_no_brand=True):
+                sqn_without_brand = brand.replace_brand(product.sqn, add_new_synonyms=False)
+                if product.sqn != sqn_without_brand:
+                    print u"Brand [%s] may be in product type [sqn:%s, brand: %s, manufacturer: %s]" % \
+                          (brand.name + u'|' + u'|'.join(brand.get_synonyms()),
+                           product.sqn, product["brand"], product["product_manufacturer"])
 
 if __name__ == '__main__':
 
@@ -282,6 +304,8 @@ if __name__ == '__main__':
         for repl in no_brand_replacements:
             print "NO BRAND REPLACEMENT: OLD: %s, NEW: %s" % repl
         print "NO BRAND GUESS REPLACEMENTS: %d" % len(no_brand_replacements)
+
+    # pfqnParser.guess_unknown_brands()
 
     # ########### SAVE RESULTS ####################
 
