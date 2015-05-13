@@ -50,19 +50,24 @@ class Brand(object):
 
     def __init__(self, name=UNKNOWN_BRAND_NAME, brand_type=TYPE_DEFAULT):
         self.name = name if isinstance(name, unicode) else unicode(name, "utf-8")
+        """@type: unicode"""
         if Brand.exist(self.name):
             raise Exception("Brand with name[%s] already exists" % self.name)
         Brand._brands[Brand.to_key(self.name)] = self
 
         # Brand type - manufacturer or marketing
         self.type = brand_type
+        """@type: unicode"""
 
         self.manufacturers = set()
+        """@type: set of (unicode)"""
         self.synonyms = []  # TODO: refactor to use set instead of list
+        """@type: list[unicode]"""
 
         # Brand with common name which define whole own product type (like Coca-cola).
         # If generic_type is not None replace brand variant to specified common form
         self.generic_type = None
+        """@type: unicode"""
 
         # Virtual brand flag to define product group where brand is unknown (like no-pack goods) or hidden by seller
         # Often goods with no-brand brand have hidden brand or manufacturer
@@ -71,10 +76,12 @@ class Brand(object):
         # Linked brands are related to this. Mainly is used for synonyms sharing.
         # Typical relation is brand<->manufacturer
         self.linked_brands = set()
+        """@type: set of (unicode)"""
 
         # Additional non-persistent keys to represent different spellings of the brand/manufacturer name
         # Can be used for linking or lookup of the same brand with different spellings
         self.surrogate_keys = set()
+        """@type: set of (unicode)"""
 
     def add_synonym(self, *syns):
         result = False
@@ -122,14 +129,13 @@ class Brand(object):
                 result.add(cls._all_surrogate_keys[norm_key])
         return result
 
-
     def get_synonyms(self, copy_related=True):
         if copy_related:
             result = [b for linked in [self] + [Brand.exist(lb) for lb in self.linked_brands if Brand.exist(lb)]
                       for b in [linked.name.lower()] + linked.synonyms]
         else:
             result = [self.name.lower()] + self.synonyms
-        return result
+        return list(set(result))
 
     def link_related(self, p_brand):
         """
@@ -176,15 +182,14 @@ class Brand(object):
         return isinstance(other, Brand) and self.name == other.name
 
     def __str__(self):
-        return ("%s [synonyms: %s][m:%s]" % (self.name, "|".join(self.synonyms), "|".join(self.manufacturers))).encode("utf-8")
+        return ("%s [type: %s][synonyms: %s][m:%s]" % (self.name, self.type, "|".join(self.synonyms), "|".join(self.manufacturers))).encode("utf-8")
 
     _false_positive_brand_matches ={
         u'Абрико'.lower(): u'абрикос',
         u'Аладушкин'.lower(): u'оладушки',
         u'Добрый'.lower(): u'бодрый',
         u'Юбилейное'.lower(): u'юбилейная',
-        u'Морозко'.lower(): u'марокко',
-        u'Морозко'.lower(): u'молоко',
+        u'Морозко'.lower(): (u'марокко', u'молоко'),
         u'Дальневосточный'.lower(): u'дальневосточная',
         u'Венеция'.lower(): u'венгрия',
         u'Белоручка'.lower(): u'белочка',
@@ -210,14 +215,76 @@ class Brand(object):
 
     __variants_cache = None
     __distance_cache = dict()
-    def replace_brand(self, s, rs=None, normalize_brands=True, normalize_result=True, add_new_synonyms=True):
+
+    @staticmethod
+    def collect_similar_tokens_as_brand_variants(s, brand_variants, variant_spelling_origin):
+        """
+        Iterate through all SQN tokens and try to match them with brand variants using Levenshtein distance.
+        Also check false positive matches using hardcoded dictionary.
+        If token similar to some of brand variants is found - add it as brand variant as well for further processing.
+        Keep some explanation of this similarity in variant_spelling_origin for each token found
+        @param unicode s: SQN
+        @param set of (unicode) brand_variants: brand variants from replace_brand()
+        @param dict of (unicode,unicode) variant_spelling_origin: simple explanation structure
+        @rtype: list[unicode]
+        """
+        result = []
+        for s_token in s.split(' '):
+            if s_token in brand_variants or s_token in result:
+                continue
+            if len(s_token) > 4:
+                similar_found = None
+                for b in brand_variants:
+                    b_tokens = b.split(u' ', 1)
+                    if len(b_tokens) > 1 or len(b_tokens[0]) <= 4:
+                        continue  # TODO: implement multi-tokens
+                    cache_key = b_tokens[0] + u'~*~' + s_token
+                    if cache_key in Brand.__distance_cache:
+                        dist = Brand.__distance_cache.get(cache_key)
+                    else:
+                        dist = distance(b_tokens[0], s_token)
+                        Brand.__distance_cache[cache_key] = dist
+                    if 0 < dist <= (2 if len(s_token) > 5 else 1):
+                        # TODO: Ignore (log only) if distance is 2 and both changes are immediately one after another
+                        # as far as such diff produces a lot of false matches
+                        if Brand.check_false_positive_brand_match(b_tokens[0], s_token):
+                            print "FOUND FALSE POSITIVE BRAND MATCH: brand variant[%s], sqn_token[%s], distance:[%d], sqn[%s]" % (
+                            b_tokens[0], s_token, dist, s)
+                        else:
+                            similar_found = s_token
+                            variant_spelling_origin[similar_found] = u'%s~%f' % (b_tokens[0], dist)
+                        break  # Ignore all remaining brand variants because sqn token has been already matched
+                if similar_found and not any(
+                        Brand.check_false_positive_brand_match(b, similar_found) for b in brand_variants):
+                    result.append(similar_found)
+        return result
+
+    def collect_brand_variants(self):
+        """
+        Collect different brand spelling variants (including translitiration) basing on brand synonyms.
+        Cache variants until synonyms are changed.
+        @return: set of normalized variants
+        @rtype: set of (unicode)
+        """
+        if self.__variants_cache is None:
+            brand_variants = set(map(cleanup_token_str, self.get_synonyms()))
+            brand_variants.update([translit(b, "ru") for b in brand_variants if re.match(u'[a-z]', b)])
+
+            # Add variants with spaces replaced to '-' and vice verse
+            brand_variants.update(add_string_combinations(brand_variants, (u' ', u'-'), (u'-', u''), (u'-', u' '),
+                                                          (u'е', u'ё'), (u'и', u'й'), (u'ё', u'е'), (u'й', u'и')))
+            self.__variants_cache = set(brand_variants)
+        else:
+            brand_variants = set(self.__variants_cache)
+        return brand_variants
+
+    def replace_brand(self, s, rs=None, normalize_result=True, add_new_synonyms=True):
         """
         Replace brand name in string s to rs. Only full words will be replaced.
         Brand synonyms are iterated to check different variants.
         Quotation are treated as part of brand name substring.
         @param unicode s: original string
         @param unicode rs: replacement. If None - use brand.generic_type if not Null or space otherwise
-        @param bool normalize_brands: if True call @cleanup_token_str for each brand and synonym
         @return: Updated string if brand is found, original string otherwise
         @rtype unicode
         """
@@ -228,43 +295,14 @@ class Brand(object):
 
         # TODO: Amend brand_variants structure to keep explanation of variant origin (linked, translitiration, spelling, etc)
         variant_spelling_origin = dict()
-        if normalize_brands:
-            if self.__variants_cache is None:
-                brand_variants = set(map(cleanup_token_str, self.get_synonyms()))
-                brand_variants.update([translit(b, "ru") for b in brand_variants if re.match(u'[a-z]', b)])
+        brand_variants = self.collect_brand_variants()
 
-                # Add variants with spaces replaced to '-' and vice verse
-                brand_variants.update(add_string_combinations(brand_variants, (u' ',u'-'), (u'-',u''), (u'-',u' '),
-                                                         (u'е',u'ё'), (u'и',u'й'), (u'ё',u'е'), (u'й',u'и')))
-                self.__variants_cache = set(brand_variants)
-            else:
-                brand_variants = set(self.__variants_cache)
-
-            for s_token in s.split(' '):
-                if s_token in brand_variants:
-                    continue
-                if len(s_token) > 4:
-                    similar_found = None
-                    for b in brand_variants:
-                        b_tokens = b.split(u' ', 1)
-                        if len(b_tokens) > 1 or len(b_tokens[0]) <= 4:
-                            continue  # TODO: implement multi-tokens
-                        if Brand.__distance_cache.has_key(b_tokens[0] + u'~*~' + s_token):
-                            dist = Brand.__distance_cache.get(b_tokens[0] + u'~*~' + s_token)
-                        else:
-                            dist = distance(b_tokens[0], s_token)
-                            Brand.__distance_cache[b_tokens[0] + u'~*~' + s_token] = dist
-                        if 0 < dist <= (2 if len(s_token) > 5 else 1):
-                            if Brand.check_false_positive_brand_match(b_tokens[0], s_token):
-                                print "FOUND FALSE POSITIVE BRAND MATCH: brand variant[%s], sqn_token[%s], distance:[%d], sqn[%s]" % (b_tokens[0], s_token, dist, s)
-                            else:
-                                similar_found = s_token
-                                variant_spelling_origin[similar_found] = u'%s~%f' % (b_tokens[0], dist)
-                            break  # Ignore all remaining brand variants because sqn token has been already matched
-                    if similar_found and not any(Brand.check_false_positive_brand_match(b, similar_found) for b in brand_variants) :
-                        brand_variants.add(similar_found)
-        else:
-            brand_variants = set(self.get_synonyms())
+        similar_tokens = self.collect_similar_tokens_as_brand_variants(s, brand_variants, variant_spelling_origin)
+        brand_variants.update(similar_tokens)
+        if not add_new_synonyms and similar_tokens:
+            # As far brand modification is switched off in this mode trace similar_tokens here
+            print u"SIMILAR TOKENS FOR SQN[%s] BRAND[%s]: %s" % \
+                  (s, self.name, u', '.join(u'%s(%s)' % (st, variant_spelling_origin[st]) for st in similar_tokens))
 
         # Start with longest brand names to avoid double processing of shortened names
         for b in sorted(brand_variants, key=len, reverse=True):
@@ -272,7 +310,7 @@ class Brand(object):
             while pos >= 0:
                 pre_char = result[pos-1] if pos > 0 else u""
                 post_char = result[pos+len(b)] if pos+len(b) < len(result) else u""
-                # Brand name is bounded by non-alphanum
+                # Brand name is bounded by non-alphanum or english/russian switch (when spaces are missed)
                 if not pre_char.isalnum() and (not post_char.isalnum() or (isenglish(b[-1]) and isrussian(post_char))):
                     was = result[pos:pos+len(b)]
                     result = result[:pos] + rs + result[pos+len(b):]
@@ -294,8 +332,8 @@ class Brand(object):
                               RE_MANUFACTURER_MAIN_GROUP + u'(?:\s*,\s*\S+)?\s*$'
     RE_MANUFACTURER_PATTERN_ENG = u'^(?:AO|ZAO|OOO|OAO|PAO)\s*(?:(?:"|«|„)+(?:TK|TPK|PO|MPK)\s*)?' + \
                                   RE_MANUFACTURER_MAIN_GROUP + u'(?:\s*,\s*\S+)?\s*$'
-    __re_manufacturer_pattern = re.compile(RE_MANUFACTURER_PATTERN, re.IGNORECASE)
-    __re_manufacturer_pattern_eng = re.compile(RE_MANUFACTURER_PATTERN_ENG, re.IGNORECASE)
+    __re_manufacturer_pattern = re.compile(RE_MANUFACTURER_PATTERN, re.IGNORECASE | re.UNICODE)
+    __re_manufacturer_pattern_eng = re.compile(RE_MANUFACTURER_PATTERN_ENG, re.IGNORECASE | re.UNICODE)
 
     @classmethod
     def collect_manufacturer_patterns(cls, manufacturer):
@@ -342,9 +380,9 @@ class Brand(object):
         patterns = cls.collect_manufacturer_patterns(manufacturer)
         existing_brands = cls.find_by_surrogate_keys(*patterns)
         if len(existing_brands) > 1:
-            raise Exception(u"Found too many existing brands with the same surrogate keys as [%s]: %s" % (
-                manufacturer, u", ".join(b.name for b in existing_brands)
-            ))
+            raise Exception((u"Found too many existing brands with the same surrogate keys as [%s]: %s" % (
+                manufacturer, u", ".join(u'%s/%s' % (b.name, b.type) for b in existing_brands))).encode("utf-8")
+            )
 
         # Check for known patterns than findOrCreate brand with synonyms for determined patterns
         brand = cls.findOrCreate(manufacturer) if not existing_brands else list(existing_brands)[0]
