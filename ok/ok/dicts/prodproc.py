@@ -69,10 +69,10 @@ class Product(dict):
 
 class ProductFQNParser(object):
 
-    __pfqn_re_weight_full = re.compile(RE_TEMPLATE_PFQN_WEIGHT_FULL)
-    __pfqn_re_weight_short = re.compile(RE_TEMPLATE_PFQN_WEIGHT_SHORT)
-    __pfqn_re_fat = re.compile(RE_TEMPLATE_PFQN_FAT)
-    __pfqn_re_pack = re.compile(RE_TEMPLATE_PFQN_PACK)
+    __pfqn_re_weight_full = re.compile(RE_TEMPLATE_PFQN_WEIGHT_FULL, re.IGNORECASE | re.UNICODE)
+    __pfqn_re_weight_short = re.compile(RE_TEMPLATE_PFQN_WEIGHT_SHORT, re.IGNORECASE | re.UNICODE)
+    __pfqn_re_fat = re.compile(RE_TEMPLATE_PFQN_FAT, re.IGNORECASE | re.UNICODE)
+    __pfqn_re_pack = re.compile(RE_TEMPLATE_PFQN_PACK, re.IGNORECASE | re.UNICODE)
 
     def __init__(self):
         self.types = dict()
@@ -82,6 +82,7 @@ class ProductFQNParser(object):
         self.packs = dict()
 
         self.ignore_category_id_list = None
+        self.accept_category_id_list = None
         self.cats = Cats()
 
     def use_cats_from_csv(self, cat_csvname):
@@ -93,6 +94,21 @@ class ProductFQNParser(object):
             if id:
                 self.ignore_category_id_list = self.ignore_category_id_list or []
                 self.ignore_category_id_list.append(id)
+
+    def accept_cats(self, *accept_cat_names):
+        """
+        Only accept products under specified cats. If not specified accept all except under ignore_cats, if specified.
+        NOTE: If both accept_cats and ignore_cats are specified logic may be complicated for products under multiple
+        cats. E.g. even if product is accepted it can be ignored if it is under one of ignore cats.
+        @param accept_cat_names:
+        @return:
+        """
+        for cat_name in accept_cat_names:
+            id = self.cats.find_by_title(cat_name)
+            if id:
+                self.accept_category_id_list = self.accept_category_id_list or []
+                self.accept_category_id_list.append(id)
+
 
     @staticmethod
     def parse_pfqn(pfqn):
@@ -166,7 +182,13 @@ class ProductFQNParser(object):
                 item = ProductItem(prodrow)
                 pfqn = remove_nbsp(unicode(item["name"], "utf-8"))
 
+                if self.accept_category_id_list and not any(self.cats.is_product_under(item["id"], cat_id) for cat_id in self.accept_category_id_list if cat_id):
+                    # If accept cat list defined - only accept products under specified cats.
+                    # if list undefined - accept all
+                    continue
+
                 if self.ignore_category_id_list and any(self.cats.is_product_under(item["id"], cat_id) for cat_id in self.ignore_category_id_list if cat_id):
+                    # If ignore cat list defined - ignore products under specified cats
                     continue
 
                 manufacturer_brand = None
@@ -263,9 +285,46 @@ class ProductFQNParser(object):
                           (brand.name + u'|' + u'|'.join(brand.get_synonyms()),
                            product.sqn, product["brand"], product["product_manufacturer"])
 
-if __name__ == '__main__':
 
-    opts = argv[:]
+def main_parse_products(prodcsvname, cat_csvname=None, brands_in_csvname=None, brands_out_csvname=None, **kwargs):
+    pfqnParser = ProductFQNParser()
+    if cat_csvname:
+        pfqnParser.use_cats_from_csv(cat_csvname)
+        print "Categories've been loaded from '%s': %d" % (cat_csvname, len(pfqnParser.cats))
+    accept_cat_names = set(c.lower() for c in pfqnParser.cats.get_root_cats())
+    accept_cat_names -= {u"Алкогольные напитки".lower(), u"Скидки".lower()}
+    pfqnParser.accept_cats(*accept_cat_names)
+    if brands_in_csvname:
+        (total, new_brands) = Brand.from_csv(brands_in_csvname)
+        print "Brands and manufacturers 've been loaded from '%s': %d (of %d)" % (brands_in_csvname, new_brands, total)
+    print
+    print "================== Parse products - marketing brands part - from '%s' =====================" % prodcsvname
+    pfqnParser.from_csv(prodcsvname)
+    print
+    print "============== Parse products - manufacturers brands part - from '%s' =================" % prodcsvname
+    pfqnParser.process_manufacturers_as_brands()
+    enabled_brand_guesses = True
+    if enabled_brand_guesses:
+        print
+        print "============== Try guess about manufactures of no-brand products from '%s' ===============" % prodcsvname
+        no_brand_replacements = pfqnParser.guess_no_brand_manufacturers()
+        for repl in no_brand_replacements:
+            print "NO BRAND REPLACEMENT: OLD: %s, NEW: %s" % repl
+        print "NO BRAND GUESS REPLACEMENTS: %d" % len(no_brand_replacements)
+
+    # pfqnParser.guess_unknown_brands()
+    # ########### SAVE RESULTS ####################
+    if brands_out_csvname:
+        with open(brands_out_csvname, 'wb') as f:
+            f.truncate()
+            Brand.to_csv(f)
+        print "Stored %d brands to csv[%s]" % (len(Brand.all()), brands_out_csvname)
+
+    return pfqnParser
+
+
+def main_options(opts=argv):
+    opts = opts[:]
     prodcsvname = opts[1]
     toprint = "producttypes"  # default
     cat_csvname = None  # Don't pre-load categories by default
@@ -283,56 +342,41 @@ if __name__ == '__main__':
             brands_out_csvname = opts.pop(2)
         else:
             raise Exception("Unknown options")
+    return dict(
+        toprint=toprint,
+        prodcsvname=prodcsvname,
+        cat_csvname=cat_csvname,
+        brands_in_csvname=brands_in_csvname,
+        brands_out_csvname=brands_out_csvname
+    )
 
-    pfqnParser = ProductFQNParser()
+if __name__ == '__main__':
 
-    if cat_csvname is not None:
-        pfqnParser.use_cats_from_csv(cat_csvname)
-        print "Categories've been loaded from '%s': %d" % (cat_csvname, len(pfqnParser.cats))
-    pfqnParser.ignore_cats(u"Алкогольные напитки", u"Скидки")
+    config = main_options(argv)
 
-    if brands_in_csvname is not None:
-        (total, new_brands) = Brand.from_csv(brands_in_csvname)
-        print "Brands and manufacturers 've been loaded from '%s': %d (of %d)" % (brands_in_csvname, new_brands, total)
-
-    pfqnParser.from_csv(prodcsvname)
-    pfqnParser.process_manufacturers_as_brands()
-
-    enabled_brand_guesses = True
-    if enabled_brand_guesses:
-        no_brand_replacements = pfqnParser.guess_no_brand_manufacturers()
-        for repl in no_brand_replacements:
-            print "NO BRAND REPLACEMENT: OLD: %s, NEW: %s" % repl
-        print "NO BRAND GUESS REPLACEMENTS: %d" % len(no_brand_replacements)
-
-    # pfqnParser.guess_unknown_brands()
-
-    # ########### SAVE RESULTS ####################
-
-    if brands_out_csvname:
-        with open(brands_out_csvname, 'wb') as f:
-            f.truncate()
-            Brand.to_csv(f)
-        print "Stored %d brands to csv[%s]" % (len(Brand.all()), brands_out_csvname)
+    pfqnParser = main_parse_products(**config)
 
     # ############ PRINT RESULTS ##################
-
+    toprint = config["toprint"]
     if toprint == "brands":
         manufacturers = dict()
         """ @type manufacturers: dict of (unicode, list[unicode]) """
         for b in Brand.all():
-            print b
-            for m in b.manufacturers:
-                manufacturers[m] = manufacturers.get(m, [])
-                manufacturers[m].append(b.name)
-                manufacturers[m] += map(lambda s: "~"+s, b.synonyms)
+            # print b
+            for m in set(im.strip().lower() for im in b.manufacturers):
+                m_brand = Brand.findOrCreate_manufacturer_brand(m)
+                manufacturers[m_brand.name] = manufacturers.get(m_brand.name, [])
+                manufacturers[m_brand.name].append(b.name)
+                manufacturers[m_brand.name] += map(lambda s: "~"+s, b.get_synonyms(copy_related=False))
         print "Total brands: %d" % len(Brand.all())
         print
         for m, b in sorted(manufacturers.iteritems(), key=lambda t:t[0]):
             print "%s [%s]" % (m, "|".join(b))
-            for linked_m in [im for ib in b if Brand.exist(ib) for im in Brand.exist(ib).manufacturers
-                             if im != m and ib not in Brand.no_brand_names() and (ib != u"О'КЕЙ" or m == u"ООО \"О'КЕЙ\"")]:
-                print "    ==> %s [%s]" % (linked_m, "|".join(manufacturers[linked_m]))
+            for (linked_m, linked_b) in [(im.name, ib) for ib in b if Brand.exist(ib)
+                                         for im in set(map(Brand.findOrCreate_manufacturer_brand, Brand.exist(ib).manufacturers))
+                                         if im.name != m and ib not in Brand.no_brand_names() and
+                                                 (ib != u"О'КЕЙ" or m == u"ООО \"О'КЕЙ\"")]:
+                print "    =%s=> %s [%s]" % (linked_b, linked_m, "|".join(manufacturers[linked_m]))
         print "Total manufacturers: %d" % len(manufacturers)
 
     elif toprint == "producttypes":
