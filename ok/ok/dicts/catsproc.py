@@ -55,13 +55,33 @@ class Cats(dict):
         @param bool deep: if False only check specified category w/o go down
         @rtype: bool
         """
-        if not self.has_key(cat_id):
+        if cat_id not in self:
             raise Exception("No category with id[%s]" % cat_id)
         item = self[cat_id]
         result = product_id in item["products"]
         if not result and deep:
             result = any(self.is_product_under(product_id, sub_cat_id, True) for sub_cat_id in self.parentIdx.get(cat_id, []))
         return result
+
+    def get_parent_id(self, cat_id):
+        """
+        @param cat_id: Cat id
+        @return: parent cat id if parent category is present, otherwise -1 (ROOT_CAT_ITEM["id"])
+        """
+        if cat_id not in self:
+            raise Exception("No category with id[%s]" % cat_id)
+        return self[cat_id]["parentId"] or ROOT_CAT_ITEM["id"]
+
+    def get_root_cats(self):
+        """
+        @return: Return cats titles without parent or where parent is ROOT
+        @rtype: list[unicode]
+        """
+        return sorted(
+            cat_item["title"].decode("utf-8")
+            for cat_item in self.values()
+            if cat_item["id"] != ROOT_CAT_ITEM["id"] and self.get_parent_id(cat_item["id"]) == ROOT_CAT_ITEM["id"]
+        )
 
 if __name__ == '__main__':
     cat_csvname = argv[1]
