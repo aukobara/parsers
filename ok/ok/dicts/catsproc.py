@@ -2,7 +2,8 @@
 
 # Classes and procedures to process category data from crawler's CSV output
 import csv
-from sys import argv
+
+from ok.dicts import main_options
 from ok.items import CatItem, ROOT_CAT_ITEM
 
 
@@ -15,7 +16,10 @@ class Cats(dict):
             super(Cats, self).__init__(**kwargs)
 
         self.parentIdx = dict()
-        """ @type parentIIdx: dict of (str, list[str]) """
+        """@type: dict of (str, list[str]) """
+
+        self.product_to_cats = dict()
+        """@type: dict of (str, list[str])"""
 
     def from_csv(self, catcsvname):
         with open(catcsvname, "rb") as f:
@@ -33,6 +37,9 @@ class Cats(dict):
                     pIdx = self.parentIdx.get(item["parentId"], [])
                     pIdx.append(item["id"])
                     self.parentIdx[item["parentId"]] = pIdx
+                for product_id in item["products"]:
+                    self.product_to_cats[product_id] = self.product_to_cats.get(product_id, [])
+                    self.product_to_cats[product_id].append(item["id"])
 
     def find_by_title(self, title):
         """
@@ -40,7 +47,7 @@ class Cats(dict):
         If many matches 've been found - raise Exception
         @param unicode title: name
         @return Category ID or None
-        @rtype: unicode
+        @rtype: str
         """
         ids_found = [item["id"] for item in self.itervalues() if item["title"].decode("utf-8").lower() == title.lower()]
         if len(ids_found) > 1:
@@ -50,17 +57,34 @@ class Cats(dict):
     def is_product_under(self, product_id, cat_id, deep=True):
         """
         Check if product is in products list of specified category or any its descendant
-        @param unicode product_id: Product
-        @param unicode cat_id: parent Category
+        @param str product_id: Product
+        @param str cat_id: parent Category
         @param bool deep: if False only check specified category w/o go down
         @rtype: bool
         """
         if cat_id not in self:
             raise Exception("No category with id[%s]" % cat_id)
-        item = self[cat_id]
-        result = product_id in item["products"]
-        if not result and deep:
-            result = any(self.is_product_under(product_id, sub_cat_id, True) for sub_cat_id in self.parentIdx.get(cat_id, []))
+
+        result = False
+        cached_cat_ids = self.product_to_cats.get(product_id)
+        if cached_cat_ids:
+            ancestor_cats = cached_cat_ids[:]
+            root_id = ROOT_CAT_ITEM["id"]
+            while ancestor_cats:
+                # Check if c_cat is specified cat or it is ancestor
+                c_cat_id = ancestor_cats.pop()
+                if c_cat_id == cat_id:
+                    result = True
+                    break
+                c_parent_id = self.get_parent_id(c_cat_id)
+                if c_parent_id and c_parent_id != root_id:
+                    ancestor_cats.append(c_parent_id)
+
+        else:
+            item = self[cat_id]
+            result = product_id in item["products"]
+            if not result and deep:
+                result = any(self.is_product_under(product_id, sub_cat_id, True) for sub_cat_id in self.parentIdx.get(cat_id, []))
         return result
 
     def get_parent_id(self, cat_id):
@@ -84,7 +108,8 @@ class Cats(dict):
         )
 
 if __name__ == '__main__':
-    cat_csvname = argv[1]
+    config = main_options()
+    cat_csvname = config["cat_csvname"]
     cats = Cats()
     cats.from_csv(cat_csvname)
 

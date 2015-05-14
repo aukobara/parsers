@@ -29,6 +29,8 @@ ITEM_PIPELINES = {
 
 LOG_FORMATTER = "ok.settings.FixEncodingLogFormatter"
 
+DICT_BASELINE_DEFAULT_DIR = 'resources/data/ok/baseline150514'
+
 class FixEncodingLogFormatter(LogFormatter):
     def encodeDumpObject(self, obj):
         """
