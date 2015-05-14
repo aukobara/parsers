@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import csv
+from itertools import combinations
 import re
 import json
 from sys import argv
 
 from ok.items import ProductItem
-from ok.dicts import cleanup_token_str, remove_nbsp
+from ok.dicts import cleanup_token_str, remove_nbsp, main_options
 from ok.dicts.brand import Brand
 from ok.dicts.catsproc import Cats
 
@@ -21,7 +22,7 @@ RE_TEMPLATE_PFQN_PRE = u'(?:\s|\.|,|\()'
 RE_TEMPLATE_PFQN_POST = u'(?=\s|$|,|\.|\)|/)'
 
 RE_TEMPLATE_PFQN_WEIGHT_FULL = u'(\D)(' +\
-                u'(?:\d+(?:шт|пак)?\s*(?:х|\*|x|/))?\s*' +\
+                u'(?:фасовка\s+)?(?:\d+(?:шт|пак)?\s*(?:х|\*|x|/))?\s*' +\
                 u'(?:\d+(?:[\.,]\d+)?\s*)' +\
                 u'(?:кг|г|л|мл|гр)\.?' +\
                 u'(?:(?:х|\*|x|/)\d+(?:\s*шт)?)?' +\
@@ -35,11 +36,11 @@ RE_TEMPLATE_PFQN_FAT = u'(' + RE_TEMPLATE_PFQN_PRE + u')(' + RE_TEMPLATE_PFQN_FA
                        RE_TEMPLATE_PFQN_FAT_MDZH + u")" + RE_TEMPLATE_PFQN_POST
 
 RE_TEMPLATE_PFQN_PACK = u'(' + RE_TEMPLATE_PFQN_PRE + u')' \
-                        u'(т/пак|ж/б|ст/б|м/у|с/б|ст\\\б|ст/бут|пл/б|пл/бут|пэтбутылка|пл|кор\.?|коробка' + \
+                        u'(т/пак|ж/б|ст/б|м/у|с/б|ст\\\б|ст/бут|бут|пл/б|пл/бут|пэтбутылка|пл|кор\.?|коробка' + \
                         u'|\d*\s*пак\.?|\d+\s*таб|\d+\s*саше|\d+\s*пир(?:\.|амидок)?' + \
-                        u'|(?:\d+\s*)?шт\.?|упак\.?|уп\.?|в/у|п/э|жесть|' \
-                        u'вакуум|нарезка|нар|стакан|ванночка|в\sванночке|дой-пак|дой/пак|пюр-пак|пюр\sпак|' + \
-                        u'зип|зип-пакет|д/пак|п/пак|пл\.упаковка|пэт|пакет|туба|ведро|бан|лоток|фольга' + \
+                        u'|(?:\d+\s*)?шт\.?|упак\.?|уп\.?|в/у|п/э|жесть|круг|обрам' + \
+                        u'|вакуум|нарезка|нар|стакан|ванночка|в\sванночке|дой-пак|дой/пак|пюр-пак|пюр\sпак' + \
+                        u'|зип|зип-пакет|д/пак|п/пак|пл\.упаковка|пэт|пакет|туба|ведро|бан|лоток|фольга' + \
                         u'|фас(?:ованные)?|н/подл\.?|ф/пакет|0[.,]5|0[.,]75|0[.,]33)' + RE_TEMPLATE_PFQN_POST
 
 
@@ -90,10 +91,10 @@ class ProductFQNParser(object):
 
     def ignore_cats(self, *ignore_cat_names):
         for cat_name in ignore_cat_names:
-            id = self.cats.find_by_title(cat_name)
-            if id:
+            cat_id = self.cats.find_by_title(cat_name)
+            if cat_id:
                 self.ignore_category_id_list = self.ignore_category_id_list or []
-                self.ignore_category_id_list.append(id)
+                self.ignore_category_id_list.append(cat_id)
 
     def accept_cats(self, *accept_cat_names):
         """
@@ -104,10 +105,10 @@ class ProductFQNParser(object):
         @return:
         """
         for cat_name in accept_cat_names:
-            id = self.cats.find_by_title(cat_name)
-            if id:
+            cat_id = self.cats.find_by_title(cat_name)
+            if cat_id:
                 self.accept_category_id_list = self.accept_category_id_list or []
-                self.accept_category_id_list.append(id)
+                self.accept_category_id_list.append(cat_id)
 
 
     @staticmethod
@@ -267,6 +268,15 @@ class ProductFQNParser(object):
                     sqn_last_change = sqn_without_brand
         return no_brand_replacements
 
+    @staticmethod
+    def guess_one_sqn(sqn):
+        result = []
+        for brand in Brand.all(skip_no_brand=True):
+            sqn_without_brand = brand.replace_brand(sqn, add_new_synonyms=False)
+            if sqn != sqn_without_brand:
+                result.append((brand.name, sqn_without_brand))
+        return result
+
     def guess_unknown_brands(self):
         """
         Here try to guess about products where brand has not been detected after scan of brand and manufacturer.
@@ -278,12 +288,11 @@ class ProductFQNParser(object):
             if product["brand_detected"]:
                 continue
 
-            for brand in Brand.all(skip_no_brand=True):
-                sqn_without_brand = brand.replace_brand(product.sqn, add_new_synonyms=False)
-                if product.sqn != sqn_without_brand:
-                    print u"Brand [%s] may be in product type [sqn:%s, brand: %s, manufacturer: %s]" % \
-                          (brand.name + u'|' + u'|'.join(brand.get_synonyms()),
-                           product.sqn, product["brand"], product["product_manufacturer"])
+            guesses = self.guess_one_sqn(product)
+            for guess in guesses:
+                print u"Brand [%s] may be in product type [sqn:%s, brand: %s, manufacturer: %s]" % \
+                      (guess[0] + u'|' + u'|'.join(Brand.exist(guess[0]).get_synonyms()),
+                       product.sqn, product["brand"], product["product_manufacturer"])
 
 
 def main_parse_products(prodcsvname, cat_csvname=None, brands_in_csvname=None, brands_out_csvname=None, **kwargs):
@@ -321,34 +330,6 @@ def main_parse_products(prodcsvname, cat_csvname=None, brands_in_csvname=None, b
         print "Stored %d brands to csv[%s]" % (len(Brand.all()), brands_out_csvname)
 
     return pfqnParser
-
-
-def main_options(opts=argv):
-    opts = opts[:]
-    prodcsvname = opts[1]
-    toprint = "producttypes"  # default
-    cat_csvname = None  # Don't pre-load categories by default
-    brands_in_csvname = None  # Don't load brands by default
-    brands_out_csvname = None  # Don't save brands by default
-    while len(opts) > 2:
-        opt = opts.pop(2)
-        if opt == "-p" and len(opts) > 2:
-            toprint = opts.pop(2)
-        elif opt == "-c" and len(opts) > 2:
-            cat_csvname = opts.pop(2)
-        elif opt == "-in-brands-csv" and len(opts) > 2:
-            brands_in_csvname = opts.pop(2)
-        elif opt == "-out-brands-csv" and len(opts) > 2:
-            brands_out_csvname = opts.pop(2)
-        else:
-            raise Exception("Unknown options")
-    return dict(
-        toprint=toprint,
-        prodcsvname=prodcsvname,
-        cat_csvname=cat_csvname,
-        brands_in_csvname=brands_in_csvname,
-        brands_out_csvname=brands_out_csvname
-    )
 
 if __name__ == '__main__':
 
@@ -404,28 +385,72 @@ if __name__ == '__main__':
 
     elif toprint == "typetuples":
         types2 = dict()
+        sqn_all_set = set()
+
+        def add_tuple(t, p_id):
+            types2[t] = types2.get(t, [])
+            types2[t].append(p_id)
         for t, d in sorted(pfqnParser.types.iteritems(), key=lambda t: t[1]["sqn"].split(" ", 1)[0]):
+            sqn_all_set.add(d["sqn"])
             words = re.split(u'\s+', d["sqn"])
-            first_word = words.pop(0)
-            if not words:
-                words.append(u'')
-            buf = ''
+            words1 = []
+            buf = u''
             for w in words:
-                if w or len(words) == 1:
+                if w:
                     if w in [u'в', u'с', u'со', u'из', u'для', u'и', u'на', u'без', u'к', u'не']:
                         buf = w  # join proposition to the next word
                         continue
-                    w = buf + u' ' + w if buf else w
-                    types2[(first_word, w)] = types2.get((first_word, w), 0) + 1
+                    words1.append(buf + u' ' + w if buf else w)
                     buf = u''
+            if buf: words1.append(buf)
+            first_word = words1.pop(0)
+            if not words1:
+                add_tuple((first_word, u''), d.sqn)
+            else:
+                add_tuple((first_word, u''), d.sqn)
+                for w in words1:
+                    add_tuple((first_word, w), d.sqn)
+                for w1, w2 in combinations(words1, 2):
+                    add_tuple((first_word, u'%s %s' % (w1, w2)), d.sqn)
+                    add_tuple((u'%s %s' % (first_word, w1), w2), d.sqn)
 
+        MIN_TUPLE_CAPACITY = 4  # Number of SQNs covered by word combination
+        tup_rel = dict()
+        """ """
+        i_count = 0
+        for t1, t2 in combinations([it for it in types2.iteritems() if len(it[1]) >= MIN_TUPLE_CAPACITY], 2):
+            s1 = set(t1[1])
+            s2 = set(t2[1])
+            if s1.issubset(s2):
+                tup_rel[t2[0]] = tup_rel.get(t2[0], [])
+                if len(s1) < len(s2):
+                    tup_rel[t2[0]].append("contains " + u'%s + %s' % (t1[0][0], t1[0][1]))
+                else:
+                    tup_rel[t2[0]].append("equals " + u'%s + %s' % (t1[0][0], t1[0][1]))
+                    tup_rel[t1[0]] = tup_rel.get(t1[0], [])
+                    tup_rel[t1[0]].append("equals " + u'%s + %s' % (t2[0][0], t2[0][1]))
+            elif s2.issubset(s1):
+                tup_rel[t1[0]] = tup_rel.get(t1[0], [])
+                tup_rel[t1[0]].append("contains " + u'%s + %s' % (t2[0][0], t2[0][1]))
+            i_count += 1
+            if i_count % 10000 == 0: print u'.',
+            if i_count % 1000000 == 0: print i_count
+        print
+        """ """
         num_tuples = dict()
-        # for t, c in sorted(types2.iteritems(), key=lambda k: types2[k[0]], reverse=True):
-        for t, c in sorted(types2.iteritems(), key=lambda k: k[0][0]):
-            if c <= 1: continue
-            print "Tuple %s + %s: %d" % (t[0], t[1], c)
+        sqn_selected_set = set()
+        for t, p_ids in sorted(types2.iteritems(), key=lambda k: u' '.join(k[0]).replace(u'+', u'')):
+            c = len(p_ids)
+            if c < MIN_TUPLE_CAPACITY: continue
+            print "Tuple %s + %s: %d" % (t[0], t[1], c),
+            if t in tup_rel:
+                print u' *** %s' % u', '.join(tup_rel[t])
+            else:
+                print
             num_tuples[c] = num_tuples.get(c, 0) + 1
+            sqn_selected_set.update(p_ids)
         print "Total tuples: %d" % sum(num_tuples.values())
+        print "Total SQN: %d (%d%%) selected of %d total" % (len(sqn_selected_set), 100.0*len(sqn_selected_set)/len(sqn_all_set), len(sqn_all_set))
         for num in sorted(num_tuples.iterkeys(), reverse=True):
             print "    %d: %d" % (num, num_tuples[num])
 
