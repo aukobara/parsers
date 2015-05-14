@@ -11,6 +11,10 @@ from ok.dicts import cleanup_token_str, remove_nbsp, main_options
 from ok.dicts.brand import Brand
 from ok.dicts.catsproc import Cats
 
+TYPE_TUPLE_RELATION_EQUALS = u"equals"
+TYPE_TUPLE_RELATION_CONTAINS = u"contains"
+TYPE_TUPLE_RELATION_SUBSET_OF = u"subset_of"
+TYPE_TUPLE_MIN_CAPACITY = 4  # Number of SQNs covered by word combination
 
 ATTRIBUTE_BRAND = u"Бренд:"
 ATTRIBUTE_MANUFACTURER = u"Изготовитель:"
@@ -44,6 +48,12 @@ RE_TEMPLATE_PFQN_PACK = u'(' + RE_TEMPLATE_PFQN_PRE + u')' \
                         u'|фас(?:ованные)?|н/подл\.?|ф/пакет|0[.,]5|0[.,]75|0[.,]33)' + RE_TEMPLATE_PFQN_POST
 
 
+class ProductType(tuple):
+
+    def __new__(cls, *args, **kwargs):
+        return tuple.__new__(cls, args)
+
+
 class Product(dict):
 
     @property
@@ -68,6 +78,7 @@ class Product(dict):
     def sqn(self, sqn):
         self["sqn"] = sqn
 
+
 class ProductFQNParser(object):
 
     __pfqn_re_weight_full = re.compile(RE_TEMPLATE_PFQN_WEIGHT_FULL, re.IGNORECASE | re.UNICODE)
@@ -85,6 +96,7 @@ class ProductFQNParser(object):
         self.ignore_category_id_list = None
         self.accept_category_id_list = None
         self.cats = Cats()
+        self.root_types = set()
 
     def use_cats_from_csv(self, cat_csvname):
         self.cats.from_csv(cat_csvname)
@@ -294,6 +306,118 @@ class ProductFQNParser(object):
                       (guess[0] + u'|' + u'|'.join(Brand.exist(guess[0]).get_synonyms()),
                        product.sqn, product["brand"], product["product_manufacturer"])
 
+    def get_sqn_set(self):
+        return set(p.sqn for p in self.types.values())
+
+    def collect_type_tuples(self):
+        """
+        Return dict with tuples for combinations of tokens in each parsed sqn. List of source sqns will be as value.
+        Join propositions to next word to treat them as single token
+        If multiple parsed products with identical sqns are present all them will be in the value list as duplicates.
+        It is required to estimate "capacity" of tuple
+        @rtype: dict of (ProductType, list[unicode])
+        """
+        result = dict()
+
+        def add_tuple(t, p_id):
+            result[t] = result.get(t, [])
+            result[t].append(p_id)
+
+        for t, d in sorted(self.types.iteritems(), key=lambda t: t[1]["sqn"].split(" ", 1)[0]):
+            words = re.split(u'\s+', d["sqn"])
+            words1 = []
+            buf = u''
+            for w in words:
+                if w:
+                    if w in [u'в', u'с', u'со', u'из', u'для', u'и', u'на', u'без', u'к', u'не', u'де']:
+                        buf = w  # join proposition to the next word
+                        continue
+                    if buf:
+                        # Add both word variants with proposition and w/o.
+                        # Proposition is added itself as well
+                        words1.append(buf + u' ' + w)
+                        # words1.append(buf)
+                    words1.append(w)
+                    buf = u''
+            if buf: words1.append(buf)
+
+            first_word = words1.pop(0)
+            add_tuple(ProductType(first_word, u''), d.sqn)
+            if words1:
+                for w in words1:
+                    add_tuple(ProductType(first_word, w), d.sqn)
+                for w1, w2 in combinations(words1, 2):
+                    if w1 + u' ' in w2 or u' ' + w1 in w2 or\
+                       w2 + u' ' in w1 or u' ' + w2 in w1:
+                        # Do not join same world and form with proposition
+                        continue
+                    add_tuple(ProductType(first_word, u'%s %s' % (w1, w2)), d.sqn)
+                    add_tuple(ProductType(u'%s %s' % (first_word, w1), w2), d.sqn)
+        return result
+
+    @staticmethod
+    def calculate_type_tuples_relationship(type_tuples, verbose=False):
+        """
+        Calculate all non-repeatable combinations of type tuples with capacity not less than MIN_TUPLE_CAPACITY
+        and check if one tuple is equals or contains (in terms of sqn set) another.
+        @param dict of (tuple of (unicode,unicode), list[unicode]) type_tuples: from collect_type_tuples()
+        @param bool verbose: type progress if specified - useful for testing of low capacity huge combinations
+        @return: dict of tuples -> list of relationships in text format
+        @rtype: tuple of (dict of (ProductType, list[unicode]), set[ProductType])
+        """
+        result = dict()
+        root_types = set()
+
+        def add_result(type1, rel1, type2, rel2):
+            result[type1] = result.get(type1, [])
+            result[type2] = result.get(type2, [])
+            result[type1].append(u'%s %s + %s' % (rel1, type2[0], type2[1]))
+            result[type2].append(u'%s %s + %s' % (rel2, type1[0], type1[1]))
+            type1_already_subset = any(TYPE_TUPLE_RELATION_SUBSET_OF in rel for rel in result[type1])
+            type2_already_subset = any(TYPE_TUPLE_RELATION_SUBSET_OF in rel for rel in result[type2])
+            if rel1 == TYPE_TUPLE_RELATION_CONTAINS:
+                if type2 in root_types:
+                    root_types.remove(type2)
+                if not type1_already_subset:
+                    root_types.add(type1)
+            elif rel2 == TYPE_TUPLE_RELATION_CONTAINS:
+                if type1 in root_types:
+                    root_types.remove(type1)
+                if not type2_already_subset:
+                    root_types.add(type2)
+
+        i_count = 0
+        for t1, t2 in combinations([it for it in type_tuples.iteritems() if len(it[1]) >= TYPE_TUPLE_MIN_CAPACITY], 2):
+            s1 = set(t1[1])
+            s2 = set(t2[1])
+            if s1.issubset(s2):
+                if len(s1) < len(s2):
+                    add_result(t1[0], TYPE_TUPLE_RELATION_SUBSET_OF, t2[0], TYPE_TUPLE_RELATION_CONTAINS)
+                else:
+                    add_result(t1[0], TYPE_TUPLE_RELATION_EQUALS, t2[0], TYPE_TUPLE_RELATION_EQUALS)
+            elif s2.issubset(s1):
+                add_result(t1[0], TYPE_TUPLE_RELATION_CONTAINS, t2[0], TYPE_TUPLE_RELATION_SUBSET_OF)
+            i_count += 1
+            if verbose and i_count % 10000 == 0: print u'.',
+            if verbose and i_count % 1000000 == 0: print i_count
+        if verbose: print
+
+        for t in type_tuples:
+            if not any(TYPE_TUPLE_RELATION_SUBSET_OF in rel or TYPE_TUPLE_RELATION_CONTAINS in rel for rel in result.get(t, [])):
+                root_types.add(t)
+
+        return result, root_types
+
+    def get_type_tuples(self, verbose=False):
+        """
+        @return dict of ProductTypes, ProductType's relations and set of root ProductTypes
+        @rtype: tuple of (dict of (ProductType, list[unicode]), dict of (ProductType, list[unicode]), set[ProductType])
+        """
+        # TODO Cache everything here until self.types is changed
+        type_tuples = self.collect_type_tuples()
+        (type_tuples_rel, root_types) = self.calculate_type_tuples_relationship(type_tuples, verbose)
+        return type_tuples, type_tuples_rel, root_types
+
 
 def main_parse_products(prodcsvname, cat_csvname=None, brands_in_csvname=None, brands_out_csvname=None, **kwargs):
     pfqnParser = ProductFQNParser()
@@ -331,142 +455,164 @@ def main_parse_products(prodcsvname, cat_csvname=None, brands_in_csvname=None, b
 
     return pfqnParser
 
-if __name__ == '__main__':
 
-    config = main_options(argv)
+def print_brands():
+    manufacturers = dict()
+    """ @type manufacturers: dict of (unicode, list[unicode]) """
+    for b in Brand.all():
+        # print b
+        for m in set(im.strip().lower() for im in b.manufacturers):
+            m_brand = Brand.findOrCreate_manufacturer_brand(m)
+            manufacturers[m_brand.name] = manufacturers.get(m_brand.name, [])
+            manufacturers[m_brand.name].append(b.name)
+            manufacturers[m_brand.name] += map(lambda s: "~" + s, b.get_synonyms(copy_related=False))
+    print "Total brands: %d" % len(Brand.all())
+    print
+    for m, b in sorted(manufacturers.iteritems(), key=lambda t: t[0]):
+        print "%s [%s]" % (m, "|".join(b))
+        for (linked_m, linked_b) in [(im.name, ib) for ib in b if Brand.exist(ib)
+                                     for im in
+                                     set(map(Brand.findOrCreate_manufacturer_brand, Brand.exist(ib).manufacturers))
+                                     if im.name != m and ib not in Brand.no_brand_names() and
+                                             (ib != u"О'КЕЙ" or m == u"ООО \"О'КЕЙ\"")]:
+            print "    =%s=> %s [%s]" % (linked_b, linked_m, "|".join(manufacturers[linked_m]))
+    print "Total manufacturers: %d" % len(manufacturers)
 
-    pfqnParser = main_parse_products(**config)
 
-    # ############ PRINT RESULTS ##################
-    toprint = config["toprint"]
-    if toprint == "brands":
-        manufacturers = dict()
-        """ @type manufacturers: dict of (unicode, list[unicode]) """
-        for b in Brand.all():
-            # print b
-            for m in set(im.strip().lower() for im in b.manufacturers):
-                m_brand = Brand.findOrCreate_manufacturer_brand(m)
-                manufacturers[m_brand.name] = manufacturers.get(m_brand.name, [])
-                manufacturers[m_brand.name].append(b.name)
-                manufacturers[m_brand.name] += map(lambda s: "~"+s, b.get_synonyms(copy_related=False))
-        print "Total brands: %d" % len(Brand.all())
-        print
-        for m, b in sorted(manufacturers.iteritems(), key=lambda t:t[0]):
-            print "%s [%s]" % (m, "|".join(b))
-            for (linked_m, linked_b) in [(im.name, ib) for ib in b if Brand.exist(ib)
-                                         for im in set(map(Brand.findOrCreate_manufacturer_brand, Brand.exist(ib).manufacturers))
-                                         if im.name != m and ib not in Brand.no_brand_names() and
-                                                 (ib != u"О'КЕЙ" or m == u"ООО \"О'КЕЙ\"")]:
-                print "    =%s=> %s [%s]" % (linked_b, linked_m, "|".join(manufacturers[linked_m]))
-        print "Total manufacturers: %d" % len(manufacturers)
+def print_product_types(pfqn_parser):
+    ptypes_count = 0
+    nobrand_count = 0
+    m_count = dict()
+    # for t, d in sorted(types.iteritems(), key=lambda t: t[1]["sqn"].split(" ", 1)[0]):
+    for t, d in sorted(pfqn_parser.types.iteritems(), key=lambda t: t[1]["product_manufacturer"]):
+        if not d["brand_detected"] and (d["brand"] in Brand.no_brand_names()):
+            # print '%s   => brand: %s, prod_man: %s, weight: %s, fat: %s, pack: %s, fqn: %s' % \
+            # (d["sqn"], d["brand"], d["product_manufacturer"], d["weight"], d["fat"], d["pack"], t)
+            nobrand_count += 1
 
-    elif toprint == "producttypes":
-        ptypes_count = 0
-        nobrand_count = 0
-        m_count = dict()
-        # for t, d in sorted(types.iteritems(), key=lambda t: t[1]["sqn"].split(" ", 1)[0]):
-        for t, d in sorted(pfqnParser.types.iteritems(), key=lambda t: t[1]["product_manufacturer"]):
-            if not d["brand_detected"] and (d["brand"] in Brand.no_brand_names()):
-                # print '%s   => brand: %s, prod_man: %s, weight: %s, fat: %s, pack: %s, fqn: %s' % \
-                #       (d["sqn"], d["brand"], d["product_manufacturer"], d["weight"], d["fat"], d["pack"], t)
-                nobrand_count += 1
+        elif not d["brand_detected"]:
+            print '%s   => brand: %s, prod_man: %s, weight: %s, fat: %s, pack: %s, fqn: %s' % \
+                  (d["sqn"], d["brand"], d["product_manufacturer"], d["weight"], d["fat"], d["pack"], t)
+            m_count[d["brand"]] = m_count.get(d["brand"], 0)
+            m_count[d["brand"]] += 1
+            ptypes_count += 1
+    print
+    print "Total product types: %d [notintype: %d, nobrand: %d]" % (len(pfqn_parser.types), ptypes_count, nobrand_count)
+    print
+    for m, c in sorted(m_count.iteritems(), key=lambda t: t[1], reverse=True):
+        print "%d : %s" % (c, m)
 
-            elif not d["brand_detected"]:
-                print '%s   => brand: %s, prod_man: %s, weight: %s, fat: %s, pack: %s, fqn: %s' % \
-                     (d["sqn"], d["brand"], d["product_manufacturer"], d["weight"], d["fat"], d["pack"], t)
-                m_count[d["brand"]] = m_count.get(d["brand"], 0)
-                m_count[d["brand"]] += 1
-                ptypes_count += 1
-        print
-        print "Total product types: %d [notintype: %d, nobrand: %d]" % (len(pfqnParser.types), ptypes_count, nobrand_count)
-        print
-        for m, c in sorted(m_count.iteritems(), key=lambda t:t[1], reverse=True):
-            print "%d : %s" % (c, m)
 
-    elif toprint == "typetuples":
-        types2 = dict()
-        sqn_all_set = set()
+def print_type_tuples(pfqn_parser):
+    """
+    @param ProductFQNParser pfqn_parser: parser
+    """
+    sqn_all_set = pfqn_parser.get_sqn_set()
+    (type_tuples, type_tuples_rel, root_types) = pfqn_parser.get_type_tuples(verbose=True)
 
-        def add_tuple(t, p_id):
-            types2[t] = types2.get(t, [])
-            types2[t].append(p_id)
-        for t, d in sorted(pfqnParser.types.iteritems(), key=lambda t: t[1]["sqn"].split(" ", 1)[0]):
-            sqn_all_set.add(d["sqn"])
-            words = re.split(u'\s+', d["sqn"])
-            words1 = []
-            buf = u''
-            for w in words:
-                if w:
-                    if w in [u'в', u'с', u'со', u'из', u'для', u'и', u'на', u'без', u'к', u'не']:
-                        buf = w  # join proposition to the next word
-                        continue
-                    words1.append(buf + u' ' + w if buf else w)
-                    buf = u''
-            if buf: words1.append(buf)
-            first_word = words1.pop(0)
-            if not words1:
-                add_tuple((first_word, u''), d.sqn)
-            else:
-                add_tuple((first_word, u''), d.sqn)
-                for w in words1:
-                    add_tuple((first_word, w), d.sqn)
-                for w1, w2 in combinations(words1, 2):
-                    add_tuple((first_word, u'%s %s' % (w1, w2)), d.sqn)
-                    add_tuple((u'%s %s' % (first_word, w1), w2), d.sqn)
+    num_tuples = dict()
+    sqn_selected_set = set()
 
-        MIN_TUPLE_CAPACITY = 4  # Number of SQNs covered by word combination
-        tup_rel = dict()
-        """ """
-        i_count = 0
-        for t1, t2 in combinations([it for it in types2.iteritems() if len(it[1]) >= MIN_TUPLE_CAPACITY], 2):
-            s1 = set(t1[1])
-            s2 = set(t2[1])
-            if s1.issubset(s2):
-                tup_rel[t2[0]] = tup_rel.get(t2[0], [])
-                if len(s1) < len(s2):
-                    tup_rel[t2[0]].append("contains " + u'%s + %s' % (t1[0][0], t1[0][1]))
-                else:
-                    tup_rel[t2[0]].append("equals " + u'%s + %s' % (t1[0][0], t1[0][1]))
-                    tup_rel[t1[0]] = tup_rel.get(t1[0], [])
-                    tup_rel[t1[0]].append("equals " + u'%s + %s' % (t2[0][0], t2[0][1]))
-            elif s2.issubset(s1):
-                tup_rel[t1[0]] = tup_rel.get(t1[0], [])
-                tup_rel[t1[0]].append("contains " + u'%s + %s' % (t2[0][0], t2[0][1]))
-            i_count += 1
-            if i_count % 10000 == 0: print u'.',
-            if i_count % 1000000 == 0: print i_count
-        print
-        """ """
-        num_tuples = dict()
-        sqn_selected_set = set()
-        for t, p_ids in sorted(types2.iteritems(), key=lambda k: u' '.join(k[0]).replace(u'+', u'')):
+    def print_type_descendant_tuples(desc_type_tuples, indent=u''):
+        for t in sorted(desc_type_tuples, key=lambda k: u' '.join(k[0]).replace(u'+', u'')):
+            p_ids = type_tuples[t]
             c = len(p_ids)
-            if c < MIN_TUPLE_CAPACITY: continue
-            print "Tuple %s + %s: %d" % (t[0], t[1], c),
-            if t in tup_rel:
-                print u' *** %s' % u', '.join(tup_rel[t])
-            else:
-                print
+            if c < TYPE_TUPLE_MIN_CAPACITY: continue
+            print "%sTuple[%s] %s + %s: %d" % (indent, 'ROOT' if t in root_types else '', t[0], t[1], c),
             num_tuples[c] = num_tuples.get(c, 0) + 1
             sqn_selected_set.update(p_ids)
-        print "Total tuples: %d" % sum(num_tuples.values())
-        print "Total SQN: %d (%d%%) selected of %d total" % (len(sqn_selected_set), 100.0*len(sqn_selected_set)/len(sqn_all_set), len(sqn_all_set))
-        for num in sorted(num_tuples.iterkeys(), reverse=True):
-            print "    %d: %d" % (num, num_tuples[num])
+
+            child_types = []
+            """@type: list[ProductType] """
+            if t in type_tuples_rel:
+                print u' *** ',
+                is_first_rel = True
+                for rel in type_tuples_rel[t]:
+                    if TYPE_TUPLE_RELATION_EQUALS in rel:
+                        # Print equals relations only, because other are in structure
+                        if not is_first_rel: print u', ',
+                        print rel,
+                    is_first_rel = False
+                    contains = re.findall(TYPE_TUPLE_RELATION_CONTAINS + u'\s+(.*)\s+\+\s+(.*)\s*', rel)
+                    if contains:
+                        child_types.append(ProductType(*contains[0]))
+            print
+
+            if child_types:
+                immediate_child_types = []
+                for child in child_types:
+                    # Do not recurse grand-children
+                    child_ancestors = [re.findall(TYPE_TUPLE_RELATION_SUBSET_OF + u'\s+(.*)\s+\+\s+(.*)\s*', rel)
+                                       for rel in type_tuples_rel[child]]
+                    if not any(anc and anc[0] in child_types for anc in child_ancestors):
+                        # For equal types recurse only one, i.e. ignore if equals has been added already
+                        child_equals = [re.findall(TYPE_TUPLE_RELATION_EQUALS + u'\s+(.*)\s+\+\s+(.*)\s*', rel)
+                                           for rel in type_tuples_rel[child]]
+                        if not any(eqls and eqls[0] in immediate_child_types for eqls in child_equals):
+                            immediate_child_types.append(child)
+
+                print_type_descendant_tuples(immediate_child_types, indent + u'    ')
+
+    print_type_descendant_tuples(root_types)
+
+    print "Total tuples: selected %d of %d total" % (sum(num_tuples.values()), len(type_tuples))
+    print "Total SQN: %d (%d%%) of %d total" % (
+        len(sqn_selected_set), 100.0 * len(sqn_selected_set) / len(sqn_all_set), len(sqn_all_set))
+
+    # Non-selected tuples
+    print
+    print "NON SELECTED TUPLES:"
+    sqn_unselected_set = set()
+    unselected_count = 0
+    for t in sorted(root_types, key=lambda k: u' '.join(k[0]).replace(u'+', u'')):
+        if t[1] or len(type_tuples[t]) >= TYPE_TUPLE_MIN_CAPACITY: continue
+        # Print only core tuples
+        print "Tuple[*] %s + %s: %d" % (t[0], t[1], len(type_tuples[t]))
+        unselected_count += 1
+        sqn_unselected_set.update(type_tuples[t])
+    print "Total tuples (w/ unselected): %d of %d total" % (sum(num_tuples.values()) + unselected_count, len(type_tuples))
+    print "Total SQN (w/ unselected): %d (%d%%) selected of %d total" % (
+        len(sqn_selected_set) + len(sqn_unselected_set),
+        100.0 * (len(sqn_selected_set) + len(sqn_unselected_set)) / len(sqn_all_set), len(sqn_all_set))
+
+
+    for num in sorted(num_tuples.iterkeys(), reverse=True):
+        print "    %d: %d" % (num, num_tuples[num])
+
+
+def print_weights(pfqn_parser):
+    for dict_i in (pfqn_parser.weights, pfqn_parser.fats, pfqn_parser.packs):
+        print "#" * 20
+        print "\r\n".join(["%s [%d]" % (k, v) for k, v in sorted(dict_i.iteritems(), key=lambda t: t[1], reverse=True)])
+    print "NO-WEIGHT Product Types " + "=" * 60
+    c = 0
+    for t, d in pfqn_parser.types.iteritems():
+        if not d["weight"]:
+            print t,
+            print '     => fat: %s, pack: %s' % (d["fat"], d["pack"]) if d["fat"] or d["pack"] else ""
+            c += 1
+    print "Total: %d" % c
+
+
+if __name__ == '__main__':
+
+    __config = main_options(argv)
+
+    __pfqnParser = main_parse_products(**__config)
+
+    # ############ PRINT RESULTS ##################
+    toprint = __config["toprint"]
+    if toprint == "brands":
+        print_brands()
+
+    elif toprint == "producttypes":
+        print_product_types(__pfqnParser)
+
+    elif toprint == "typetuples":
+        print_type_tuples(__pfqnParser)
 
     elif toprint == "weights":
-        for dict_i in (pfqnParser.weights, pfqnParser.fats, pfqnParser.packs):
-            print "#" * 20
-            print "\r\n".join(["%s [%d]" % (k, v) for k,v in sorted(dict_i.iteritems(), key=lambda t:t[1], reverse=True)])
-
-        print "NO-WEIGHT Product Types " + "=" *60
-        c = 0
-        for t, d in pfqnParser.types.iteritems():
-            if not d["weight"]:
-                print t,
-                print '     => fat: %s, pack: %s' % (d["fat"], d["pack"]) if d["fat"] or d["pack"] else ""
-                c+=1
-        print "Total: %d" % c
+        print_weights(__pfqnParser)
 
     else:
         raise Exception("Unknown print type [%s]" % toprint)

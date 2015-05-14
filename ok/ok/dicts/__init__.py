@@ -17,8 +17,8 @@ def cleanup_token_str(s, ext_symbols=None):
     @param list[unicode] ext_symbols: list of additional symbols to clean
     @rtype: unicode
     """
-    ext = '|'.join(ext_symbols) if ext_symbols else None
-    return re.sub(u'(?:\s|"|,|\.|«|»|“|”|\(|\)|\?|\+' + ('|' + ext if ext else '') + ')+', u' ', s).strip()
+    ext = u'|'.join(ext_symbols) if ext_symbols else None
+    return re.sub(u'(?:\s|"|,|\.|«|»|“|”|\(|\)|\?|\+' + (u'|' + ext if ext else u'') + ')+', u' ', s).strip()
 
 
 def isenglish(s):
@@ -89,7 +89,7 @@ def main_options(opts=argv):
         elif not opt.startswith('-') and not prodcsvname:
             prodcsvname = opt
         else:
-            raise Exception("Unknown options")
+            raise Exception((u"Unknown options: %s" % opt).encode("utf-8"))
     # Defaults
     toprint = toprint or "producttypes"
     baseline_dir = baseline_dir or DICT_BASELINE_DEFAULT_DIR
