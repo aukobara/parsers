@@ -430,20 +430,23 @@ class Brand(object):
 
     @staticmethod
     def to_csv(csv_filename):
-        header = ['name', 'type', 'no_brand', 'generic', 'synonyms', 'manufacturers', 'linked']  # 'type','linked'
-        writer = csv.DictWriter(csv_filename, header)
-        writer.writeheader()
-        for b in Brand.all():
-            if b.type == Brand.TYPE_DUPLICATE:
-                continue
-            writer.writerow({'name': b.name.encode("utf-8"),
-                             'type': b.type.encode("utf-8"),
-                             'no_brand': b.no_brand,
-                             'generic': b.generic_type.encode("utf-8") if b.generic_type else None,
-                             'synonyms': u'|'.join(sorted(syn.lower() for syn in b.synonyms)).encode("utf-8"),
-                             'manufacturers': u'|'.join(sorted(b.manufacturers)).encode("utf-8"),
-                             'linked': u'|'.join(sorted(b.linked_brands)).encode("utf-8")
-                             })
+        with open(csv_filename, 'wb') as f:
+            f.truncate()
+
+            header = ['name', 'type', 'no_brand', 'generic', 'synonyms', 'manufacturers', 'linked']  # 'type','linked'
+            writer = csv.DictWriter(f, header)
+            writer.writeheader()
+            for b in Brand.all():
+                if b.type == Brand.TYPE_DUPLICATE:
+                    continue
+                writer.writerow({'name': b.name.encode("utf-8"),
+                                 'type': b.type.encode("utf-8"),
+                                 'no_brand': b.no_brand,
+                                 'generic': b.generic_type.encode("utf-8") if b.generic_type else None,
+                                 'synonyms': u'|'.join(sorted(syn.lower() for syn in b.synonyms)).encode("utf-8"),
+                                 'manufacturers': u'|'.join(sorted(b.manufacturers)).encode("utf-8"),
+                                 'linked': u'|'.join(sorted(b.linked_brands)).encode("utf-8")
+                                 })
         pass
 
     @staticmethod

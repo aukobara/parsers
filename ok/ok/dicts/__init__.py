@@ -74,6 +74,8 @@ def main_options(opts=argv):
     cat_csvname = None
     brands_in_csvname = None
     brands_out_csvname = None  # Don't save brands by default
+    products_meta_in_csvname = None  # Don't load meta types by default
+    products_meta_out_csvname = None  # Don't save meta types by default
     while len(opts) > 1:
         opt = opts.pop(1)
         if opt == "-p" and len(opts) > 1:
@@ -84,6 +86,10 @@ def main_options(opts=argv):
             brands_in_csvname = opts.pop(1)
         elif opt == "-out-brands-csv" and len(opts) > 1:
             brands_out_csvname = opts.pop(1)
+        elif opt == "-in-products-meta-csv" and len(opts) > 1:
+            products_meta_in_csvname = opts.pop(1)
+        elif opt == "-out-products-meta-csv" and len(opts) > 1:
+            products_meta_out_csvname = opts.pop(1)
         elif opt == "-base-dir" and len(opts) > 1:
             baseline_dir = opts.pop(1)
         elif not opt.startswith('-') and not prodcsvname:
@@ -101,5 +107,7 @@ def main_options(opts=argv):
         prodcsvname=prodcsvname,
         cat_csvname=cat_csvname,
         brands_in_csvname=brands_in_csvname,
-        brands_out_csvname=brands_out_csvname
+        brands_out_csvname=brands_out_csvname,
+        products_meta_in_csvname=products_meta_in_csvname,
+        products_meta_out_csvname=products_meta_out_csvname
     )
