@@ -1,22 +1,17 @@
 # -*- coding: utf-8 -*-
 
 import csv
-from itertools import combinations
 import re
 import json
 from sys import argv
+from ok.dicts.product_type import ProductTypeDict, TYPE_TUPLE_MIN_CAPACITY, TYPE_TUPLE_RELATION_EQUALS, \
+    TYPE_TUPLE_RELATION_SIMILAR, TYPE_TUPLE_RELATION_CONTAINS, TYPE_TUPLE_RELATION_SUBSET_OF
 
 from ok.items import ProductItem
 from ok.dicts import cleanup_token_str, remove_nbsp, main_options
 from ok.dicts.brand import Brand
 from ok.dicts.catsproc import Cats
 
-TYPE_TUPLE_PROPOSITION_LIST = (u'в', u'с', u'со', u'из', u'для', u'и', u'на', u'без', u'к', u'не', u'де')
-
-TYPE_TUPLE_RELATION_EQUALS = u"equals"
-TYPE_TUPLE_RELATION_CONTAINS = u"contains"
-TYPE_TUPLE_RELATION_SUBSET_OF = u"subset_of"
-TYPE_TUPLE_MIN_CAPACITY = 4  # Number of SQNs covered by word combination
 
 ATTRIBUTE_BRAND = u"Бренд:"
 ATTRIBUTE_MANUFACTURER = u"Изготовитель:"
@@ -50,107 +45,6 @@ RE_TEMPLATE_PFQN_PACK = u'(' + RE_TEMPLATE_PFQN_PRE + u')' \
                         u'|фас(?:ованные)?|н/подл\.?|ф/пакет|0[.,]5|0[.,]75|0[.,]33)' + RE_TEMPLATE_PFQN_POST
 
 
-class ProductType(tuple):
-
-    class Relation(tuple):
-
-        @staticmethod
-        def __new__(cls, *args, **kwargs):
-            (from_type, to_type, rel_type) = args
-            return tuple.__new__(cls, (from_type, to_type, rel_type))
-
-        @property
-        def from_type(self): return self[0]
-        @property
-        def to_type(self): return self[1]
-        @property
-        def rel_type(self): return self[2]
-
-        def __unicode__(self):
-            return u'%s %s' % (self.rel_type, self.to_type)
-
-        def __str__(self):
-            return self.__unicode__().encode("utf-8")
-
-    # TODO: refactor to ise multi item tuples instead of string compositions
-    def __new__(cls, *args, **kwargs):
-        self = tuple.__new__(cls, args)
-        self._relations = dict()
-        """ @type: dict of (ProductType, ProductType.Relation) """
-        # self._normalized_form = tuple(sorted(t for i in self if i for t in i.split(u' ') if t and t not in TYPE_TUPLE_PROPOSITION_LIST))
-        return self
-
-    def make_relation(self, p_type2, rel_from, rel_to):
-        """
-        Add relation to both self and specified ProductType
-        @param ProductType p_type2: another type
-        @param ProductType.Relation rel_from: from self to second
-        @param ProductType.Relation rel_from: from second to first
-        @return:
-        """
-        relation = self._relations.get(p_type2)
-        if relation and relation.rel_type != rel_from:
-            raise Exception(u"ProductType%s has conflicting relations already with %s" % (self, p_type2))
-        if not relation:
-            relation = self.Relation(self, p_type2, rel_from)
-            self._relations[p_type2] = relation
-            p_type2.make_relation(self, rel_to, rel_from)  # Notify second party about relation
-        return relation
-
-    def equals_to(self, p_type2):
-        return self.make_relation(p_type2, TYPE_TUPLE_RELATION_EQUALS, TYPE_TUPLE_RELATION_EQUALS)
-
-    def contains(self, p_type2):
-        return self.make_relation(p_type2, TYPE_TUPLE_RELATION_CONTAINS, TYPE_TUPLE_RELATION_SUBSET_OF)
-
-    def subset_of(self, p_type2):
-        return self.make_relation(p_type2, TYPE_TUPLE_RELATION_SUBSET_OF, TYPE_TUPLE_RELATION_CONTAINS)
-
-    def not_related(self, p_type2):
-        relation = self._relations.get(p_type2)
-        if relation:
-            del self._relations[p_type2]
-            p_type2.not_related(self)
-
-    def relations(self, *rel_type):
-        """
-        @param list[unicode] rel_type: Relation type list. If empty - all return
-        @rtype: list[ProductType.Relation]
-        """
-        return [rel for rel in self._relations.values() if not rel_type or rel.rel_type in rel_type]
-
-    def related_types(self, *rel_type):
-        """
-        @param list[unicode] rel_type: Relation type list. If empty - all return
-        @rtype: list[ProductType]
-        """
-        return [rel.to_type for rel in self.relations(*rel_type)]
-
-    def brake_relations(self):
-        copy_relations = self._relations.keys()[:]
-        self._relations.clear()
-        for r_type2 in copy_relations:
-            r_type2.not_related(self)
-
-    # def __eq__(self, y):
-    #     if not isinstance(y, ProductType) or len(y) != len(self):
-    #         result = super(ProductType, self).__eq__(y)
-    #     else:
-    #         x_t = self._normalized_form
-    #         y_t = y._normalized_form
-    #         result = x_t == y_t
-    #     return result
-
-    # def __hash__(self):
-    #     return self._normalized_form.__hash__()
-
-    def __unicode__(self):
-        return u' + '.join(self)
-
-    def __str__(self):
-        return self.__unicode__().encode("utf-8")
-
-
 class Product(dict):
 
     @property
@@ -175,19 +69,52 @@ class Product(dict):
     def sqn(self, sqn):
         self["sqn"] = sqn
 
+    @staticmethod
+    def to_meta_csv(csv_filename, products):
+        """
+        Store parsed products metadata to use for further analysis and product lookup
+        @param csv_filename: file name
+        @param collections.Iterable[Product] products: products' iterator to export
+        """
+        with open(csv_filename, 'wb') as f:
+            f.truncate()
+            header = ['raw_id', 'sqn', 'brand', 'brand_detected', 'product_manufacturer', 'weight', 'fat', 'pack', 'pfqn']
+            writer = csv.DictWriter(f, header)
+            writer.writeheader()
+            for product in products:
+                d = {field: unicode(product[field]).encode("utf-8") for field in header if product.get(field)}
+                d['raw_id'] = product["raw_item"]["id"]
+                writer.writerow(d)
+
+        pass
+
+    @staticmethod
+    def from_meta_csv(csv_filename):
+        """
+        Load parsed products metadata to use for further analysis and product lookup
+        @param csv_filename: file name
+        @return: generator of Products
+        @rtype: collections.Iterable[Product]
+        """
+        with open(csv_filename, 'rb') as f:
+            reader = csv.reader(f)
+            fields = next(reader)
+            for row in reader:
+                product_meta_row = dict(zip(fields, row))
+                product = Product(**{field: value.decode("utf-8") for field, value in product_meta_row.iteritems()})
+                yield product
+        pass
+
 
 class ProductFQNParser(object):
     """
     @type types: dict of (unicode, Product)
-    @type _root_types: list[ProductType]
-    @type _type_tuples: dict of (ProductType, list[unicode])
     """
 
     __pfqn_re_weight_full = re.compile(RE_TEMPLATE_PFQN_WEIGHT_FULL, re.IGNORECASE | re.UNICODE)
     __pfqn_re_weight_short = re.compile(RE_TEMPLATE_PFQN_WEIGHT_SHORT, re.IGNORECASE | re.UNICODE)
     __pfqn_re_fat = re.compile(RE_TEMPLATE_PFQN_FAT, re.IGNORECASE | re.UNICODE)
     __pfqn_re_pack = re.compile(RE_TEMPLATE_PFQN_PACK, re.IGNORECASE | re.UNICODE)
-
 
     def __init__(self):
         self.types = dict()
@@ -199,8 +126,6 @@ class ProductFQNParser(object):
         self.ignore_category_id_list = None
         self.accept_category_id_list = None
         self.cats = Cats()
-        self._root_types = None
-        self._type_tuples = None
 
     def use_cats_from_csv(self, cat_csvname):
         self.cats.from_csv(cat_csvname)
@@ -315,12 +240,12 @@ class ProductFQNParser(object):
 
                 manufacturer_brand = None
                 if item.get("details"):
-                    details = json.loads(item["details"])
+                    details = json.loads(remove_nbsp(item["details"]))
                     """ @type details: dict of (unicode, unicode) """
 
-                    brand = Brand.findOrCreate(remove_nbsp(details.get(ATTRIBUTE_BRAND, Brand.UNKNOWN_BRAND_NAME)))
+                    brand = Brand.findOrCreate(details.get(ATTRIBUTE_BRAND, Brand.UNKNOWN_BRAND_NAME))
 
-                    product_manufacturer = remove_nbsp(details.get(ATTRIBUTE_MANUFACTURER))
+                    product_manufacturer = details.get(ATTRIBUTE_MANUFACTURER)
                     if product_manufacturer:
                         brand.manufacturers.add(product_manufacturer)
                         manufacturer_brand = Brand.findOrCreate_manufacturer_brand(product_manufacturer)
@@ -331,39 +256,6 @@ class ProductFQNParser(object):
 
                 product = self.extract_product(pfqn, brand, manufacturer_brand)
                 product["raw_item"] = item
-
-    def to_meta_csv(self, csv_filename):
-        """
-        Store parsed products metadata to use for further analysis and product lookup
-        @param csv_filename: file name
-        @return:
-        """
-        with open(csv_filename, 'wb') as f:
-            f.truncate()
-            header = ['raw_id', 'sqn', 'brand', 'brand_detected', 'product_manufacturer', 'weight', 'fat', 'pack', 'pfqn']
-            writer = csv.DictWriter(f, header)
-            writer.writeheader()
-            for product in self.types.values():
-                d = {field: unicode(product[field]).encode("utf-8") for field in header if product.get(field)}
-                d['raw_id'] = product["raw_item"]["id"]
-                writer.writerow(d)
-
-        pass
-
-    def from_meta_csv(self, csv_filename):
-        """
-        Load parsed products metadata to use for further analysis and product lookup
-        @param csv_filename: file name
-        @return:
-        """
-        with open(csv_filename, 'rb') as f:
-            reader = csv.reader(f)
-            fields = next(reader)
-            for row in reader:
-                product_meta_row = dict(zip(fields, row))
-                product = Product(**{field: value.decode("utf-8") for field, value in product_meta_row.iteritems()})
-                self.types[product.pfqn] = product
-        pass
 
     def process_manufacturers_as_brands(self):
         """
@@ -461,115 +353,10 @@ class ProductFQNParser(object):
             result[product.sqn].append(pfqn)
         return result
 
-    @staticmethod
-    def collect_sqn_type_tuples(sqn):
-        """
-        Return dict with tuples for combinations of tokens in each parsed sqn. Source sqn will be as value.
-        Join propositions to next word to treat them as single token
-        If multiple parsed products with identical sqns are present all them will be in the value list as duplicates.
-        It is required to estimate "capacity" of tuple
-        @rtype: dict of (ProductType, unicode)
-        """
-        # TODO: Implement synonyms pre-processing for unfolding of abbreviations to normal forms
-        result = dict()
-
-        words = re.split(u'\s+', sqn)
-        words1 = []
-        buf = u''
-        for w in words:
-            if w:
-                if w in TYPE_TUPLE_PROPOSITION_LIST:
-                    buf = w  # join proposition to the next word
-                    continue
-                if buf:
-                    # Add both word variants with proposition and w/o.
-                    # Proposition is added itself as well
-                    words1.append(buf + u' ' + w)
-                    # words1.append(buf)
-                words1.append(w)
-                buf = u''
-        if buf: words1.append(buf)
-        first_word = words1.pop(0)
-        result[ProductType(first_word, u'')] = sqn
-        if words1:
-            for w in words1:
-                result[ProductType(first_word, w)] = sqn
-            for w1, w2 in combinations(words1, 2):
-                if w1 + u' ' in w2 or u' ' + w1 in w2 or \
-                   w2 + u' ' in w1 or u' ' + w2 in w1:
-                    # Do not join same world and form with proposition
-                    continue
-                result[ProductType(first_word, u'%s %s' % (w1, w2))] = sqn
-                result[ProductType(u'%s %s' % (first_word, w1), w2)] = sqn
-        return result
-
-    def collect_type_tuples(self):
-        """
-        Collect product type tuples for all parsed products using @collect_sqn_type_tuples
-        @rtype: dict of (ProductType, list[unicode])
-        """
-        result = dict()
-        for product in self.types.values():
-            product_tuples = self.collect_sqn_type_tuples(product.sqn)
-            for type_tuple, sqn in product_tuples.iteritems():
-                existing_sqns = result.get(type_tuple, [])
-                existing_sqns.append(sqn)
-                result[type_tuple] = existing_sqns
-        return result
-
-    @staticmethod
-    def update_type_tuples_relationship(type_tuples, verbose=False, cleanup_prev_relations=True):
-        """
-        Calculate all non-repeatable combinations of type tuples with capacity not less than MIN_TUPLE_CAPACITY
-        and check if one tuple is equals or contains (in terms of sqn set) another.
-        @param dict of (ProductType, list[unicode]) type_tuples: from collect_type_tuples()
-        @param bool verbose: type progress if specified - useful for testing of low capacity huge combinations
-        """
-
-        if cleanup_prev_relations:
-            for t in type_tuples:
-                t.brake_relations()
-
-        i_count = 0
-        for t1, t2 in combinations([it for it in type_tuples.iteritems() if len(it[1]) >= TYPE_TUPLE_MIN_CAPACITY], 2):
-            s1 = set(t1[1])
-            s2 = set(t2[1])
-            if s1.issubset(s2):
-                if len(s1) < len(s2):
-                    t1[0].subset_of(t2[0])
-                else:
-                    t1[0].equals_to(t2[0])
-            elif s2.issubset(s1):
-                t1[0].contains(t2[0])
-            i_count += 1
-            if verbose and i_count % 10000 == 0: print u'.',
-            if verbose and i_count % 1000000 == 0: print i_count
-        if verbose: print
-        pass
-
-    def get_type_tuples(self):
-        """
-        @return dict of ProductTypes
-        @rtype: dict of (ProductType, list[unicode])
-        """
-        if not self._type_tuples:
-            type_tuples = self.collect_type_tuples()
-            self.update_type_tuples_relationship(type_tuples)
-            self._type_tuples = type_tuples
-
-        return dict(self._type_tuples)
-
-    def get_root_type_tuples(self):
-        if not self._root_types:
-            type_tuples = self.get_type_tuples()
-            root_types = []
-            for t in type_tuples:
-                if not t.relations(TYPE_TUPLE_RELATION_SUBSET_OF):
-                    # Type tuple has no structured relations
-                    root_types.append(t)
-            self._root_types = root_types
-
-        return self._root_types[:]
+    def build_product_types_dict(self):
+        types_dict = ProductTypeDict()
+        types_dict.build_from_products(self.types.itervalues())
+        return types_dict
 
 
 def main_parse_products(prodcsvname, cat_csvname=None, brands_in_csvname=None, brands_out_csvname=None,
@@ -606,7 +393,8 @@ def main_parse_products(prodcsvname, cat_csvname=None, brands_in_csvname=None, b
         # pfqnParser.guess_unknown_brands()
 
     else:
-        pfqnParser.from_meta_csv(products_meta_in_csvname)
+        for product in Product.from_meta_csv(products_meta_in_csvname):
+            pfqnParser.types[product.pfqn] = product
         print "Products meta data 's been loaded from '%s': %d products total" % (products_meta_in_csvname, len(pfqnParser.types))
 
     # ########### SAVE RESULTS ####################
@@ -615,7 +403,7 @@ def main_parse_products(prodcsvname, cat_csvname=None, brands_in_csvname=None, b
         print "Stored %d brands to csv[%s]" % (len(Brand.all()), brands_out_csvname)
 
     if products_meta_out_csvname:
-        pfqnParser.to_meta_csv(products_meta_out_csvname)
+        Product.to_meta_csv(products_meta_out_csvname, pfqnParser.types.itervalues())
         print "Stored %d products to csv[%s]" % (len(pfqnParser.types), products_meta_out_csvname)
 
     return pfqnParser
@@ -673,8 +461,10 @@ def print_type_tuples(pfqn_parser):
     @param ProductFQNParser pfqn_parser: parser
     """
     sqn_all_set = set(pfqn_parser.get_sqn_dict().keys())
-    type_tuples = pfqn_parser.get_type_tuples()
-    root_types = pfqn_parser.get_root_type_tuples()
+    type_dict = pfqn_parser.build_product_types_dict()
+    type_dict.VERBOSE = True
+    type_tuples = type_dict.get_type_tuples()
+    root_types = type_dict.get_root_type_tuples()
 
     num_tuples = dict()
     sqn_selected_set = set()
@@ -694,10 +484,10 @@ def print_type_tuples(pfqn_parser):
             num_tuples[c] = num_tuples.get(c, 0) + 1
             sqn_selected_set.update(p_ids)
 
-            equal_types = t.related_types(TYPE_TUPLE_RELATION_EQUALS)
-            if equal_types:
+            equal_relations = t.relations(TYPE_TUPLE_RELATION_EQUALS, TYPE_TUPLE_RELATION_SIMILAR)
+            if equal_relations:
                 # Print equals relations only, because other are in structure
-                print u' *** equals %s' % (u', '.join(map(unicode, equal_types))),
+                print u' *** %s' % (u', '.join([u'%s[%d]' % (rel, len(set(type_tuples[rel.to_type]))) for rel in equal_relations])),
             print
 
             child_types = t.related_types(TYPE_TUPLE_RELATION_CONTAINS)
@@ -725,10 +515,10 @@ def print_type_tuples(pfqn_parser):
     print "NON SELECTED TUPLES:"
     sqn_unselected_set = set()
     unselected_count = 0
-    for t in sorted(root_types, key=lambda k: u' '.join(k[0]).replace(u'+', u'')):
-        if t[1] or len(type_tuples[t]) >= TYPE_TUPLE_MIN_CAPACITY: continue
+    for t in sorted(root_types, key=lambda k: unicode(k)):
+        if len(t) > 1 or len(type_tuples[t]) >= TYPE_TUPLE_MIN_CAPACITY: continue
         # Print only core tuples
-        print "Tuple[*] %s + %s: %d" % (t[0], t[1], len(type_tuples[t]))
+        print u"Tuple[*] %s: %d" % (t, len(set(type_tuples[t])))
         unselected_count += 1
         sqn_unselected_set.update(type_tuples[t])
     print "Total tuples (w/ unselected): %d of %d total" % (sum(num_tuples.values()) + unselected_count, len(type_tuples))
