@@ -4,6 +4,7 @@ from itertools import combinations
 import re
 import Levenshtein
 
+from ok.dicts.product import Product
 
 TYPE_TUPLE_PROPOSITION_LIST = (u'в', u'с', u'со', u'из', u'для', u'и', u'на', u'без', u'к', u'не', u'де')
 
