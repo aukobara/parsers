@@ -10,7 +10,7 @@ from ok.dicts.product_type import ProductTypeDict, TYPE_TUPLE_MIN_CAPACITY, TYPE
 from ok.items import ProductItem
 from ok.dicts import cleanup_token_str, remove_nbsp, main_options
 from ok.dicts.brand import Brand
-from ok.dicts.catsproc import Cats
+from ok.dicts.cats import Cats
 
 
 ATTRIBUTE_BRAND = u"Бренд:"
