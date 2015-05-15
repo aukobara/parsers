@@ -119,10 +119,17 @@ class ProductTypeDict(object):
     @type _type_tuples: dict of (ProductType, list[unicode])
     """
 
+    # Build type tuples operation may be long. This may help to check progress
     VERBOSE = False
 
     def __init__(self):
+        # ProductTypes are not contained in other types. These are actual roots of classified types
+        # as well as remaining unclassified types with unknown relations
+        # It is lazily built and have to be drop if type tuples are changed
         self._root_types = None
+
+        # Dict of all ProductTypes mapped to list of SQNs produced them. It is built from Products SQNs or pre-loaded
+        # from external source (like file)
         self._type_tuples = None
 
     @staticmethod
@@ -148,7 +155,6 @@ class ProductTypeDict(object):
                     continue
                 if buf:
                     # Add both word variants with proposition and w/o.
-                    # TODO: generate proposition forms also for 2-3 next words, not only immediate
                     words1.append(buf + u' ' + w)
                     buf_count += 1
                     if buf_count == 2:
@@ -207,6 +213,8 @@ class ProductTypeDict(object):
         """
         Calculate all non-repeatable combinations of type tuples with capacity not less than MIN_TUPLE_CAPACITY
         and check if one tuple is equals or contains (in terms of sqn set) another.
+        NOTE: If type_tuples is big (10+K types) or/and TYPE_TUPLE_MIN_CAPACITY is too low (3 or less) this operation
+        can work WAY TOO LONG. Be careful.
         @param dict of (ProductType, list[unicode]) type_tuples: from collect_type_tuples()
         @param bool verbose: type progress if specified - useful for testing of low capacity huge combinations
         """
