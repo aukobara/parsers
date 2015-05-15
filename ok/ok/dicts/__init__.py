@@ -102,6 +102,7 @@ def main_options(opts=argv):
     cat_csvname = cat_csvname or os.path.abspath(os.path.join(baseline_dir, 'cats.csv'))
     brands_in_csvname = brands_in_csvname or os.path.abspath(os.path.join(baseline_dir, 'brands.csv'))
     prodcsvname = prodcsvname or os.path.abspath(os.path.join(baseline_dir, 'products_raw.csv'))
+    products_meta_in_csvname = products_meta_in_csvname or os.path.abspath(os.path.join(baseline_dir, 'products_meta.csv'))
     return dict(
         toprint=toprint,
         prodcsvname=prodcsvname,
