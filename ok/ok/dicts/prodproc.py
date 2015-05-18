@@ -5,7 +5,7 @@ import re
 import json
 from sys import argv
 
-from ok.dicts.product import Product
+from ok.dicts.product import Product, PRODUCT_ATTRIBUTE_RAW_ID
 from ok.dicts.product_type import ProductTypeDict, TYPE_TUPLE_MIN_CAPACITY, TYPE_TUPLE_RELATION_EQUALS, \
     TYPE_TUPLE_RELATION_SIMILAR, TYPE_TUPLE_RELATION_CONTAINS, TYPE_TUPLE_RELATION_SUBSET_OF
 from ok.items import ProductItem
@@ -128,7 +128,6 @@ class ProductFQNParser(object):
         """
         Parse PFQN and build new instance of Product. If brand is specified and non UNKNOWN - replace brand in PFQN
         As side effects - count weight, fat, pack constants in internal storage.
-        Save reference to new Product in types
         @param unicode pfqn: PFQN
         @param Brand|None brand: known brand
         @param Brand|None manufacturer_brand: known manufacturer
@@ -152,8 +151,26 @@ class ProductFQNParser(object):
                               brand=brand.name if brand else Brand.UNKNOWN_BRAND_NAME,
                               sqn=sqn_without_brand, brand_detected=sqn != sqn_without_brand,
                               product_manufacturer=manufacturer_brand.name if manufacturer_brand else None)
-        self.types[pfqn] = product  # TODO: Check if types already contain specified PFQN
         return product
+
+    def add_product(self, product, **kwargs):
+        """
+        Add product to types. Also extend product data with additional data inspired by parser knowledge.
+        @param product:
+        @return:
+        """
+        product_copy = Product(product)
+        product_copy.update(kwargs)
+        product_copy["tags"] = []
+        for cat_id in self.cats.get_product_cat_ids(product_copy[PRODUCT_ATTRIBUTE_RAW_ID]):
+            if self.accept_category_id_list and \
+                    not any(self.cats.is_cat_under(cat_id, a_cat_id) for a_cat_id in self.accept_category_id_list):
+                continue
+            if self.ignore_category_id_list and \
+                    any(self.cats.is_cat_under(cat_id, i_cat_id) for i_cat_id in self.ignore_category_id_list):
+                continue
+            product_copy["tags"].append(self.cats.get_cat_title_by_id(cat_id))
+        self.types[product_copy.pfqn] = product_copy  # TODO: Check if types already contain specified PFQN
 
     def from_csv(self, prodcsvname):
         """
@@ -180,7 +197,8 @@ class ProductFQNParser(object):
 
                 manufacturer_brand = None
                 if item.get("details"):
-                    details = json.loads(remove_nbsp(item["details"]))
+                    details_raw = remove_nbsp(item["details"])
+                    details = json.loads(details_raw)
                     """ @type details: dict of (unicode, unicode) """
 
                     brand = Brand.findOrCreate(details.get(ATTRIBUTE_BRAND, Brand.UNKNOWN_BRAND_NAME))
@@ -195,7 +213,7 @@ class ProductFQNParser(object):
                     brand = Brand.findOrCreate(Brand.UNKNOWN_BRAND_NAME)
 
                 product = self.extract_product(pfqn, brand, manufacturer_brand)
-                product["raw_item"] = item
+                self.add_product(product, raw_item=item)  # TODO: Check if types already contain specified PFQN
 
     def process_manufacturers_as_brands(self):
         """
@@ -334,7 +352,7 @@ def main_parse_products(prodcsvname, cat_csvname=None, brands_in_csvname=None, b
 
     else:
         for product in Product.from_meta_csv(products_meta_in_csvname):
-            pfqnParser.types[product.pfqn] = product
+            pfqnParser.add_product(product)
         print "Products meta data 's been loaded from '%s': %d products total" % (products_meta_in_csvname, len(pfqnParser.types))
 
     # ########### SAVE RESULTS ####################
