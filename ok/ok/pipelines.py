@@ -17,7 +17,8 @@ class OkPipeline(object):
             productId = item["id"]
             if productId:
                 if productId in self.ids:
-                    raise DropItem("Product is processed already %r, crawllink: %r" % (productId, item["crawllink"]))
+                    raise DropItem("Product is processed already %r, crawllink: %r" %
+                                   (productId, item.get("crawllink", '<no-link>')))
                 else:
                     self.ids.add(productId)
         return item
