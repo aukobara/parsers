@@ -31,10 +31,22 @@ class ProductType(tuple):
         def __str__(self):
             return self.__unicode__().encode("utf-8")
 
+    __slot__ = ('_relations',)
+
+    # ProductType instances acts as singleton. All instances are kept here
+    __v = set()
+    """@type: set[ProductType]"""
+
     def __new__(cls, *args, **kwargs):
         self = tuple.__new__(cls, args)
-        self._relations = dict()
         """ @type: dict of (ProductType, ProductType.Relation) """
+        self._relations = dict()
+        wrapper = EqWrapper(self)
+        if wrapper in cls.__v:
+            self = wrapper.match
+        else:
+            cls.__v.add(self)
+
         return self
 
     def make_relation(self, p_type2, rel_from, rel_to, is_soft=False, rel_attr_from=None, rel_attr_to=None):
@@ -110,6 +122,23 @@ class ProductType(tuple):
 
     def __str__(self):
         return self.__unicode__().encode("utf-8")
+
+
+class EqWrapper(ProductType):
+    def __new__(cls, *args):
+        self = tuple.__new__(cls, args[0])
+        self.obj = args[0]
+        self.match = None
+        return self
+
+    def __eq__(self, other):
+        result = (self.obj == other)
+        if result:
+            self.match = other
+        return result
+
+    def __getattr__(self, item):
+        return getattr(self.obj, item)
 
 
 class ProductTypeDict(object):
