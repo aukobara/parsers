@@ -41,6 +41,13 @@ class Cats(dict):
                     self.product_to_cats[product_id] = self.product_to_cats.get(product_id, [])
                     self.product_to_cats[product_id].append(item["id"])
 
+    @staticmethod
+    def _get_item_title(cat_item):
+        return cat_item["title"].decode("utf-8")
+
+    def get_cat_title_by_id(self, cat_id):
+        return self._get_item_title(self[cat_id]) if cat_id and cat_id in self else None
+
     def find_by_title(self, title):
         """
         Iterate through all categories and find one with specified title ignoring case.
@@ -54,6 +61,27 @@ class Cats(dict):
             raise Exception("Multiple categories 've been found with title '%s'" % title)
         return ids_found[0] if ids_found else None
 
+    def get_product_cat_ids(self, product_id, deep=True):
+        """
+        Return all cat ids where product is under them including their parents if deep is True
+        @param product_id:
+        @param deep:
+        @return:
+        """
+        cached_cat_ids = self.product_to_cats.get(product_id)
+        if cached_cat_ids:
+            ancestor_cats = cached_cat_ids[:]
+            root_id = ROOT_CAT_ITEM["id"]
+            while ancestor_cats:
+                # Check if c_cat is specified cat or it is ancestor
+                c_cat_id = ancestor_cats.pop(0)
+                yield c_cat_id
+                if deep:
+                    c_parent_id = self.get_parent_id(c_cat_id)
+                    if c_parent_id and c_parent_id != root_id and c_parent_id not in ancestor_cats:
+                        ancestor_cats.append(c_parent_id)
+        return
+
     def is_product_under(self, product_id, cat_id, deep=True):
         """
         Check if product is in products list of specified category or any its descendant
@@ -65,26 +93,34 @@ class Cats(dict):
         if cat_id not in self:
             raise Exception("No category with id[%s]" % cat_id)
 
-        result = False
         cached_cat_ids = self.product_to_cats.get(product_id)
         if cached_cat_ids:
-            ancestor_cats = cached_cat_ids[:]
-            root_id = ROOT_CAT_ITEM["id"]
-            while ancestor_cats:
-                # Check if c_cat is specified cat or it is ancestor
-                c_cat_id = ancestor_cats.pop()
-                if c_cat_id == cat_id:
-                    result = True
-                    break
-                c_parent_id = self.get_parent_id(c_cat_id)
-                if c_parent_id and c_parent_id != root_id:
-                    ancestor_cats.append(c_parent_id)
+            result = any(cat_id == c_cat_id for c_cat_id in self.get_product_cat_ids(product_id, deep))
 
         else:
             item = self[cat_id]
             result = product_id in item["products"]
             if not result and deep:
                 result = any(self.is_product_under(product_id, sub_cat_id, True) for sub_cat_id in self.parentIdx.get(cat_id, []))
+        return result
+
+    def is_cat_under(self, cat_id, top_cat_id, deep=True):
+        """
+        Check if cat is sub-cat of another cat or equals
+        @param str cat_id: cat
+        @param str top_cat_id: parent Category
+        @param bool deep: if False only check specified category w/o go down
+        @rtype: bool
+        """
+        if cat_id not in self:
+            raise Exception("No category with id[%s]" % cat_id)
+        if top_cat_id not in self:
+            raise Exception("No category with id[%s]" % top_cat_id)
+
+        parent_cat_id = self.get_parent_id(cat_id)
+        result = cat_id == top_cat_id or parent_cat_id == top_cat_id
+        if not result and deep and parent_cat_id != ROOT_CAT_ITEM["id"]:
+            result = self.is_cat_under(parent_cat_id, top_cat_id, True)
         return result
 
     def get_parent_id(self, cat_id):
