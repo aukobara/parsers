@@ -58,7 +58,7 @@ def add_string_combinations(patterns, *repl):
 
 
 def remove_nbsp(s):
-    return None if s is None else s.replace(u'\u00a0', ' ') if isinstance(s, unicode) else s.replace('\xa0', ' ')
+    return None if s is None else s.replace(u'\u00a0', u' ') if isinstance(s, unicode) else s.replace('\xc2\xa0', ' ')
 
 
 def main_options(opts=argv):
@@ -102,9 +102,10 @@ def main_options(opts=argv):
     cat_csvname = cat_csvname or os.path.abspath(os.path.join(baseline_dir, 'cats.csv'))
     brands_in_csvname = brands_in_csvname or os.path.abspath(os.path.join(baseline_dir, 'brands.csv'))
     prodcsvname = prodcsvname or os.path.abspath(os.path.join(baseline_dir, 'products_raw.csv'))
-    products_meta_in_csvname = products_meta_in_csvname or os.path.abspath(os.path.join(baseline_dir, 'products_meta.csv'))
+    # products_meta_in_csvname = products_meta_in_csvname or os.path.abspath(os.path.join(baseline_dir, 'products_meta.csv'))
     return dict(
         toprint=toprint,
+        baseline_dir=baseline_dir,
         prodcsvname=prodcsvname,
         cat_csvname=cat_csvname,
         brands_in_csvname=brands_in_csvname,
