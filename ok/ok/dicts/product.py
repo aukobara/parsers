@@ -51,8 +51,8 @@ class Product(dict):
         self["raw_item"] = raw_item
 
     def __contains__(self, key):
-        if key == PRODUCT_ATTRIBUTE_RAW_ID:
-            return 'id' in self.raw_item
+        if key == PRODUCT_ATTRIBUTE_RAW_ID and 'id' in self.raw_item:
+            return True
         return dict.__contains__(self, key)
 
     def __getitem__(self, key):
@@ -82,7 +82,7 @@ class Product(dict):
         """
         with open(csv_filename, 'wb') as f:
             f.truncate()
-            header = [PRODUCT_ATTRIBUTE_RAW_ID, 'sqn', 'brand', 'brand_detected', 'product_manufacturer', 'weight', 'fat', 'pack', 'pfqn', 'tags']
+            header = [PRODUCT_ATTRIBUTE_RAW_ID, 'sqn', 'brand', 'brand_detected', 'product_manufacturer', 'weight', 'fat', 'pack', 'pfqn', 'tags', 'types']
             writer = csv.DictWriter(f, header)
             writer.writeheader()
             for product in products:
@@ -90,8 +90,8 @@ class Product(dict):
                 for field in header:
                     if field in product:
                         value = product[field]
-                        if isinstance(value, (list, tuple)):
-                            value = u'|'.join(value)
+                        if isinstance(value, (list, tuple, set)):
+                            value = u'|'.join(sorted(map(unicode, value)))
                         d[field] = unicode(value).encode("utf-8")
 
                 writer.writerow(d)
@@ -106,6 +106,7 @@ class Product(dict):
         @return: generator of Products
         @rtype: collections.Iterable[Product]
         """
+        from ok.dicts.product_type import ProductType
         with open(csv_filename, 'rb') as f:
             reader = csv.reader(f)
             fields = next(reader)
@@ -114,5 +115,7 @@ class Product(dict):
                 product = Product(**{field: value.decode("utf-8") for field, value in product_meta_row.iteritems()})
                 if 'tags' in product and product.get('tags') is not None:
                     product['tags'] = product['tags'].split(u'|')
+                if 'types' in product and product.get('types') is not None:
+                    product['types'] = set([ProductType(*pt_str.split(u' + ')) for pt_str in product['types'].split(u'|')])
                 yield product
         pass
