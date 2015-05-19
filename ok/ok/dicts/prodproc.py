@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from collections import OrderedDict
 
 import csv
 import re
@@ -7,7 +8,8 @@ from sys import argv
 
 from ok.dicts.product import Product, PRODUCT_ATTRIBUTE_RAW_ID
 from ok.dicts.product_type import ProductTypeDict, TYPE_TUPLE_MIN_CAPACITY, TYPE_TUPLE_RELATION_EQUALS, \
-    TYPE_TUPLE_RELATION_SIMILAR, TYPE_TUPLE_RELATION_CONTAINS, TYPE_TUPLE_RELATION_SUBSET_OF
+    TYPE_TUPLE_RELATION_SIMILAR, TYPE_TUPLE_RELATION_CONTAINS, TYPE_TUPLE_RELATION_SUBSET_OF, TYPE_TUPLE_RELATION_ALMOST, \
+    TYPE_TUPLE_RELATION_IDENTICAL
 from ok.items import ProductItem
 from ok.dicts import cleanup_token_str, remove_nbsp, main_options
 from ok.dicts.brand import Brand
@@ -48,7 +50,7 @@ RE_TEMPLATE_PFQN_PACK = u'(' + RE_TEMPLATE_PFQN_PRE + u')' \
 
 class ProductFQNParser(object):
     """
-    @type types: dict of (unicode, ok.dicts.product.Product)
+    @type products: dict of (unicode, ok.dicts.product.Product)
     """
 
     __pfqn_re_weight_full = re.compile(RE_TEMPLATE_PFQN_WEIGHT_FULL, re.IGNORECASE | re.UNICODE)
@@ -57,7 +59,7 @@ class ProductFQNParser(object):
     __pfqn_re_pack = re.compile(RE_TEMPLATE_PFQN_PACK, re.IGNORECASE | re.UNICODE)
 
     def __init__(self):
-        self.types = dict()
+        self.products = dict()
         """ @type types: dict of (unicode, Product) """
         self.weights = dict()
         self.fats = dict()
@@ -66,6 +68,7 @@ class ProductFQNParser(object):
         self.ignore_category_id_list = None
         self.accept_category_id_list = None
         self.cats = Cats()
+        self._product_types_dict = None
 
     def use_cats_from_csv(self, cat_csvname):
         self.cats.from_csv(cat_csvname)
@@ -147,10 +150,58 @@ class ProductFQNParser(object):
         if brand and brand.name != Brand.UNKNOWN_BRAND_NAME:
             sqn_without_brand = brand.replace_brand(sqn_without_brand)
 
+        # TODO: Recognize product type
         product = product_cls(pfqn=pfqn, weight=weight, fat=fat, pack=pack,
                               brand=brand.name if brand else Brand.UNKNOWN_BRAND_NAME,
                               sqn=sqn_without_brand, brand_detected=sqn != sqn_without_brand,
                               product_manufacturer=manufacturer_brand.name if manufacturer_brand else None)
+        return product
+
+    def recognize_product_cats(self, product):
+        tags = []
+        for cat_id in self.cats.get_product_cat_ids(product[PRODUCT_ATTRIBUTE_RAW_ID]):
+            if self.accept_category_id_list and \
+                    not any(self.cats.is_cat_under(cat_id, a_cat_id) for a_cat_id in self.accept_category_id_list):
+                continue
+            if self.ignore_category_id_list and \
+                    any(self.cats.is_cat_under(cat_id, i_cat_id) for i_cat_id in self.ignore_category_id_list):
+                continue
+            tags.append(self.cats.get_cat_title_by_id(cat_id))
+        return tags
+
+    def update_product_with_parser_knowledge(self, product):
+        """
+        Take product dict with basic data fulfilled that can be obtained from external source without special semantic
+        knowledge, like:
+            FQN (and pre-parsed to SQN, fat, pack)
+            raw_id (local seller's unique or EAN)
+            Brand (marketing; +brand_detected flag if it was recognized during SQN extraction basing on external data)
+            Manufacturer (as brand)
+            Other data from pack labels and websites about exactly this product, where it has been found
+                (e.g., ingredients table or nutrition facts - not implemented yet)
+        Update product with semantic data basing on parser knowledge:
+            - tags/categories
+            - product type
+        NOTE: Product may come with already pre-filled semantic data (e.g. if it pre-loaded from internal data storage,
+        instead of external source). Than, such data will be merged/refreshed
+        @param product:
+        @return: product
+        """
+
+        # ######## TAGS #############
+        tags = self.recognize_product_cats(product)
+        product["tags"] = list(OrderedDict.fromkeys(product.get("tags", []) + tags))
+
+        # ######### TYPES ############
+        types_dict = self.get_product_types_dict()
+        all_matched_types = types_dict.collect_type_tuples([product])
+        suggested_relations = types_dict.find_type_tuples_relationship(all_matched_types, ignore_sqns=True)
+        for p_type, relations in suggested_relations.iteritems():
+            for rel in relations:
+                if rel.from_type == TYPE_TUPLE_RELATION_EQUALS or rel.from_type == TYPE_TUPLE_RELATION_IDENTICAL:
+                    product['types'] = product.get('types', set())
+                    product['types'].add(rel.to_type)
+
         return product
 
     def add_product(self, product, **kwargs):
@@ -161,16 +212,8 @@ class ProductFQNParser(object):
         """
         product_copy = Product(product)
         product_copy.update(kwargs)
-        product_copy["tags"] = []
-        for cat_id in self.cats.get_product_cat_ids(product_copy[PRODUCT_ATTRIBUTE_RAW_ID]):
-            if self.accept_category_id_list and \
-                    not any(self.cats.is_cat_under(cat_id, a_cat_id) for a_cat_id in self.accept_category_id_list):
-                continue
-            if self.ignore_category_id_list and \
-                    any(self.cats.is_cat_under(cat_id, i_cat_id) for i_cat_id in self.ignore_category_id_list):
-                continue
-            product_copy["tags"].append(self.cats.get_cat_title_by_id(cat_id))
-        self.types[product_copy.pfqn] = product_copy  # TODO: Check if types already contain specified PFQN
+        self.update_product_with_parser_knowledge(product_copy)
+        self.products[product_copy.pfqn] = product_copy  # TODO: Check if types already contain specified PFQN
 
     def from_csv(self, prodcsvname):
         """
@@ -222,7 +265,7 @@ class ProductFQNParser(object):
         @rtype: list[tuple(unicode,unicode)]
         """
         manufacturer_replacements = []
-        for product in self.types.itervalues():
+        for product in self.products.itervalues():
             # Here process manufacturers only where present.
             if not product["product_manufacturer"]:
                 # TODO: Try to link the same manufacturer names with different spelling by brand name
@@ -256,7 +299,7 @@ class ProductFQNParser(object):
         """
         no_brand_replacements = []
         no_brand_manufacturers = {m for b_name in Brand.no_brand_names() for m in Brand.findOrCreate(b_name).manufacturers}
-        for product in self.types.itervalues():
+        for product in self.products.itervalues():
             if product["product_manufacturer"] or product["brand"] not in Brand.no_brand_names():
                 continue
 
@@ -290,7 +333,7 @@ class ProductFQNParser(object):
         @return tuples of sqn like (before_replacement, after_replacement)
         @rtype: list[tuple(unicode,unicode)]
         """
-        for product in self.types.itervalues():
+        for product in self.products.itervalues():
             if product["brand_detected"]:
                 continue
 
@@ -306,19 +349,26 @@ class ProductFQNParser(object):
         @rtype: dict of (unicode, list[unicode])
         """
         result = dict()
-        for pfqn, product in self.types.iteritems():
+        for pfqn, product in self.products.iteritems():
             result[product.sqn] = result.get(product.sqn, [])
             result[product.sqn].append(pfqn)
         return result
 
-    def build_product_types_dict(self):
-        types_dict = ProductTypeDict()
-        types_dict.build_from_products(self.types.itervalues())
+    def rebuild_product_types_dict(self):
+        types_dict = self._product_types_dict
+        types_dict.build_from_products(self.products.itervalues())
         return types_dict
+
+    def get_product_types_dict(self, build_if_required=True):
+        if not self._product_types_dict:
+            self._product_types_dict = ProductTypeDict()
+            if build_if_required:
+                self.rebuild_product_types_dict()
+        return self._product_types_dict
 
 
 def main_parse_products(prodcsvname, cat_csvname=None, brands_in_csvname=None, brands_out_csvname=None,
-                        products_meta_in_csvname=None, products_meta_out_csvname=None, **kwargs):
+                        products_meta_in_csvname=None, products_meta_out_csvname=None, product_types_in_json=None, **kwargs):
     pfqnParser = ProductFQNParser()
 
     if cat_csvname:
@@ -331,6 +381,11 @@ def main_parse_products(prodcsvname, cat_csvname=None, brands_in_csvname=None, b
     if brands_in_csvname:
         (total, new_brands) = Brand.from_csv(brands_in_csvname)
         print "Brands and manufacturers 've been loaded from '%s': %d (of %d)" % (brands_in_csvname, new_brands, total)
+
+    if product_types_in_json:
+        types_dict = pfqnParser.get_product_types_dict(build_if_required=False)
+        types_dict.VERBOSE = True
+        types_dict.from_json(product_types_in_json)
 
     if not products_meta_in_csvname:
         # Products must be parsed and cannot be pre-loaded
@@ -353,7 +408,7 @@ def main_parse_products(prodcsvname, cat_csvname=None, brands_in_csvname=None, b
     else:
         for product in Product.from_meta_csv(products_meta_in_csvname):
             pfqnParser.add_product(product)
-        print "Products meta data 's been loaded from '%s': %d products total" % (products_meta_in_csvname, len(pfqnParser.types))
+        print "Products meta data 's been loaded from '%s': %d products total" % (products_meta_in_csvname, len(pfqnParser.products))
 
     # ########### SAVE RESULTS ####################
     if brands_out_csvname:
@@ -361,8 +416,8 @@ def main_parse_products(prodcsvname, cat_csvname=None, brands_in_csvname=None, b
         print "Stored %d brands to csv[%s]" % (len(Brand.all()), brands_out_csvname)
 
     if products_meta_out_csvname:
-        Product.to_meta_csv(products_meta_out_csvname, pfqnParser.types.itervalues())
-        print "Stored %d products to csv[%s]" % (len(pfqnParser.types), products_meta_out_csvname)
+        Product.to_meta_csv(products_meta_out_csvname, pfqnParser.products.itervalues())
+        print "Stored %d products to csv[%s]" % (len(pfqnParser.products), products_meta_out_csvname)
 
     return pfqnParser
 
@@ -391,11 +446,14 @@ def print_brands():
 
 
 def print_product_types(pfqn_parser):
+    """
+    @param ProductFQNParser pfqn_parser: parser
+    """
     ptypes_count = 0
     nobrand_count = 0
     m_count = dict()
     # for t, d in sorted(types.iteritems(), key=lambda t: t[1]["sqn"].split(" ", 1)[0]):
-    for t, d in sorted(pfqn_parser.types.iteritems(), key=lambda t: t[1]["product_manufacturer"]):
+    for t, d in sorted(pfqn_parser.products.iteritems(), key=lambda t: t[1]["product_manufacturer"]):
         if not d["brand_detected"] and (d["brand"] in Brand.no_brand_names()):
             # print '%s   => brand: %s, prod_man: %s, weight: %s, fat: %s, pack: %s, fqn: %s' % \
             # (d["sqn"], d["brand"], d["product_manufacturer"], d["weight"], d["fat"], d["pack"], t)
@@ -408,7 +466,7 @@ def print_product_types(pfqn_parser):
             m_count[d["brand"]] += 1
             ptypes_count += 1
     print
-    print "Total product types: %d [notintype: %d, nobrand: %d]" % (len(pfqn_parser.types), ptypes_count, nobrand_count)
+    print "Total product types: %d [notintype: %d, nobrand: %d]" % (len(pfqn_parser.products), ptypes_count, nobrand_count)
     print
     for m, c in sorted(m_count.iteritems(), key=lambda t: t[1], reverse=True):
         print "%d : %s" % (c, m)
@@ -419,7 +477,7 @@ def print_type_tuples(pfqn_parser):
     @param ProductFQNParser pfqn_parser: parser
     """
     sqn_all_set = set(pfqn_parser.get_sqn_dict().keys())
-    type_dict = pfqn_parser.build_product_types_dict()
+    type_dict = pfqn_parser.get_product_types_dict()
     type_dict.VERBOSE = True
     type_tuples = type_dict.get_type_tuples()
     root_types = type_dict.get_root_type_tuples()
@@ -442,7 +500,7 @@ def print_type_tuples(pfqn_parser):
             num_tuples[c] = num_tuples.get(c, 0) + 1
             sqn_selected_set.update(p_ids)
 
-            equal_relations = t.relations(TYPE_TUPLE_RELATION_EQUALS, TYPE_TUPLE_RELATION_SIMILAR)
+            equal_relations = t.relations(TYPE_TUPLE_RELATION_EQUALS, TYPE_TUPLE_RELATION_SIMILAR, TYPE_TUPLE_RELATION_ALMOST)
             if equal_relations:
                 # Print equals relations only, because other are in structure
                 print u' *** %s' % (u', '.join([u'%s[%d]' % (rel, len(set(type_tuples[rel.to_type]))) for rel in equal_relations])),
@@ -489,12 +547,15 @@ def print_type_tuples(pfqn_parser):
 
 
 def print_weights(pfqn_parser):
+    """
+    @param ProductFQNParser pfqn_parser: parser
+    """
     for dict_i in (pfqn_parser.weights, pfqn_parser.fats, pfqn_parser.packs):
         print "#" * 20
         print "\r\n".join(["%s [%d]" % (k, v) for k, v in sorted(dict_i.iteritems(), key=lambda t: t[1], reverse=True)])
     print "NO-WEIGHT Product Types " + "=" * 60
     c = 0
-    for t, d in pfqn_parser.types.iteritems():
+    for t, d in pfqn_parser.products.iteritems():
         if not d["weight"]:
             print t,
             print '     => fat: %s, pack: %s' % (d["fat"], d["pack"]) if d["fat"] or d["pack"] else ""
