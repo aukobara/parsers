@@ -93,7 +93,7 @@ class ProductType(tuple):
         @param ProductType.Relation back_relation_copy: to relation
         @return:
         """
-        return self.make_relation(relation_copy.to_type, relation_copy.from_type, back_relation_copy.to_type,
+        return self.make_relation(relation_copy.to_type, relation_copy.rel_type, back_relation_copy.rel_type,
                                   is_soft=relation_copy.is_soft,
                                   rel_attr_from=relation_copy.rel_attr, rel_attr_to=back_relation_copy.rel_attr)
 
@@ -318,7 +318,7 @@ class ProductTypeDict(object):
         for product in products:
             product_tuples = ProductTypeDict.collect_sqn_type_tuples(product.sqn)
 
-            for tag in product.get('tags', []):
+            for tag in product.get('tags', set()):
                 product_tuples[ProductType(u'#' + tag.lower())] = product.sqn
 
             for type_tuple, sqn in product_tuples.iteritems():
@@ -535,8 +535,7 @@ class ProductTypeDict(object):
         Persist type structures to JSON file
         """
         types = OrderedDict((unicode(k), [len(set(sqns))]+[unicode(rel) for rel in k.relations()])
-                            for k, sqns in sorted(self._type_tuples.iteritems(), key=lambda _t: unicode(_t[0]))
-                            if len(sqns) >= TYPE_TUPLE_MIN_CAPACITY or k.relations() or len(k) == 1
+                            for k, sqns in sorted(self.get_type_tuples(meaningful_only=True).iteritems(), key=lambda _t: unicode(_t[0]))
                             )
 
         with open(json_filename, 'wb') as f:
@@ -625,8 +624,6 @@ def load_from_json():
             Product.to_meta_csv(products_meta_out_csvname, products)
 
 
-
-
 def print_sqn_tails():
     config = main_options(sys.argv)
     products = Product.from_meta_csv(config['products_meta_in_csvname'])
@@ -659,5 +656,5 @@ def print_sqn_tails():
 
 if __name__ == '__main__':
     # print_sqn_tails()
-    # dump_json()
-    load_from_json()
+    dump_json()
+    # load_from_json()
