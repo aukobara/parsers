@@ -76,6 +76,8 @@ def main_options(opts=argv):
     brands_out_csvname = None  # Don't save brands by default
     products_meta_in_csvname = None  # Don't load meta types by default
     products_meta_out_csvname = None  # Don't save meta types by default
+    product_types_in_json = None
+    product_types_out_json = None  # Don't save product types by default
     while len(opts) > 1:
         opt = opts.pop(1)
         if opt == "-p" and len(opts) > 1:
@@ -90,6 +92,10 @@ def main_options(opts=argv):
             products_meta_in_csvname = opts.pop(1)
         elif opt == "-out-products-meta-csv" and len(opts) > 1:
             products_meta_out_csvname = opts.pop(1)
+        elif opt == "-in-product-types-json" and len(opts) > 1:
+            product_types_in_json = opts.pop(1)
+        elif opt == "-out-product-types-json" and len(opts) > 1:
+            product_types_out_json = opts.pop(1)
         elif opt == "-base-dir" and len(opts) > 1:
             baseline_dir = opts.pop(1)
         elif not opt.startswith('-') and not prodcsvname:
@@ -103,6 +109,7 @@ def main_options(opts=argv):
     brands_in_csvname = brands_in_csvname or os.path.abspath(os.path.join(baseline_dir, 'brands.csv'))
     prodcsvname = prodcsvname or os.path.abspath(os.path.join(baseline_dir, 'products_raw.csv'))
     # products_meta_in_csvname = products_meta_in_csvname or os.path.abspath(os.path.join(baseline_dir, 'products_meta.csv'))
+    product_types_in_json = product_types_in_json or os.path.abspath(os.path.join(baseline_dir, 'product_types.json'))
     return dict(
         toprint=toprint,
         baseline_dir=baseline_dir,
@@ -111,5 +118,7 @@ def main_options(opts=argv):
         brands_in_csvname=brands_in_csvname,
         brands_out_csvname=brands_out_csvname,
         products_meta_in_csvname=products_meta_in_csvname,
-        products_meta_out_csvname=products_meta_out_csvname
+        products_meta_out_csvname=products_meta_out_csvname,
+        product_types_in_json=product_types_in_json,
+        product_types_out_json=product_types_out_json,
     )
