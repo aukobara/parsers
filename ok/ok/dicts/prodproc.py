@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from collections import OrderedDict
 
 import csv
 import re
@@ -40,7 +39,7 @@ RE_TEMPLATE_PFQN_FAT = u'(' + RE_TEMPLATE_PFQN_PRE + u')(' + RE_TEMPLATE_PFQN_FA
                        RE_TEMPLATE_PFQN_FAT_MDZH + u")" + RE_TEMPLATE_PFQN_POST
 
 RE_TEMPLATE_PFQN_PACK = u'(' + RE_TEMPLATE_PFQN_PRE + u')' \
-                        u'(т/пак|ж/б|ст/б|м/у|с/б|ст\\\б|ст/бут|бут|пл/б|пл/бут|пэтбутылка|пл|кор\.?|коробка' + \
+                        u'(т/пак|ж/б|ст/б|м/у|с/б|ст\\\б|ст/бут|бут|пл/б|пл/бут|пэтбутылка|пл|кор\.?|коробка|в\sп/к' + \
                         u'|\d*\s*пак\.?|\d+\s*таб|\d+\s*саше|\d+\s*пир(?:\.|амидок)?' + \
                         u'|(?:\d+\s*)?шт\.?|упак\.?|уп\.?|в/у|п/э|жесть|круг|обрам' + \
                         u'|вакуум|нарезка|нар|стакан|ванночка|в\sванночке|дой-пак|дой/пак|пюр-пак|пюр\sпак' + \
@@ -158,7 +157,7 @@ class ProductFQNParser(object):
         return product
 
     def recognize_product_cats(self, product):
-        tags = []
+        tags = set()
         for cat_id in self.cats.get_product_cat_ids(product[PRODUCT_ATTRIBUTE_RAW_ID]):
             if self.accept_category_id_list and \
                     not any(self.cats.is_cat_under(cat_id, a_cat_id) for a_cat_id in self.accept_category_id_list):
@@ -166,7 +165,7 @@ class ProductFQNParser(object):
             if self.ignore_category_id_list and \
                     any(self.cats.is_cat_under(cat_id, i_cat_id) for i_cat_id in self.ignore_category_id_list):
                 continue
-            tags.append(self.cats.get_cat_title_by_id(cat_id))
+            tags.add(self.cats.get_cat_title_by_id(cat_id))
         return tags
 
     def update_product_with_parser_knowledge(self, product):
@@ -190,15 +189,17 @@ class ProductFQNParser(object):
 
         # ######## TAGS #############
         tags = self.recognize_product_cats(product)
-        product["tags"] = list(OrderedDict.fromkeys(product.get("tags", []) + tags))
+        product["tags"] = product.get("tags", set())
+        product["tags"].update(tags)
 
         # ######### TYPES ############
         types_dict = self.get_product_types_dict()
-        all_matched_types = types_dict.collect_type_tuples([product])
+        # TODO: do we need tags here?
+        all_matched_types = types_dict.collect_sqn_type_tuples(product.sqn)
         suggested_relations = types_dict.find_type_tuples_relationship(all_matched_types, ignore_sqns=True)
         for p_type, relations in suggested_relations.iteritems():
             for rel in relations:
-                if rel.from_type == TYPE_TUPLE_RELATION_EQUALS or rel.from_type == TYPE_TUPLE_RELATION_IDENTICAL:
+                if rel.rel_type == TYPE_TUPLE_RELATION_IDENTICAL or rel.rel_type == TYPE_TUPLE_RELATION_EQUALS:
                     product['types'] = product.get('types', set())
                     product['types'].add(rel.to_type)
 

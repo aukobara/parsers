@@ -114,7 +114,7 @@ class Product(dict):
                 product_meta_row = dict(zip(fields, row))
                 product = Product(**{field: value.decode("utf-8") for field, value in product_meta_row.iteritems()})
                 if 'tags' in product and product.get('tags') is not None:
-                    product['tags'] = product['tags'].split(u'|')
+                    product['tags'] = set(product['tags'].split(u'|'))
                 if 'types' in product and product.get('types') is not None:
                     product['types'] = set([ProductType(*pt_str.split(u' + ')) for pt_str in product['types'].split(u'|')])
                 yield product
