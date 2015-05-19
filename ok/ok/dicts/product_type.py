@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from ast import literal_eval
 from collections import OrderedDict, namedtuple
-from itertools import combinations, product, permutations, chain
+from itertools import combinations, product as iter_product, permutations, chain
 import json
 import re
 import Levenshtein
@@ -12,6 +12,7 @@ from ok.dicts.product import Product
 
 TYPE_TUPLE_PROPOSITION_LIST = (u'в', u'с', u'со', u'из', u'для', u'и', u'на', u'без', u'к', u'не', u'де', u'по')
 
+TYPE_TUPLE_RELATION_IDENTICAL = u"identical"
 TYPE_TUPLE_RELATION_EQUALS = u"equals"
 TYPE_TUPLE_RELATION_SIMILAR = u"similar"
 TYPE_TUPLE_RELATION_ALMOST = u"almost"
@@ -32,21 +33,27 @@ class ProductType(tuple):
         def __str__(self):
             return self.__unicode__().encode("utf-8")
 
-    __slot__ = ('_relations',)
+    __slot__ = ('_relations, __relations_cache',)
 
     # ProductType instances acts as singleton. All instances are kept here
     __v = set()
     """@type: set[ProductType]"""
 
     def __new__(cls, *args, **kwargs):
+        """
+        @rtype: ProductType
+        """
         self = tuple.__new__(cls, args)
         """ @type: dict of (ProductType, ProductType.Relation) """
         self._relations = dict()
-        wrapper = EqWrapper(self)
-        if wrapper in cls.__v:
-            self = wrapper.match
-        else:
-            cls.__v.add(self)
+        self.__relations_cache = None
+        singleton = kwargs.get('singleton', True)
+        if singleton:
+            wrapper = EqWrapper(self)
+            if wrapper in cls.__v:
+                self = wrapper.match
+            else:
+                cls.__v.add(self)
 
         return self
 
@@ -74,10 +81,28 @@ class ProductType(tuple):
         if not relation or (relation.is_soft and not is_soft):
             relation = self.Relation(self, p_type2, rel_from, is_soft=is_soft, rel_attr=rel_attr_from)
             self._relations[p_type2] = relation
+            self.__relations_cache = None
             # Notify second party about relation
             p_type2.make_relation(self, rel_to, rel_from, is_soft=is_soft,
                                   rel_attr_from=rel_attr_to, rel_attr_to=rel_attr_from)
         return relation
+
+    def copy_relation(self, relation_copy, back_relation_copy):
+        """
+        @param ProductType.Relation relation_copy: from relation
+        @param ProductType.Relation back_relation_copy: to relation
+        @return:
+        """
+        return self.make_relation(relation_copy.to_type, relation_copy.from_type, back_relation_copy.to_type,
+                                  is_soft=relation_copy.is_soft,
+                                  rel_attr_from=relation_copy.rel_attr, rel_attr_to=back_relation_copy.rel_attr)
+
+    def identical(self, p_type2):
+        """
+        This is a special relation type to link two copies of the same product type. It should never happen in
+        dict types where type singletons are used
+        """
+        return self.make_relation(p_type2, TYPE_TUPLE_RELATION_IDENTICAL, TYPE_TUPLE_RELATION_IDENTICAL)
 
     def equals_to(self, p_type2):
         return self.make_relation(p_type2, TYPE_TUPLE_RELATION_EQUALS, TYPE_TUPLE_RELATION_EQUALS)
@@ -110,8 +135,12 @@ class ProductType(tuple):
         @param list[unicode] rel_type: Relation type list. If empty - all return
         @rtype: list[ProductType.Relation]
         """
-        return sorted([rel for rel in self._relations.values() if not rel_type or rel.rel_type in rel_type],
-                      key=lambda _r: u'%s %s' % (_r.rel_type, _r.to_type))
+        if not self.__relations_cache or rel_type not in self.__relations_cache:
+            self.__relations_cache = self.__relations_cache or dict()
+            self.__relations_cache[rel_type] = sorted([rel for rel in self._relations.values()
+                                                      if not rel_type or rel.rel_type in rel_type],
+                                                      key=lambda _r: u'%s %s' % (_r.rel_type, _r.to_type))
+        return self.__relations_cache[rel_type]
 
     def related_types(self, *rel_type):
         """
@@ -168,6 +197,9 @@ class ProductTypeDict(object):
         # Dict of all ProductTypes mapped to list of SQNs produced them. It is built from Products SQNs or pre-loaded
         # from external source (like file)
         self._type_tuples = None
+        # This is a cache of _type_tuples with filtered meaningful items only (see filter_meaningful_types())
+        # It MUST be dropped always when _type_tuples is changed
+        self._meaningful_type_tuples = None
 
     class MultiWord(unicode):
         # Multi-variant string. It has main representation but also additional variants which can be used for
@@ -237,7 +269,7 @@ class ProductTypeDict(object):
             if len(vf[0]) > 1:
                 # For MultiWord add optional combinations with itself
                 vf.append(vf[0] + [u''])
-            for wvf in product(*vf):
+            for wvf in iter_product(*vf):
                 for _w in combinations(_words, n):
                     v = [[]] * len(_w)
                     for i, _wi in enumerate(_w):
@@ -245,7 +277,7 @@ class ProductTypeDict(object):
                         if len(v[i]) > 1:
                             # For MultiWord add optional combinations with itself
                             v.append(v[i] + [u''])
-                    for wv in product(*v):
+                    for wv in iter_product(*v):
                             if any(w_pair[0] == w_pair[1] or
                                     (isinstance(w_pair[0], ProductTypeDict.MultiWord) and w_pair[1] in w_pair[0].variants) or
                                     is_proposition_form(w_pair[0], w_pair[1])
@@ -273,7 +305,7 @@ class ProductTypeDict(object):
         return result
 
     @staticmethod
-    def collect_type_tuples(products, verbose=False):
+    def collect_type_tuples(products):
         """
         Collect product type tuples for all parsed products using @collect_sqn_type_tuples
         @param collections.Iterable[Product] products: sequence of Products
@@ -281,7 +313,7 @@ class ProductTypeDict(object):
         """
         result = dict()
         i_count = 0
-        if verbose:
+        if ProductTypeDict.VERBOSE:
             print u'Collecting type tuples from products'
         for product in products:
             product_tuples = ProductTypeDict.collect_sqn_type_tuples(product.sqn)
@@ -294,23 +326,85 @@ class ProductTypeDict(object):
                 existing_sqns.append(sqn)
                 result[type_tuple] = existing_sqns
             i_count += 1
-            if verbose and i_count % 100 == 0: print u'.',
-        if verbose:
+            if ProductTypeDict.VERBOSE and i_count % 100 == 0: print u'.',
+        if ProductTypeDict.VERBOSE:
             print
         return result
 
     @staticmethod
-    def update_type_tuples_relationship(type_tuples, verbose=False, cleanup_prev_relations=True):
+    def filter_meaningful_types(types_iter):
+        """
+        Take iterator and return filtered iterator without types to be ignored for processing
+        @param collections.Iterable(tuple(ProductType, list[unicode])) types_iter: iterator over product types dict items
+        @rtype: collections.Iterable[tuple of (ProductType, list[unicode])]
+        """
+        for p_type, data in types_iter:
+            if len(data) >= TYPE_TUPLE_MIN_CAPACITY or len(p_type) == 1 or p_type.relations():
+                yield p_type, data
+
+    @staticmethod
+    def find_relation(type1, set1, type2, set2, max_similarity):
+        """
+        @param ProductType type1: type from
+        @param set|None set1: data from - if empty do not compare data sets but types only
+        @param ProductType type2: type to
+        @param set|None set2: data to - if empty do not compare data sets but types only
+        @param float max_similarity: similarity level required
+        @rtype: None|tuple(ProductType.Relation, ProductType.Relation)
+        @return tuple of forward and backward relations
+        """
+        type1_copy = ProductType(*type1,  singleton=False)
+        type2_copy = ProductType(*type2, singleton=False)
+        relation = None
+        back_relation = None
+        if type1_copy == type2_copy:
+            relation = type1_copy.identical(type2_copy)
+        elif set1 and set2:
+            if set1.issubset(set2):
+                if len(set1) < len(set2):
+                    relation = type1_copy.subset_of(type2_copy)
+                else:
+                    relation = type1_copy.equals_to(type2_copy)
+            elif set2.issubset(set1):
+                relation = type1_copy.contains(type2_copy)
+            else:
+                s_inter = set1.intersection(set2)
+
+                def similarity(s):
+                    return (round(1.0 * len(s_inter) / len(s), 2), len(s_inter))
+
+                # if similarity(s1) >= 0.8:
+                if len(s_inter) >= TYPE_TUPLE_MIN_CAPACITY:
+                    # AKA setratio()>0.8 in Levenshtein
+                    relation = type1_copy.almost(type2_copy, similarity(set1), similarity(set2))
+                    # if similarity(s2) >= 0.8:
+                    # if len(s_inter) >= TYPE_TUPLE_MIN_CAPACITY:
+                    # relation = type1.almost(type2, similarity(s1), similarity(s2))
+
+        if len(type1_copy) == len(type2_copy) and not type1_copy.get_relation(type2_copy):
+            similarity = Levenshtein.setratio(type1_copy, type2_copy)
+            if similarity >= max_similarity:
+                # Is it too smart??
+                relation = type1_copy.similar(type2_copy, round(similarity, 2))
+
+        if relation:
+            back_relation = type2_copy.get_relation(type1_copy)
+            # Fix relations with original types
+            relation = relation._replace(from_type=type1, to_type=type2)
+            back_relation = back_relation._replace(from_type=type2, to_type=type1)
+
+        return None if not relation else (relation, back_relation)
+
+    def update_type_tuples_relationship(self, type_tuples, cleanup_prev_relations=True):
         """
         Calculate all non-repeatable combinations of type tuples with capacity not less than MIN_TUPLE_CAPACITY
         and check if one tuple is equals or contains (in terms of sqn set) another.
         NOTE: If type_tuples is big (10+K types) or/and TYPE_TUPLE_MIN_CAPACITY is too low (3 or less) this operation
         can work WAY TOO LONG. Be careful.
         @param dict of (ProductType, list[unicode]) type_tuples: from collect_type_tuples()
-        @param bool verbose: type progress if specified - useful for testing of low capacity huge combinations
         """
 
-        if verbose:
+        if self.VERBOSE:
             print u'Updating type tuples relationships'
 
         if cleanup_prev_relations:
@@ -318,8 +412,7 @@ class ProductTypeDict(object):
                 t.brake_relations()
 
         i_count = 0
-        filtered_type_tuples = [it for it in type_tuples.iteritems() if len(it[1]) >= TYPE_TUPLE_MIN_CAPACITY]
-        for t1, t2 in combinations(filtered_type_tuples, 2):
+        for t1, t2 in combinations(self.filter_meaningful_types(type_tuples.iteritems()), 2):
             s1 = set(t1[1])
             s2 = set(t2[1])
             type1 = t1[0]
@@ -327,54 +420,103 @@ class ProductTypeDict(object):
             type2 = t2[0]
             """@type: ProductType"""
 
-            if s1.issubset(s2):
-                if len(s1) < len(s2):
-                    type1.subset_of(type2)
-                else:
-                    type1.equals_to(type2)
-            elif s2.issubset(s1):
-                type1.contains(type2)
-            else:
-                s_inter = s1.intersection(s2)
-                def similarity(s): return (round(1.0 * len(s_inter)/len(s), 2), len(s_inter))
-                # if similarity(s1) >= 0.8:
-                if len(s_inter) >= TYPE_TUPLE_MIN_CAPACITY:
-                    # AKA setratio()>0.8 in Levenshtein
-                    type1.almost(type2, similarity(s1), similarity(s2))
-                # if similarity(s2) >= 0.8:
-                if len(s_inter) >= TYPE_TUPLE_MIN_CAPACITY:
-                    type2.almost(type1, similarity(s2), similarity(s1))
-
-            if len(type1) == len(type2) and not type1.get_relation(type2):
-                similarity = Levenshtein.setratio(type1, type2)
-                if similarity >= 0.85:
-                    # Is it too smart??
-                    type1.similar(type2, round(similarity, 2))
+            rel = self.find_relation(type1, s1, type2, s2, 0.85)
+            if rel and rel[0].rel_type != TYPE_TUPLE_RELATION_IDENTICAL:
+                # Do not link types with themselves. Actually last conditions should never fail, just for spare case.
+                type1.copy_relation(rel[0], rel[1])
 
             i_count += 1
-            if verbose and i_count % 10000 == 0: print u'.',
-            if verbose and i_count % 1000000 == 0: print i_count
-        if verbose: print
+            if self.VERBOSE and i_count % 10000 == 0: print u'.',
+            if self.VERBOSE and i_count % 1000000 == 0: print i_count
+        if self.VERBOSE: print
         pass
+
+    def find_type_tuples_relationship(self, type_tuples, ignore_sqns=False, force_deep_scan=False, max_similarity=0.8):
+        """
+        Calculate all non-repeatable combinations of type tuples with capacity not less than MIN_TUPLE_CAPACITY
+        and check if one tuple is equals or contains (in terms of sqn set) another.
+        NOTE: If type_tuples is big (10+K types) or/and TYPE_TUPLE_MIN_CAPACITY is too low (3 or less) this operation
+        can work WAY TOO LONG. Be careful.
+        @param dict of (ProductType, list[unicode]) type_tuples: from collect_type_tuples()
+        @param bool ignore_sqns: if True do not try to compare sqn data sets but check type tuples only
+        @param bool force_deep_scan: if True scan for similarity all non-identical types even if identical has been found.
+        @return: dict of ProductType mapped to suggested Relations linked to meaningful types in types dict.
+                Relation instances are not in types actually and should be used for analysis or must be merged later
+                if required to types data
+        """
+
+        # if self.VERBOSE:
+        #     print u'Find type tuples relationships: %s' % (u', '.join(map(unicode, type_tuples.keys())))
+
+        i_count = 0
+        types_suggested_relations = dict()
+        """@type: dict of (ProductType, list[ProductType.Relation])"""
+
+        type_tuples_for_deep_scan = dict(type_tuples)
+        dict_types = self.get_type_tuples(meaningful_only=True)
+        if ignore_sqns:
+            # Optimize lookup data set - do not iterate for known types, just map as identical
+            for t in type_tuples:
+                if t in dict_types:
+                    # Must always find identical relation
+                    rel = self.find_relation(t, None, t, None, max_similarity)
+                    types_suggested_relations[t] = types_suggested_relations.get(t, [])
+                    types_suggested_relations[t].append(rel[0])
+                    if force_deep_scan:
+                        del type_tuples_for_deep_scan[t]
+
+        if not force_deep_scan and types_suggested_relations:
+            # If identical types have been found deep scan is not required
+            type_tuples_for_deep_scan.clear()
+            # if self.VERBOSE: print "Identical type 's been found, skip deep scan"
+
+        for t1, t2 in iter_product(type_tuples_for_deep_scan.iteritems(), dict_types.iteritems()):
+            s1 = set(t1[1]) if not ignore_sqns else None
+            s2 = set(t2[1]) if not ignore_sqns else None
+            type_input = t1[0]
+            """@type: ProductType"""
+            type_dict = t2[0]
+            """@type: ProductType"""
+
+            rel = self.find_relation(type_input, s1, type_dict, s2, max_similarity)
+
+            if rel:
+                suggested_relation = rel[0]
+                types_suggested_relations[type_input] = types_suggested_relations.get(type_input, [])
+                types_suggested_relations[type_input].append(suggested_relation)
+
+            i_count += 1
+            if self.VERBOSE and i_count % 10000 == 0: print u'.',
+            if self.VERBOSE and i_count % 1000000 == 0: print i_count
+        if self.VERBOSE and i_count >= 10000:
+            print
+            # print u'Suggested %d types' % len(types_suggested_relations)
+
+        return types_suggested_relations
 
     def build_from_products(self, products):
         """
         Build types graph from sequence of products
         @param collections.Iterable[Product] products: seq of Product
         """
-        type_tuples = self.collect_type_tuples(products, verbose=self.VERBOSE)
-        self.update_type_tuples_relationship(type_tuples, verbose=self.VERBOSE)
+        type_tuples = self.collect_type_tuples(products)
+        self.update_type_tuples_relationship(type_tuples)
         self._type_tuples = type_tuples
+        self._meaningful_type_tuples = None
 
-    def get_type_tuples(self):
+    def get_type_tuples(self, meaningful_only=False):
         """
         @return dict of ProductTypes
         @rtype: dict of (ProductType, list[unicode])
         """
         if not self._type_tuples:
             raise Exception("You have to build dict first!")
-
-        return dict(self._type_tuples)
+        if not meaningful_only:
+            return dict(self._type_tuples)
+        else:
+            if not self._meaningful_type_tuples:
+                self._meaningful_type_tuples = dict((k, v) for k, v in self.filter_meaningful_types(self._type_tuples.iteritems()))
+            return self._meaningful_type_tuples
 
     def get_root_type_tuples(self):
         if not self._root_types:
@@ -447,6 +589,7 @@ class ProductTypeDict(object):
                         seen_rel[pt] = seen_rel.get(pt, dict())
                         seen_rel[pt][type_to] = r_to
         self._type_tuples = type_tuples
+        self._meaningful_type_tuples = None
 
         if self.VERBOSE:
             print "Loaded %d type tuples from json %s" % (len(self._type_tuples), json_filename)
@@ -465,9 +608,23 @@ def load_from_json():
     config = main_options(sys.argv)
     types = ProductTypeDict()
     types.VERBOSE = True
-    import os.path
-    types.from_json(os.path.join(config['baseline_dir'], 'product_types.json'))
+    types.from_json(config['product_types_in_json'])
     types.to_json('out/product_types_1.json')
+    products_meta_in_csvname = config['products_meta_in_csvname']
+    if products_meta_in_csvname:
+        products = list(Product.from_meta_csv(products_meta_in_csvname))
+        type_tuples = types.get_type_tuples()
+        meaningful_tuples = set(type_tuples)
+        for p in products:
+            p_all_types = types.collect_sqn_type_tuples(p.sqn)
+            p_types = set(p_all_types).intersection(meaningful_tuples)
+            p['types'] = p_types
+
+        products_meta_out_csvname = config['products_meta_out_csvname']
+        if products_meta_out_csvname:
+            Product.to_meta_csv(products_meta_out_csvname, products)
+
+
 
 
 def print_sqn_tails():
@@ -479,7 +636,7 @@ def print_sqn_tails():
 
     s = dict()
     s_type = dict()
-    for t, sqns in sorted(types._type_tuples.iteritems(), key=lambda _t: len(_t[0])*100 + len(unicode(_t[0])), reverse=True):
+    for t, sqns in sorted(types.get_type_tuples().iteritems(), key=lambda _t: len(_t[0])*100 + len(unicode(_t[0])), reverse=True):
         if len(t) == 1 or len(sqns) >= TYPE_TUPLE_MIN_CAPACITY or t.relations():
             for sqn in sqns:
                 s[sqn] = s.get(sqn, sqn)
@@ -495,7 +652,7 @@ def print_sqn_tails():
         if tail:
             t_products.append(Product(sqn=tail))
 
-    tails = types.collect_type_tuples(t_products, verbose=types.VERBOSE)
+    tails = types.collect_type_tuples(t_products)
     for t, s in sorted(tails.iteritems(), key=lambda _t: len(set(_t[1])), reverse=True):
         if len(set(s)) < 3: continue
         print u'%s: %s' % (t, len(set(s)))
