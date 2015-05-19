@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from ast import literal_eval
 from collections import OrderedDict, namedtuple
 from itertools import combinations, product, permutations, chain
 import json
@@ -48,6 +49,13 @@ class ProductType(tuple):
             cls.__v.add(self)
 
         return self
+
+    @staticmethod
+    def reload():
+        """
+        Clear all type tuple singletons
+        """
+        ProductType.__v.clear()
 
     def make_relation(self, p_type2, rel_from, rel_to, is_soft=False, rel_attr_from=None, rel_attr_to=None):
         """
@@ -102,7 +110,8 @@ class ProductType(tuple):
         @param list[unicode] rel_type: Relation type list. If empty - all return
         @rtype: list[ProductType.Relation]
         """
-        return sorted([rel for rel in self._relations.values() if not rel_type or rel.rel_type in rel_type], key=lambda _r: _r.rel_type)
+        return sorted([rel for rel in self._relations.values() if not rel_type or rel.rel_type in rel_type],
+                      key=lambda _r: u'%s %s' % (_r.rel_type, _r.to_type))
 
     def related_types(self, *rel_type):
         """
@@ -221,6 +230,7 @@ class ProductTypeDict(object):
                     w2.startswith(w1 + u'-') or w1.startswith(w2 + u'-')
 
         first_word = words1.pop(0)
+
         def add_combinations(_words, n):
             vf = [[]]
             vf[0] = [first_word] + (first_word.variants if isinstance(first_word, ProductTypeDict.MultiWord) else [])
@@ -381,12 +391,11 @@ class ProductTypeDict(object):
     def to_json(self, json_filename):
         """
         Persist type structures to JSON file
-        @return:
         """
-        types = {unicode(k): [len(set(sqns))]+[unicode(rel) for rel in k.relations()]
-                 for k, sqns in self._type_tuples.iteritems()
-                 if len(sqns) >= TYPE_TUPLE_MIN_CAPACITY or k.relations() or len(k) == 1
-                 }
+        types = OrderedDict((unicode(k), [len(set(sqns))]+[unicode(rel) for rel in k.relations()])
+                            for k, sqns in sorted(self._type_tuples.iteritems(), key=lambda _t: unicode(_t[0]))
+                            if len(sqns) >= TYPE_TUPLE_MIN_CAPACITY or k.relations() or len(k) == 1
+                            )
 
         with open(json_filename, 'wb') as f:
             f.truncate()
@@ -397,6 +406,51 @@ class ProductTypeDict(object):
         if self.VERBOSE:
             print "Dumped json of %d type tuples to %s" % (len(types), json_filename)
 
+    def from_json(self, json_filename):
+        """
+        Restore type structures from JSON file (see format in to_json)
+        SQNs cannot be restored from type dump and should be updated separately if required. For API compatibility
+        they are filled as lists of indexes with len from dump
+        """
+        with open(json_filename, 'rb') as f:
+            s = f.read().decode("utf-8")
+        types = json.loads(s)
+        ProductType.reload()
+        type_tuples = dict()
+        pseudo_sqn = 1
+        seen_rel = dict()
+        for type_str, rel_str in types.iteritems():
+            type_items = type_str.split(u' + ')
+            pt = ProductType(*type_items)
+            type_tuples[pt] = []
+            for i in xrange(int(rel_str[0])):
+                type_tuples[pt].append(unicode(pseudo_sqn))
+                pseudo_sqn += 1
+
+            for r_str in rel_str[1:]:
+                r_match = re.findall(u'^(\w+)(?:\[([^\]]+)\])?(~)?\s+(.*)$', r_str)
+                if r_match:
+                    relation, rel_attr, is_soft, type_to_str = r_match[0]
+                    type_to_items = type_to_str.split(u' + ')
+                    type_to = ProductType(*type_to_items)
+                    if rel_attr:
+                        try:
+                            rel_attr = literal_eval(rel_attr)
+                        except ValueError:
+                            pass  # Just use string as is
+                    r_to = ProductType.Relation(from_type=pt, to_type=type_to, rel_type=relation, is_soft=is_soft == u'~', rel_attr=rel_attr)
+                    if type_to in seen_rel and pt in seen_rel[type_to]:
+                        # Already processed back relation
+                        r_from = seen_rel[type_to][pt]
+                        pt.make_relation(type_to, r_to.rel_type, r_from.rel_type, r_to.is_soft, r_to.rel_attr, r_from.rel_attr)
+                    else:
+                        seen_rel[pt] = seen_rel.get(pt, dict())
+                        seen_rel[pt][type_to] = r_to
+        self._type_tuples = type_tuples
+
+        if self.VERBOSE:
+            print "Loaded %d type tuples from json %s" % (len(self._type_tuples), json_filename)
+
 
 def dump_json():
     config = main_options(sys.argv)
@@ -405,6 +459,15 @@ def dump_json():
     types.VERBOSE = True
     types.build_from_products(products)
     types.to_json('out/product_types.json')
+
+
+def load_from_json():
+    config = main_options(sys.argv)
+    types = ProductTypeDict()
+    types.VERBOSE = True
+    import os.path
+    types.from_json(os.path.join(config['baseline_dir'], 'product_types.json'))
+    types.to_json('out/product_types_1.json')
 
 
 def print_sqn_tails():
@@ -439,4 +502,5 @@ def print_sqn_tails():
 
 if __name__ == '__main__':
     # print_sqn_tails()
-    dump_json()
+    # dump_json()
+    load_from_json()
