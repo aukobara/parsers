@@ -26,10 +26,17 @@
         "contains #соль", 
         "contains #супы и блюда быстрого приготовления", 
         "contains #сухие завтраки", 
+        "contains bioкаша", 
+        "contains bioмюсли", 
         "contains батончик + мюсли", 
+        "contains батончик-мюсли", 
         "contains батончики", 
         "contains батончики + мюсли", 
+        "contains булочки", 
+        "contains быстросуп", 
+        "contains быстросуп-пюре", 
         "contains вермишель", 
+        "contains гороховый", 
         "contains гот", 
         "contains гот + pops", 
         "contains гот + завтрак", 
@@ -38,7 +45,11 @@
         "contains гот + завтрак + шоколад", 
         "contains гот + шарики", 
         "contains гот + шоколад", 
+        "contains готовый", 
+        "contains греча", 
         "contains заменитель + сахара", 
+        "contains зерно", 
+        "contains картофельные", 
         "contains каша + 4", 
         "contains каша + ассорти", 
         "contains каша + овсяная", 
@@ -51,6 +62,7 @@
         "contains крупа + рис", 
         "contains крупа + рис + экстра", 
         "contains крупа + экстра", 
+        "contains куриный", 
         "contains лапша", 
         "contains лапша + говядина", 
         "contains лапша + домашнему", 
@@ -59,6 +71,7 @@
         "contains лапша + по", 
         "contains лапша + по + домашнему", 
         "contains лапша + по-домашнему", 
+        "contains луковый", 
         "contains макаронные", 
         "contains макаронные + изделия", 
         "contains макароны + вермишель", 
@@ -66,15 +79,26 @@
         "contains макароны + пенне", 
         "contains макароны + ригате", 
         "contains макароны + спагетти", 
+        "contains маффины", 
+        "contains мисо", 
         "contains мука", 
         "contains мука + в/с", 
         "contains мука + пшеничная", 
         "contains мука + пшеничная + в/с", 
+        "contains мюсли", 
+        "contains песок", 
+        "contains подсластитель", 
+        "contains прессов", 
+        "contains программа", 
+        "contains пудра", 
         "contains пюре + картоф", 
         "contains пюре + картоф + т/ст", 
         "contains пюре + т/ст", 
         "contains рафинад", 
         "contains рафинад + сахар", 
+        "contains ризотто", 
+        "contains рис", 
+        "contains рисовая", 
         "contains сахар + коричневый", 
         "contains сахар + кусковой", 
         "contains сахар + кусковой + тростниковый", 
@@ -83,7 +107,10 @@
         "contains сахар + рафинад", 
         "contains сахар + трост", 
         "contains сахар + тростниковый", 
+        "contains сахар-песок", 
+        "contains сахар-прессов", 
         "contains сахар-рафинад", 
+        "contains сахарная", 
         "contains смесь + д/выпечки", 
         "contains смесь + д/выпечки + кекс", 
         "contains смесь + кекс", 
@@ -95,6 +122,9 @@
         "contains соль + морская + йодир", 
         "contains соль + морская + мелкая", 
         "contains соль + шейкер", 
+        "contains сорбит", 
+        "contains суп-пюре", 
+        "contains томатный", 
         "contains фруктоза", 
         "contains хлебцы + б/глютена", 
         "contains хлопья + геркулес", 
@@ -106,6 +136,7 @@
         19, 
         "almost[(0.21, 4)]~ батончик", 
         "almost[(0.21, 4)]~ хлебцы", 
+        "contains булочки", 
         "contains хлебцы + б/глютена", 
         "subset_of #бакалея"
     ], 
@@ -122,6 +153,10 @@
         "contains блины", 
         "contains блины + мясом", 
         "contains блины + с мясом", 
+        "contains круассаны", 
+        "contains оладьи", 
+        "contains пирожки", 
+        "contains сочни", 
         "subset_of #замороженные продукты", 
         "subset_of #полуфабрикаты замороженные"
     ], 
@@ -194,6 +229,16 @@
     "#выпечка, изделия сдобные": [
         40, 
         "almost[(0.13, 5)]~ ягодный", 
+        "contains ватрушка", 
+        "contains изделие", 
+        "contains коржик", 
+        "contains оладушки", 
+        "contains плюшка", 
+        "contains ромовая", 
+        "contains сдоба", 
+        "contains слойка", 
+        "contains сочник", 
+        "contains яблочный", 
         "contains ягодное", 
         "contains ягодное + лукошко", 
         "contains ягодный + пирог", 
@@ -217,26 +262,57 @@
     ], 
     "#готовые блюда замороженные": [
         37, 
+        "contains жульен", 
+        "contains колобки", 
+        "contains крем-суп", 
+        "contains кроллы", 
+        "contains лазанья", 
+        "contains паэлья", 
+        "contains плов", 
+        "contains по", 
+        "contains похлебка", 
+        "contains солянка", 
+        "contains сотэ", 
+        "contains сырники", 
+        "contains сырные", 
+        "contains феттучини", 
+        "contains цыпленок-по", 
+        "contains чахохбили", 
+        "contains чебурек", 
+        "contains чебуреки", 
+        "contains чебуречки", 
+        "contains шампиньон", 
         "subset_of #замороженные продукты"
     ], 
     "#готовые блюда консервированные": [
         14, 
+        "contains ветчинка", 
+        "contains голубцы", 
+        "contains жаркое", 
+        "contains обед", 
+        "contains харчо", 
         "subset_of #консервация"
     ], 
     "#грибные консервы": [
         26, 
         "almost[(0.5, 13)]~ грибы", 
         "almost[(0.19, 5)]~ шампиньоны", 
+        "contains грибное", 
+        "contains грибочки", 
         "contains грибы + грузди", 
         "contains грибы + маринованные", 
         "contains грибы + опята", 
+        "contains грузди", 
         "contains шампиньоны + резаные", 
         "contains шампиньоны + целые", 
         "similar[0.91]~ #рыбные консервы", 
         "subset_of #консервация"
     ], 
     "#грибы свежие": [
-        2
+        2, 
+        "subset_of #овощи", 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of грибы"
     ], 
     "#десерты, каши молочные": [
         64, 
@@ -246,6 +322,7 @@
         "almost[(0.14, 9)]~ пирожное", 
         "almost[(0.17, 11)]~ продукт", 
         "contains десерт + удовольствие", 
+        "contains запеканка", 
         "contains мол", 
         "contains мол + каша", 
         "contains мол + каша + рисовая", 
@@ -257,16 +334,22 @@
         "contains мол + сост + каша", 
         "contains мол + сост + прод", 
         "contains мол + сост + рисовая", 
+        "contains молсод", 
+        "contains монте", 
         "contains продукт + овсяный", 
         "contains продукт + овсяный + питьев", 
         "contains продукт + питьев", 
         "contains пудинг", 
+        "contains снэк", 
+        "contains творожный", 
+        "contains трубочка", 
         "subset_of #молочные продукты", 
         "subset_of #молочные продукты, сыры, яйцо"
     ], 
     "#другие крупы": [
         19, 
         "almost[(0.84, 16)]~ крупа", 
+        "contains зерно", 
         "contains крупа + манная", 
         "contains крупа + пшено", 
         "subset_of #бакалея", 
@@ -276,7 +359,16 @@
         18, 
         "almost[(0.22, 4)]~ ассорти", 
         "almost[(0.22, 4)]~ перец", 
+        "contains артишоки", 
+        "contains закуска", 
+        "contains зубчики", 
+        "contains каперсы", 
         "contains лечо", 
+        "contains луковки", 
+        "contains острый", 
+        "contains патиссоны", 
+        "contains пеперони", 
+        "contains перец-пеперони", 
         "subset_of #консервация", 
         "subset_of #овощные консервы"
     ], 
@@ -294,6 +386,7 @@
         "contains #пицца", 
         "contains #полуфабрикаты замороженные", 
         "contains #тесто", 
+        "contains cмесь", 
         "contains блинчики", 
         "contains блинчики + ветчиной", 
         "contains блинчики + грибами", 
@@ -305,35 +398,93 @@
         "contains блины", 
         "contains блины + мясом", 
         "contains блины + с мясом", 
+        "contains брокколи", 
+        "contains брюссельская", 
         "contains вареники", 
         "contains вареники + картофелем", 
         "contains вареники + с картофелем", 
         "contains вишня", 
+        "contains гавайская", 
+        "contains греческая", 
+        "contains ежевика", 
+        "contains жульен", 
+        "contains итальянская", 
+        "contains клубника", 
+        "contains колобки", 
+        "contains кордон", 
         "contains котлеты + домашние", 
         "contains котлеты + картофельные", 
+        "contains крем-суп", 
+        "contains кроллы", 
+        "contains круассаны", 
+        "contains куриное", 
+        "contains кусочки", 
+        "contains лазанья", 
+        "contains манты", 
+        "contains мексиканская", 
         "contains наггетсы", 
+        "contains нагетсы", 
+        "contains овощи", 
+        "contains овощная", 
+        "contains овощное", 
+        "contains овощные", 
+        "contains оладьи", 
+        "contains основа", 
+        "contains отбивная", 
+        "contains паэлья", 
         "contains пельмени", 
         "contains пельмени + из отборной", 
         "contains пельмени + классические", 
         "contains пельмени + отборной", 
         "contains пельмени + сибирские", 
+        "contains пельмешки", 
+        "contains пирожки", 
         "contains пицца", 
         "contains пицца + ветчиной", 
         "contains пицца + с ветчиной", 
+        "contains плов", 
+        "contains по", 
+        "contains португальская", 
+        "contains похлебка", 
+        "contains самса", 
+        "contains солянка", 
+        "contains сотэ", 
+        "contains сочни", 
+        "contains стрипсы", 
+        "contains сырники", 
+        "contains сырные", 
         "contains тесто + дрожжевое", 
         "contains тесто + слоеное", 
+        "contains феттучини", 
+        "contains фрикадельки", 
+        "contains фруктовая", 
         "contains хинкали", 
         "contains цветная", 
-        "contains цветная + капуста"
+        "contains цветная + капуста", 
+        "contains цыпленок-по", 
+        "contains чахохбили", 
+        "contains чебурек", 
+        "contains чебуреки", 
+        "contains чебуречки", 
+        "contains шампиньон"
     ], 
     "#зелень": [
         34, 
         "almost[(0.35, 12)]~ салат", 
         "almost[(0.24, 8)]~ смесь", 
+        "contains кинза", 
+        "contains мята", 
+        "contains петрушка", 
+        "contains розмарин", 
+        "contains рукола", 
         "contains салат + айсберг", 
         "contains смесь + микс", 
         "contains смесь + салатная", 
         "contains смесь + салатная + микс", 
+        "contains стебель", 
+        "contains тимьян", 
+        "contains укроп", 
+        "contains щавель", 
         "subset_of #овощи, фрукты, грибы, ягоды"
     ], 
     "#икра": [
@@ -358,6 +509,11 @@
         20, 
         "almost[(0.3, 6)]~ баклажаны", 
         "almost[(0.2, 4)]~ икра", 
+        "contains айвар", 
+        "contains винегрет", 
+        "contains лютеница", 
+        "contains пинджур", 
+        "contains чудо", 
         "subset_of #консервация", 
         "subset_of #овощные консервы"
     ], 
@@ -365,10 +521,25 @@
         44, 
         "almost[(0.09, 4)]~ глазурь", 
         "almost[(0.18, 8)]~ приправа", 
+        "contains ванилин", 
+        "contains ванильный", 
         "contains дрожжи", 
         "contains желатин", 
+        "contains жемчужины", 
+        "contains карандаши", 
+        "contains кокосовая", 
+        "contains кондитерская", 
+        "contains корж", 
+        "contains коржи", 
+        "contains корица", 
+        "contains кунжут", 
+        "contains лимонная", 
+        "contains мак", 
+        "contains посыпка", 
         "contains разрыхлитель", 
         "contains разрыхлитель + д/теста", 
+        "contains сода", 
+        "contains фигурки", 
         "subset_of #растительные масла, соусы и приправы"
     ], 
     "#йогурты и творожки": [
@@ -420,14 +591,18 @@
         "contains продукт + соком", 
         "contains продукт + творож", 
         "contains продукт + терм", 
+        "contains творож", 
         "subset_of #молочные продукты", 
         "subset_of #молочные продукты, сыры, яйцо"
     ], 
     "#какао, цикорий": [
         23, 
         "almost[(0.22, 5)]~ напиток", 
+        "contains Кофе", 
         "contains какао", 
         "contains какао + растворимый", 
+        "contains какао-напиток", 
+        "contains кофейный", 
         "contains напиток + быстрорастворимый", 
         "contains напиток + шоколадный", 
         "contains напиток + шоколадный + быстрорастворимый", 
@@ -475,6 +650,7 @@
     ], 
     "#кетчупы": [
         35, 
+        "contains горлохват", 
         "contains кетчуп", 
         "contains кетчуп + острый", 
         "contains кетчуп + томатный", 
@@ -490,8 +666,14 @@
         "almost[(0.21, 9)]~ напиток + к/м + соком", 
         "almost[(0.31, 13)]~ напиток + с соком", 
         "almost[(0.31, 13)]~ напиток + соком", 
+        "contains ацидофилин", 
+        "contains биокефир", 
+        "contains биопрод", 
         "contains биопродукт + кефирный", 
+        "contains бифилайф", 
+        "contains варенец", 
         "contains кефир + тп", 
+        "contains кефирный", 
         "contains напиток + к/м + тан", 
         "contains напиток + сыворотка", 
         "contains напиток + сыворотка + с соком", 
@@ -520,6 +702,8 @@
         "contains колбаса + русская", 
         "contains колбаса + синюге", 
         "contains колбаса + телячья", 
+        "contains колбасу", 
+        "contains молочная", 
         "subset_of #мясная гастрономия"
     ], 
     "#колбасы копченые": [
@@ -546,6 +730,8 @@
         "contains колбаски + пиколини", 
         "contains колбаски + с/к", 
         "contains колбаски + с/к + пиколини", 
+        "contains с/к", 
+        "contains салями", 
         "contains сервелат", 
         "contains сервелат + в/к", 
         "contains сервелат + финский", 
@@ -567,11 +753,20 @@
         "contains #мучные кондитерские изделия", 
         "contains #торты и пирожные свежие", 
         "contains #шоколад", 
+        "contains Чупа", 
+        "contains бисквитное", 
+        "contains бодрость", 
         "contains вафли + сливочные", 
+        "contains дольки", 
+        "contains жевательные", 
         "contains зефир", 
+        "contains ирис", 
         "contains карамель", 
         "contains карамель + ассорти", 
         "contains карамель + леденцовая", 
+        "contains козинак", 
+        "contains колбаска", 
+        "contains конфета", 
         "contains конфеты", 
         "contains конфеты + minis", 
         "contains конфеты + а", 
@@ -582,17 +777,26 @@
         "contains конфеты + шок", 
         "contains конфеты + шоколадные", 
         "contains крекер", 
+        "contains крекеры", 
         "contains круассан + 1", 
         "contains круассан + 3", 
         "contains круассан + 3 + 1", 
+        "contains кунафа", 
+        "contains леденцы", 
         "contains лукум", 
+        "contains м", 
+        "contains м-кекс", 
         "contains мармелад", 
         "contains мармелад + жевательный", 
         "contains мармелад + желейный", 
+        "contains мармеладные", 
+        "contains мини-карамель", 
         "contains набор + конфет", 
         "contains набор + пирожных", 
+        "contains нуга", 
         "contains паста + шоколадная", 
         "contains пастила", 
+        "contains пахлава", 
         "contains печенье + bianco", 
         "contains печенье + bianco + мулинелли", 
         "contains печенье + chocolife", 
@@ -603,10 +807,14 @@
         "contains печенье + бисквитное + chocolife", 
         "contains печенье + мулинелли", 
         "contains пирожные", 
+        "contains плитка", 
+        "contains рахат", 
+        "contains рахат-лукум", 
         "contains торт + киевский", 
         "contains торт + молоко", 
         "contains торт + птичье", 
         "contains торт + птичье + молоко", 
+        "contains трюфели", 
         "contains халва", 
         "contains шоколад", 
         "contains шоколад + excellence", 
@@ -644,11 +852,13 @@
         "contains шоколад + форме + конфет", 
         "contains шоколад + фундуком", 
         "contains шоколад + цельным", 
+        "contains шоколадка", 
+        "contains шоколадное", 
         "contains шоколадный + батончик", 
         "contains щербет"
     ], 
     "#консервация": [
-        436, 
+        437, 
         "almost[(0.01, 5)]~ ассорти", 
         "almost[(0.01, 6)]~ баклажаны", 
         "almost[(0.03, 11)]~ говядина", 
@@ -699,21 +909,41 @@
         "contains #томатная паста, томаты консервированные", 
         "contains #фасоль", 
         "contains #фруктово-ягодная консервация", 
+        "contains айвар", 
         "contains ананасы", 
+        "contains артишоки", 
+        "contains бобы", 
+        "contains бычки", 
         "contains варенье", 
+        "contains ветчинка", 
+        "contains винегрет", 
         "contains говядина + тушеная", 
         "contains говядина + тушеная + в/с", 
+        "contains голубцы", 
         "contains горошек", 
         "contains горошек + зеленый", 
+        "contains грибное", 
+        "contains грибочки", 
         "contains грибы + грузди", 
         "contains грибы + маринованные", 
         "contains грибы + опята", 
+        "contains грузди", 
         "contains джем", 
         "contains джем + б/сахара", 
+        "contains евроогурчики", 
+        "contains жаркое", 
+        "contains закуска", 
+        "contains земляника", 
+        "contains зубчики", 
+        "contains каперсы", 
         "contains компот", 
+        "contains конина", 
         "contains корнишоны", 
         "contains кукуруза + сладкая", 
         "contains лечо", 
+        "contains луковки", 
+        "contains лютеница", 
+        "contains манго", 
         "contains маслины", 
         "contains маслины + б/к", 
         "contains маслины + с/к", 
@@ -731,10 +961,14 @@
         "contains молоко + сгущенное", 
         "contains молоко + сгущенное + с сахаром", 
         "contains молоко + сгущенное + сахаром", 
+        "contains молокосодержащий", 
         "contains мёд", 
         "contains мёд + абхазии", 
         "contains мёд + натуральный", 
+        "contains обед", 
+        "contains облепиха", 
         "contains огурцы + маринованные", 
+        "contains огурчики", 
         "contains оливки", 
         "contains оливки + анчоусом", 
         "contains оливки + б/к", 
@@ -745,6 +979,8 @@
         "contains оливки + с кост", 
         "contains оливки + с/к", 
         "contains оливки + фаршированные", 
+        "contains острый", 
+        "contains патиссоны", 
         "contains паштет + гусиной", 
         "contains паштет + гусиной + из печени", 
         "contains паштет + гусиной + печени", 
@@ -753,30 +989,50 @@
         "contains паштет + из гусиной + печени", 
         "contains паштет + из печени", 
         "contains паштет + печени", 
+        "contains пеперони", 
+        "contains перец-пеперони", 
         "contains персики", 
         "contains персики + половинки", 
         "contains печень + трески", 
+        "contains пинджур", 
+        "contains повидло", 
+        "contains помидоры", 
         "contains продукт + молокосод", 
         "contains продукт + молокосод + сгущенка", 
         "contains продукт + сгущенка", 
         "contains сайра", 
         "contains сайра + натуральная", 
+        "contains сардина", 
+        "contains сардинелла", 
+        "contains сардины", 
         "contains свинина + тушеная", 
+        "contains сгущенка", 
         "contains сироп", 
+        "contains сом", 
         "contains томаты + маринованные", 
+        "contains трубач", 
         "contains тунец + ключ", 
         "contains фасоль + белая + в т/с", 
         "contains фасоль + белая + т/с", 
         "contains фасоль + в т/с", 
         "contains фасоль + т/с", 
+        "contains фито", 
+        "contains фито-мед", 
+        "contains харчо", 
+        "contains цветочный", 
+        "contains черная", 
+        "contains чудо", 
         "contains шампиньоны + резаные", 
         "contains шампиньоны + целые", 
-        "contains шпроты"
+        "contains шпроты", 
+        "contains щука"
     ], 
     "#конфеты": [
         96, 
         "almost[(0.05, 5)]~ набор", 
         "almost[(0.04, 4)]~ шоколад", 
+        "contains жевательные", 
+        "contains ирис", 
         "contains карамель", 
         "contains карамель + ассорти", 
         "contains карамель + леденцовая", 
@@ -789,7 +1045,10 @@
         "contains конфеты + темный", 
         "contains конфеты + шок", 
         "contains конфеты + шоколадные", 
+        "contains леденцы", 
+        "contains мини-карамель", 
         "contains набор + конфет", 
+        "contains трюфели", 
         "contains шоколад + в конфет", 
         "contains шоколад + в форме", 
         "contains шоколад + в форме + в конфет", 
@@ -804,8 +1063,10 @@
         23, 
         "almost[(0.26, 6)]~ картофель", 
         "almost[(0.17, 4)]~ лук", 
+        "contains корень", 
         "contains лук + репчатый", 
         "contains редис", 
+        "contains редька", 
         "subset_of #овощи", 
         "subset_of #овощи, фрукты, грибы, ягоды"
     ], 
@@ -813,9 +1074,17 @@
         40, 
         "almost[(0.1, 4)]~ #пельмени, вареники, хинкали", 
         "almost[(0.42, 17)]~ котлеты", 
+        "contains кордон", 
         "contains котлеты + домашние", 
         "contains котлеты + картофельные", 
+        "contains куриное", 
+        "contains кусочки", 
         "contains наггетсы", 
+        "contains нагетсы", 
+        "contains овощные", 
+        "contains отбивная", 
+        "contains самса", 
+        "contains стрипсы", 
         "subset_of #замороженные продукты", 
         "subset_of #полуфабрикаты замороженные"
     ], 
@@ -885,6 +1154,7 @@
         "contains кофе + стекло", 
         "contains кофе + суб", 
         "contains кофе + эспрессо", 
+        "contains молотый", 
         "subset_of #чай, кофе, какао"
     ], 
     "#крабовое мясо и палочки": [
@@ -897,6 +1167,7 @@
         "contains крабовое + охл", 
         "contains крабовые + охл", 
         "contains крабовые + палочки + охл", 
+        "contains крабовый", 
         "subset_of #рыба, морепродукты и икра", 
         "subset_of #рыбная гастрономия"
     ], 
@@ -914,6 +1185,7 @@
         "contains #другие крупы", 
         "contains #крупа гречневая", 
         "contains #рис", 
+        "contains зерно", 
         "contains крупа", 
         "contains крупа + горох", 
         "contains крупа + гречневая", 
@@ -922,6 +1194,7 @@
         "contains крупа + рис", 
         "contains крупа + рис + экстра", 
         "contains крупа + экстра", 
+        "contains ризотто", 
         "contains чечевица", 
         "subset_of #бакалея"
     ], 
@@ -1007,12 +1280,14 @@
         "contains майонез + перепел + яйце", 
         "contains майонез + провансаль", 
         "contains майонез + яйце", 
+        "contains майонезный", 
         "contains соус + майонезный", 
         "subset_of #растительные масла, соусы и приправы"
     ], 
     "#макаронные изделия": [
         68, 
         "almost[(0.85, 58)]~ макароны", 
+        "contains картофельные", 
         "contains макаронные", 
         "contains макаронные + изделия", 
         "contains макароны + вермишель", 
@@ -1027,11 +1302,20 @@
         "almost[(0.32, 23)]~ мармелад", 
         "almost[(0.08, 6)]~ мармелад + жевательный", 
         "almost[(0.06, 4)]~ паста", 
+        "contains дольки", 
         "contains зефир", 
+        "contains козинак", 
+        "contains колбаска", 
+        "contains кунафа", 
         "contains лукум", 
         "contains мармелад + желейный", 
+        "contains мармеладные", 
+        "contains нуга", 
         "contains паста + шоколадная", 
         "contains пастила", 
+        "contains пахлава", 
+        "contains рахат", 
+        "contains рахат-лукум", 
         "contains халва", 
         "contains щербет", 
         "subset_of #кондитерские изделия"
@@ -1079,7 +1363,7 @@
         "subset_of #молочные продукты, сыры, яйцо"
     ], 
     "#мед": [
-        47, 
+        48, 
         "contains мед", 
         "contains мед + алтайский", 
         "contains мед + горный", 
@@ -1090,6 +1374,9 @@
         "contains мёд", 
         "contains мёд + абхазии", 
         "contains мёд + натуральный", 
+        "contains фито", 
+        "contains фито-мед", 
+        "contains цветочный", 
         "subset_of #консервация"
     ], 
     "#молоко и сливки": [
@@ -1148,9 +1435,11 @@
         "contains молоко + сгущенное", 
         "contains молоко + сгущенное + с сахаром", 
         "contains молоко + сгущенное + сахаром", 
+        "contains молокосодержащий", 
         "contains продукт + молокосод", 
         "contains продукт + молокосод + сгущенка", 
         "contains продукт + сгущенка", 
+        "contains сгущенка", 
         "similar[0.86]~ #овощные консервы", 
         "subset_of #консервация"
     ], 
@@ -1175,8 +1464,10 @@
         "contains #масло сливочное и маргарин", 
         "contains #молоко и сливки", 
         "contains #продукты молочные для детей и кормящих мам", 
+        "contains #продукты соевые", 
         "contains #сметана", 
         "contains #творожные изделия", 
+        "contains ацидофилин", 
         "contains биойогурт", 
         "contains биойогурт + б/б", 
         "contains биойогурт + б/б + злаки", 
@@ -1191,6 +1482,8 @@
         "contains биойогурт + чернослив", 
         "contains биойогурт + эффективный", 
         "contains биойогурт + яблоко", 
+        "contains биокефир", 
+        "contains биопрод", 
         "contains биопродукт", 
         "contains биопродукт + йогуртный", 
         "contains биопродукт + йогуртный + творож", 
@@ -1199,11 +1492,15 @@
         "contains биопродукт + творож + йогуртный", 
         "contains биопродукт + творож-йогуртный", 
         "contains биотворог", 
+        "contains бифидокефир", 
+        "contains бифилайф", 
+        "contains варенец", 
         "contains десерт + вишня", 
         "contains десерт + творож", 
         "contains десерт + творож + творожок", 
         "contains десерт + творожок", 
         "contains десерт + удовольствие", 
+        "contains запеканка", 
         "contains йогурт", 
         "contains йогурт + вязкий", 
         "contains йогурт + клубника", 
@@ -1213,6 +1510,8 @@
         "contains йогурт + ст", 
         "contains кефир", 
         "contains кефир + тп", 
+        "contains кефирный", 
+        "contains кисломол", 
         "contains коктейль + tba", 
         "contains коктейль + ваниль", 
         "contains коктейль + клубника", 
@@ -1254,6 +1553,8 @@
         "contains молоко + стерил + тп", 
         "contains молоко + тп", 
         "contains молоко + утп", 
+        "contains молсод", 
+        "contains монте", 
         "contains напиток + neo", 
         "contains напиток + к/м", 
         "contains напиток + к/м + с соком", 
@@ -1309,16 +1610,22 @@
         "contains сливки + стерил", 
         "contains сливки + стерилизованные", 
         "contains сметана", 
+        "contains снэк", 
         "contains спред", 
+        "contains сырки", 
         "contains сырок", 
         "contains сырок + ваниль", 
         "contains сырок + глазир", 
         "contains сырок + глазир + ваниль", 
         "contains сырок + глазированный", 
+        "contains сырок-суфле", 
         "contains творог", 
         "contains творог + зернен", 
         "contains творог + мягкий", 
         "contains творог + фруктовый", 
+        "contains творож", 
+        "contains творожный", 
+        "contains трубочка", 
         "subset_of #молочные продукты, сыры, яйцо"
     ], 
     "#молочные продукты, сыры, яйцо": [
@@ -1346,12 +1653,15 @@
         "contains #мороженое", 
         "contains #плавленные, копченые, колбасные сыры", 
         "contains #продукты молочные для детей и кормящих мам", 
+        "contains #продукты соевые", 
         "contains #сметана", 
         "contains #сыры", 
         "contains #твердые сыры", 
         "contains #творожистые и рассольные сыры", 
         "contains #творожные изделия", 
         "contains #яйцо", 
+        "contains cыр", 
+        "contains ацидофилин", 
         "contains биойогурт", 
         "contains биойогурт + б/б", 
         "contains биойогурт + б/б + злаки", 
@@ -1366,6 +1676,8 @@
         "contains биойогурт + чернослив", 
         "contains биойогурт + эффективный", 
         "contains биойогурт + яблоко", 
+        "contains биокефир", 
+        "contains биопрод", 
         "contains биопродукт", 
         "contains биопродукт + йогуртный", 
         "contains биопродукт + йогуртный + творож", 
@@ -1374,12 +1686,18 @@
         "contains биопродукт + творож + йогуртный", 
         "contains биопродукт + творож-йогуртный", 
         "contains биотворог", 
+        "contains бифидокефир", 
+        "contains бифилайф", 
+        "contains брынза", 
+        "contains варенец", 
+        "contains грана", 
         "contains десерт", 
         "contains десерт + вишня", 
         "contains десерт + творож", 
         "contains десерт + творож + творожок", 
         "contains десерт + творожок", 
         "contains десерт + удовольствие", 
+        "contains запеканка", 
         "contains йогурт", 
         "contains йогурт + вязкий", 
         "contains йогурт + клубника", 
@@ -1389,6 +1707,8 @@
         "contains йогурт + ст", 
         "contains кефир", 
         "contains кефир + тп", 
+        "contains кефирный", 
+        "contains кисломол", 
         "contains коктейль + tba", 
         "contains коктейль + ваниль", 
         "contains коктейль + клубника", 
@@ -1430,6 +1750,10 @@
         "contains молоко + стерил + тп", 
         "contains молоко + тп", 
         "contains молоко + утп", 
+        "contains молсод", 
+        "contains монте", 
+        "contains моороженое", 
+        "contains мороженное", 
         "contains мороженое", 
         "contains мороженое + брикет", 
         "contains мороженое + брюле", 
@@ -1498,6 +1822,7 @@
         "contains мороженое + эскимо + глазури", 
         "contains мороженое + эскимо + пломбир", 
         "contains мороженое + эскимо + шок", 
+        "contains моцарелла", 
         "contains напиток + neo", 
         "contains напиток + к/м", 
         "contains напиток + к/м + с соком", 
@@ -1524,6 +1849,8 @@
         "contains напиток + сыворотка + с соком", 
         "contains напиток + сыворотка + соком", 
         "contains напиток + тан", 
+        "contains плавленый", 
+        "contains пломбир", 
         "contains продукт + вишня", 
         "contains продукт + йогур", 
         "contains продукт + йогур + нежный", 
@@ -1551,9 +1878,11 @@
         "contains продукт + терм", 
         "contains продукт + ягоды", 
         "contains пудинг", 
+        "contains рассольный", 
         "contains сливки + стерил", 
         "contains сливки + стерилизованные", 
         "contains сметана", 
+        "contains снэк", 
         "contains спред", 
         "contains сыр", 
         "contains сыр + ассорти", 
@@ -1601,16 +1930,25 @@
         "contains сыр + чечил + спагетти", 
         "contains сыр + чечил-спагетти", 
         "contains сыр + швейцарский", 
+        "contains сырки", 
+        "contains сырная", 
         "contains сырный + продукт", 
         "contains сырок", 
         "contains сырок + ваниль", 
         "contains сырок + глазир", 
         "contains сырок + глазир + ваниль", 
         "contains сырок + глазированный", 
+        "contains сырок-суфле", 
         "contains творог", 
         "contains творог + зернен", 
         "contains творог + мягкий", 
         "contains творог + фруктовый", 
+        "contains творож", 
+        "contains творожный", 
+        "contains торт-рулет", 
+        "contains трубочка", 
+        "contains шербет", 
+        "contains эдам", 
         "contains яйцо", 
         "contains яйцо + куриное", 
         "contains яйцо + куриное + роскар", 
@@ -1630,13 +1968,17 @@
         "almost[(0.17, 7)]~ креветки + королевские", 
         "almost[(0.17, 7)]~ креветки + с/г", 
         "contains кальмар + с/м", 
+        "contains креветка", 
         "contains креветки + в/м + очищ", 
         "contains креветки + очищ", 
+        "contains осьминоги", 
         "subset_of #рыба, морепродукты и икра"
     ], 
     "#мороженое": [
         104, 
         "almost[(0.06, 6)]~ торт", 
+        "contains моороженое", 
+        "contains мороженное", 
         "contains мороженое", 
         "contains мороженое + брикет", 
         "contains мороженое + брюле", 
@@ -1705,12 +2047,16 @@
         "contains мороженое + эскимо + глазури", 
         "contains мороженое + эскимо + пломбир", 
         "contains мороженое + эскимо + шок", 
+        "contains пломбир", 
+        "contains торт-рулет", 
+        "contains шербет", 
         "subset_of #молочные продукты, сыры, яйцо"
     ], 
     "#мука": [
         25, 
         "almost[(0.52, 13)]~ смесь", 
         "almost[(0.28, 7)]~ смесь + мучная", 
+        "contains маффины", 
         "contains мука", 
         "contains мука + в/с", 
         "contains мука + пшеничная", 
@@ -1726,11 +2072,16 @@
         "almost[(0.17, 12)]~ вафли", 
         "almost[(0.13, 9)]~ круассан", 
         "almost[(0.38, 26)]~ печенье", 
+        "contains бисквитное", 
+        "contains бодрость", 
         "contains вафли + сливочные", 
         "contains крекер", 
+        "contains крекеры", 
         "contains круассан + 1", 
         "contains круассан + 3", 
         "contains круассан + 3 + 1", 
+        "contains м", 
+        "contains м-кекс", 
         "contains печенье + bianco", 
         "contains печенье + bianco + мулинелли", 
         "contains печенье + chocolife", 
@@ -1758,6 +2109,8 @@
         "contains #сосиски, сардельки, колбаски", 
         "contains балык", 
         "contains балык + с/к", 
+        "contains бастурма", 
+        "contains брезаола", 
         "contains буженина", 
         "contains ветчина + из окорока", 
         "contains ветчина + окорока", 
@@ -1765,8 +2118,10 @@
         "contains грудинка + в/к", 
         "contains грудинка + к/в", 
         "contains докторская", 
+        "contains зельц", 
         "contains карбонад", 
         "contains карбонад + в/к", 
+        "contains карпаччо", 
         "contains колбаса", 
         "contains колбаса + б/о", 
         "contains колбаса + в синюге", 
@@ -1807,6 +2162,12 @@
         "contains колбаски + пиколини", 
         "contains колбаски + с/к", 
         "contains колбаски + с/к + пиколини", 
+        "contains колбасу", 
+        "contains корейка", 
+        "contains молочная", 
+        "contains с/к", 
+        "contains сальтисон", 
+        "contains салями", 
         "contains сардельки", 
         "contains сардельки + говяжьи", 
         "contains сардельки + докторские", 
@@ -1814,6 +2175,7 @@
         "contains сервелат", 
         "contains сервелат + в/к", 
         "contains сервелат + финский", 
+        "contains сосиска", 
         "contains сосиски", 
         "contains сосиски + 1", 
         "contains сосиски + 1 + сорт", 
@@ -1826,7 +2188,9 @@
         "contains сосиски + сливочные", 
         "contains сосиски + сорт", 
         "contains сосиски + сыром", 
-        "contains студень"
+        "contains студень", 
+        "contains холодец", 
+        "contains шпикачки"
     ], 
     "#мясные деликатесы": [
         67, 
@@ -1835,6 +2199,8 @@
         "almost[(0.07, 5)]~ говядина", 
         "contains балык", 
         "contains балык + с/к", 
+        "contains бастурма", 
+        "contains брезаола", 
         "contains буженина", 
         "contains ветчина + из окорока", 
         "contains ветчина + окорока", 
@@ -1843,6 +2209,8 @@
         "contains грудинка + к/в", 
         "contains карбонад", 
         "contains карбонад + в/к", 
+        "contains карпаччо", 
+        "contains корейка", 
         "subset_of #мясная гастрономия"
     ], 
     "#мясные консервы": [
@@ -1854,6 +2222,7 @@
         "almost[(0.1, 4)]~ паштет + печеночный", 
         "contains говядина + тушеная", 
         "contains говядина + тушеная + в/с", 
+        "contains конина", 
         "contains паштет + гусиной", 
         "contains паштет + гусиной + из печени", 
         "contains паштет + гусиной + печени", 
@@ -1871,6 +2240,7 @@
         "contains говядина + б/к", 
         "contains говядина + зам", 
         "contains говядина + зам + б/к", 
+        "contains ножки", 
         "subset_of #мясо и птица"
     ], 
     "#мясо и птица": [
@@ -1891,10 +2261,13 @@
         "contains баранина + н/к", 
         "contains баранина + охл", 
         "contains баранина + охл + н/к", 
+        "contains барбекю", 
         "contains бедро", 
         "contains бедро + охл", 
         "contains бедро + цыпленка", 
         "contains бедро + цыпленка + охл", 
+        "contains бефстроганов", 
+        "contains биточки", 
         "contains говядина + б/к", 
         "contains говядина + зам", 
         "contains говядина + зам + б/к", 
@@ -1913,20 +2286,40 @@
         "contains грудка + цыпленка", 
         "contains грудка + цыпленка + охл", 
         "contains гуляш + охл", 
+        "contains гусь", 
         "contains желудки", 
         "contains желудки + куриные", 
         "contains желудки + охл", 
+        "contains зразы", 
+        "contains кебаб", 
+        "contains кебапи", 
         "contains колбаски + для жарки", 
         "contains колбаски + жарки", 
+        "contains кости", 
         "contains котлета", 
+        "contains крокеты", 
         "contains кролик", 
         "contains кролик + охл", 
         "contains крыло", 
         "contains крыло + охл", 
         "contains крыло + цыпленка", 
         "contains крыло + цыпленка + охл", 
+        "contains крылышки", 
+        "contains купаты", 
+        "contains люля", 
+        "contains люля-кебаб", 
+        "contains медальоны", 
+        "contains ножки", 
+        "contains огузок", 
+        "contains окорок", 
+        "contains окорочок", 
+        "contains перепел", 
         "contains печень + говяжья", 
         "contains печень + зам", 
+        "contains поджарка", 
+        "contains рагу", 
+        "contains ребрышки", 
+        "contains рулька", 
         "contains свинина + б/к", 
         "contains свинина + лопатка", 
         "contains свинина + н/к", 
@@ -1939,6 +2332,10 @@
         "contains стейк + говядины", 
         "contains стейк + говядины + охл", 
         "contains стейк + охл", 
+        "contains стриплоин", 
+        "contains суповой", 
+        "contains телятина", 
+        "contains тибон", 
         "contains фарш", 
         "contains фарш + говяжий", 
         "contains фарш + говяжий + охл", 
@@ -1953,7 +2350,14 @@
         "contains фарш + п/ф + рубленый", 
         "contains фарш + рубленый", 
         "contains цыпленок + охл", 
-        "contains шашлык"
+        "contains цыплёнок", 
+        "contains шарики", 
+        "contains шашлык", 
+        "contains шеи", 
+        "contains шея", 
+        "contains эскалоп", 
+        "contains ягнятина", 
+        "contains язык"
     ], 
     "#мясо охлажденное": [
         117, 
@@ -1966,6 +2370,7 @@
         "contains баранина + н/к", 
         "contains баранина + охл", 
         "contains баранина + охл + н/к", 
+        "contains барбекю", 
         "contains говядина + н/к", 
         "contains говядина + охл", 
         "contains говядина + охл + н/к", 
@@ -1973,7 +2378,19 @@
         "contains говядина + п/ф", 
         "contains говядина + часть", 
         "contains гуляш + охл", 
+        "contains кебаб", 
+        "contains кебапи", 
+        "contains кости", 
         "contains кролик + охл", 
+        "contains купаты", 
+        "contains люля", 
+        "contains люля-кебаб", 
+        "contains медальоны", 
+        "contains огузок", 
+        "contains поджарка", 
+        "contains рагу", 
+        "contains ребрышки", 
+        "contains рулька", 
         "contains свинина + н/к", 
         "contains свинина + охл", 
         "contains свинина + охл + б/к", 
@@ -1982,6 +2399,10 @@
         "contains стейк + говядины", 
         "contains стейк + говядины + охл", 
         "contains стейк + охл", 
+        "contains стриплоин", 
+        "contains суповой", 
+        "contains телятина", 
+        "contains тибон", 
         "contains фарш + говяжий", 
         "contains фарш + говяжий + охл", 
         "contains фарш + мясн", 
@@ -1994,6 +2415,7 @@
         "contains фарш + п/ф + мясн", 
         "contains фарш + п/ф + рубленый", 
         "contains фарш + рубленый", 
+        "contains шея", 
         "subset_of #мясо и птица"
     ], 
     "#напитки, соки": [
@@ -2214,18 +2636,29 @@
         "almost[(0.13, 8)]~ огурцы", 
         "almost[(0.08, 5)]~ перец", 
         "almost[(0.14, 9)]~ томаты", 
+        "contains #грибы свежие", 
         "contains #капуста", 
         "contains #корнеплоды", 
         "contains #овощи другие", 
         "contains #огурец", 
         "contains #перец", 
         "contains #томат", 
+        "contains авокадо", 
+        "contains баклажан", 
+        "contains корень", 
         "contains лук + репчатый", 
         "contains редис", 
+        "contains редька", 
+        "contains томат", 
+        "contains фенхель", 
+        "similar[0.91]~ овощи", 
         "subset_of #овощи, фрукты, грибы, ягоды"
     ], 
     "#овощи другие": [
         7, 
+        "contains авокадо", 
+        "contains баклажан", 
+        "contains фенхель", 
         "subset_of #овощи", 
         "subset_of #овощи, фрукты, грибы, ягоды"
     ], 
@@ -2241,6 +2674,7 @@
         "almost[(0.05, 12)]~ салат", 
         "almost[(0.06, 14)]~ смесь", 
         "almost[(0.04, 11)]~ томаты", 
+        "contains #грибы свежие", 
         "contains #зелень", 
         "contains #капуста", 
         "contains #корнеплоды", 
@@ -2252,12 +2686,23 @@
         "contains #соленые и квашенные овощи и плоды", 
         "contains #томат", 
         "contains #фрукты, ягоды", 
+        "contains авокадо", 
         "contains апельсины", 
         "contains арахис", 
+        "contains баклажан", 
+        "contains бананы", 
         "contains виноград", 
+        "contains голубика", 
+        "contains гранат", 
+        "contains гранаты", 
+        "contains грейпфрут", 
+        "contains грейпфруты", 
+        "contains грецкий", 
         "contains грибы + сушеные", 
         "contains грибы + сушеные + белые", 
         "contains груша", 
+        "contains дыня", 
+        "contains ежевика", 
         "contains изюм", 
         "contains капуста", 
         "contains капуста + квашеная", 
@@ -2268,6 +2713,12 @@
         "contains капуста + с морковью", 
         "contains кедровые", 
         "contains кедровые + орешки", 
+        "contains кедровый", 
+        "contains кешью", 
+        "contains киви", 
+        "contains кинза", 
+        "contains кишмиш", 
+        "contains кокос", 
         "contains коктейль + и сухофруктов", 
         "contains коктейль + из орехов", 
         "contains коктейль + из орехов + и сухофруктов", 
@@ -2276,16 +2727,31 @@
         "contains коктейль + орехов + и сухофруктов", 
         "contains коктейль + орехов + сухофруктов", 
         "contains коктейль + сухофруктов", 
+        "contains корень", 
+        "contains кумкват", 
+        "contains лайм", 
+        "contains лимоны", 
         "contains лук", 
         "contains лук + репчатый", 
+        "contains манго", 
         "contains мандарины", 
+        "contains миннеола", 
         "contains морковь", 
         "contains морковь + корейски", 
         "contains морковь + корейски + по", 
         "contains морковь + по", 
         "contains морковь + по + корейски", 
         "contains морковь + по-корейски", 
+        "contains мята", 
+        "contains орешки", 
+        "contains пекан", 
+        "contains петрушка", 
+        "contains питахайя", 
+        "contains помело", 
         "contains редис", 
+        "contains редька", 
+        "contains розмарин", 
+        "contains рукола", 
         "contains салат + айсберг", 
         "contains семечки", 
         "contains семечки + жареные", 
@@ -2299,17 +2765,40 @@
         "contains смесь + микс", 
         "contains смесь + салатная", 
         "contains смесь + салатная + микс", 
+        "contains смородина", 
+        "contains стебель", 
+        "contains тимьян", 
+        "contains томат", 
+        "contains укроп", 
+        "contains фенхель", 
+        "contains физалис", 
+        "contains финики", 
         "contains фисташки", 
         "contains фисташки + жареные", 
         "contains фисташки + жареные + соленые", 
         "contains фисташки + соленые", 
+        "contains хурма", 
+        "contains щавель", 
         "contains яблоки"
     ], 
     "#овощи, ягоды, грибы замороженные": [
         51, 
         "almost[(0.08, 4)]~ #овощи, фрукты, грибы, ягоды", 
         "almost[(0.14, 7)]~ смесь", 
+        "contains cмесь", 
+        "contains брюссельская", 
         "contains вишня", 
+        "contains гавайская", 
+        "contains греческая", 
+        "contains ежевика", 
+        "contains итальянская", 
+        "contains клубника", 
+        "contains мексиканская", 
+        "contains овощи", 
+        "contains овощная", 
+        "contains овощное", 
+        "contains португальская", 
+        "contains фруктовая", 
         "subset_of #замороженные продукты"
     ], 
     "#овощные консервы": [
@@ -2333,16 +2822,27 @@
         "contains #оливки", 
         "contains #томатная паста, томаты консервированные", 
         "contains #фасоль", 
+        "contains айвар", 
+        "contains артишоки", 
+        "contains бобы", 
+        "contains винегрет", 
         "contains горошек", 
         "contains горошек + зеленый", 
+        "contains евроогурчики", 
+        "contains закуска", 
+        "contains зубчики", 
+        "contains каперсы", 
         "contains корнишоны", 
         "contains кукуруза + сладкая", 
         "contains лечо", 
+        "contains луковки", 
+        "contains лютеница", 
         "contains маслины", 
         "contains маслины + б/к", 
         "contains маслины + с/к", 
         "contains маслины + черные", 
         "contains огурцы + маринованные", 
+        "contains огурчики", 
         "contains оливки", 
         "contains оливки + анчоусом", 
         "contains оливки + б/к", 
@@ -2353,11 +2853,18 @@
         "contains оливки + с кост", 
         "contains оливки + с/к", 
         "contains оливки + фаршированные", 
+        "contains острый", 
+        "contains патиссоны", 
+        "contains пеперони", 
+        "contains перец-пеперони", 
+        "contains пинджур", 
+        "contains помидоры", 
         "contains томаты + маринованные", 
         "contains фасоль + белая + в т/с", 
         "contains фасоль + белая + т/с", 
         "contains фасоль + в т/с", 
         "contains фасоль + т/с", 
+        "contains чудо", 
         "similar[0.86]~ #молочные консервы", 
         "subset_of #консервация"
     ], 
@@ -2372,6 +2879,7 @@
         "almost[(0.53, 8)]~ огурцы", 
         "contains корнишоны", 
         "contains огурцы + маринованные", 
+        "contains огурчики", 
         "subset_of #консервация", 
         "subset_of #овощные консервы"
     ], 
@@ -2379,6 +2887,7 @@
         37, 
         "almost[(0.97, 36)]~ оливки", 
         "almost[(0.19, 7)]~ оливки + б/к", 
+        "contains евроогурчики", 
         "contains оливки + анчоусом", 
         "contains оливки + гигант", 
         "contains оливки + зеленые", 
@@ -2395,11 +2904,15 @@
         "almost[(0.11, 7)]~ коктейль", 
         "almost[(0.1, 6)]~ смесь", 
         "contains арахис", 
+        "contains грецкий", 
         "contains грибы + сушеные", 
         "contains грибы + сушеные + белые", 
         "contains изюм", 
         "contains кедровые", 
         "contains кедровые + орешки", 
+        "contains кедровый", 
+        "contains кешью", 
+        "contains кишмиш", 
         "contains коктейль + и сухофруктов", 
         "contains коктейль + из орехов", 
         "contains коктейль + из орехов + и сухофруктов", 
@@ -2408,6 +2921,8 @@
         "contains коктейль + орехов + и сухофруктов", 
         "contains коктейль + орехов + сухофруктов", 
         "contains коктейль + сухофруктов", 
+        "contains орешки", 
+        "contains пекан", 
         "contains семечки", 
         "contains семечки + жареные", 
         "contains семечки + жареные + отборные", 
@@ -2417,6 +2932,7 @@
         "contains семечки + подсолн + отборные", 
         "contains семечки + подсолнечника", 
         "contains семечки + тыквенные", 
+        "contains финики", 
         "contains фисташки", 
         "contains фисташки + жареные", 
         "contains фисташки + жареные + соленые", 
@@ -2428,7 +2944,10 @@
         "almost[(0.14, 5)]~ колбаса", 
         "almost[(0.6, 21)]~ паштет", 
         "almost[(0.14, 5)]~ паштет + печеночный", 
+        "contains зельц", 
+        "contains сальтисон", 
         "contains студень", 
+        "contains холодец", 
         "subset_of #мясная гастрономия"
     ], 
     "#пельмени, вареники, хинкали": [
@@ -2438,11 +2957,13 @@
         "contains вареники", 
         "contains вареники + картофелем", 
         "contains вареники + с картофелем", 
+        "contains манты", 
         "contains пельмени", 
         "contains пельмени + из отборной", 
         "contains пельмени + классические", 
         "contains пельмени + отборной", 
         "contains пельмени + сибирские", 
+        "contains пельмешки", 
         "contains хинкали", 
         "subset_of #замороженные продукты", 
         "subset_of #полуфабрикаты замороженные"
@@ -2467,6 +2988,7 @@
         "almost[(0.87, 46)]~ сыр", 
         "almost[(0.13, 7)]~ сыр + копченый", 
         "almost[(0.17, 9)]~ сыр + сливочный", 
+        "contains плавленый", 
         "contains сыр + ассорти", 
         "contains сыр + бутерброда", 
         "contains сыр + бутерброда + ломтик", 
@@ -2513,17 +3035,32 @@
         "contains вареники", 
         "contains вареники + картофелем", 
         "contains вареники + с картофелем", 
+        "contains кордон", 
         "contains котлеты + домашние", 
         "contains котлеты + картофельные", 
+        "contains круассаны", 
+        "contains куриное", 
+        "contains кусочки", 
+        "contains манты", 
         "contains наггетсы", 
+        "contains нагетсы", 
+        "contains овощные", 
+        "contains оладьи", 
+        "contains основа", 
+        "contains отбивная", 
         "contains пельмени", 
         "contains пельмени + из отборной", 
         "contains пельмени + классические", 
         "contains пельмени + отборной", 
         "contains пельмени + сибирские", 
+        "contains пельмешки", 
+        "contains пирожки", 
         "contains пицца", 
         "contains пицца + ветчиной", 
         "contains пицца + с ветчиной", 
+        "contains самса", 
+        "contains сочни", 
+        "contains стрипсы", 
         "contains тесто + дрожжевое", 
         "contains тесто + слоеное", 
         "contains хинкали", 
@@ -2559,6 +3096,8 @@
         "contains коктейль + морепродуктов + масле", 
         "contains мидии + в масле", 
         "contains мидии + масле", 
+        "contains молодые", 
+        "contains раковые", 
         "contains сельдь + в вине", 
         "contains сельдь + в красном", 
         "contains сельдь + в красном + в вине", 
@@ -2634,6 +3173,11 @@
     ], 
     "#продукты для похудения": [
         14, 
+        "contains батончик-мюсли", 
+        "contains мисо", 
+        "contains мюсли", 
+        "contains программа", 
+        "contains суп-пюре", 
         "subset_of #бакалея"
     ], 
     "#продукты молочные для детей и кормящих мам": [
@@ -2647,10 +3191,12 @@
         "almost[(0.07, 5)]~ молоко + стерил", 
         "almost[(0.16, 12)]~ творог", 
         "contains биотворог", 
+        "contains бифидокефир", 
         "contains йогурт + вязкий", 
         "contains йогурт + малина", 
         "contains йогурт + питьевой", 
         "contains кефир + тп", 
+        "contains кисломол", 
         "contains коктейль + tba", 
         "contains коктейль + молоч", 
         "contains коктейль + стерил", 
@@ -2660,10 +3206,15 @@
         "subset_of #молочные продукты, сыры, яйцо"
     ], 
     "#продукты соевые": [
-        3
+        3, 
+        "subset_of #молочные продукты", 
+        "subset_of #молочные продукты, сыры, яйцо"
     ], 
     "#птица замороженная": [
         21, 
+        "contains гусь", 
+        "contains окорочок", 
+        "contains перепел", 
         "subset_of #мясо и птица"
     ], 
     "#птица охлажденная": [
@@ -2679,14 +3230,20 @@
         "almost[(0.07, 4)]~ шашлык", 
         "contains бедро + охл", 
         "contains бедро + цыпленка + охл", 
+        "contains биточки", 
         "contains голень + охл", 
         "contains голень + цыпленка + охл", 
         "contains грудка + охл", 
         "contains грудка + цыпленка + охл", 
         "contains желудки + охл", 
+        "contains зразы", 
+        "contains крокеты", 
         "contains крыло + охл", 
         "contains крыло + цыпленка + охл", 
+        "contains крылышки", 
         "contains цыпленок + охл", 
+        "contains цыплёнок", 
+        "contains шарики", 
         "subset_of #мясо и птица"
     ], 
     "#растительные масла, соусы и приправы": [
@@ -2707,21 +3264,48 @@
         "contains #специи, приправы", 
         "contains #уксус", 
         "contains #хрен, горчица, маринад", 
+        "contains Долмио", 
+        "contains бальзамический", 
+        "contains белый", 
         "contains бульон", 
+        "contains бумага", 
+        "contains ванилин", 
+        "contains ванильный", 
+        "contains васаби", 
+        "contains водоросли", 
+        "contains вок", 
+        "contains вок-соус", 
+        "contains гвоздика", 
         "contains глазурь", 
+        "contains горлохват", 
         "contains горчица", 
+        "contains дип", 
+        "contains дип-соус", 
         "contains дрожжи", 
+        "contains дым", 
         "contains желатин", 
+        "contains жемчужины", 
         "contains заправка", 
+        "contains карандаши", 
         "contains кетчуп", 
         "contains кетчуп + острый", 
         "contains кетчуп + томатный", 
         "contains кетчуп + шашлычный", 
+        "contains кислота", 
+        "contains кокосовая", 
+        "contains кондитерская", 
+        "contains корж", 
+        "contains коржи", 
+        "contains корица", 
+        "contains красный", 
         "contains крем + бальзамический", 
         "contains крем + соус", 
         "contains крем + соус + бальзамический", 
         "contains крем-соус", 
         "contains крем-соус + бальзамический", 
+        "contains кунжут", 
+        "contains лавровый", 
+        "contains лимонная", 
         "contains майонез", 
         "contains майонез + organic", 
         "contains майонез + классический", 
@@ -2735,6 +3319,8 @@
         "contains майонез + перепел + яйце", 
         "contains майонез + провансаль", 
         "contains майонез + яйце", 
+        "contains майонезный", 
+        "contains мак", 
         "contains маринад", 
         "contains масло + e", 
         "contains масло + e + v", 
@@ -2752,6 +3338,12 @@
         "contains масло + подсол + раф", 
         "contains масло + раф", 
         "contains масло + раф + дез", 
+        "contains мельница", 
+        "contains морские", 
+        "contains панировочная", 
+        "contains панировочные", 
+        "contains петрушка", 
+        "contains посыпка", 
         "contains приправа", 
         "contains приправа + горошек", 
         "contains приправа + д/курицы", 
@@ -2776,8 +3368,11 @@
         "contains приправа + шашлыка", 
         "contains разрыхлитель", 
         "contains разрыхлитель + д/теста", 
+        "contains рассол", 
         "contains смесь + второе", 
         "contains смесь + на второе", 
+        "contains сода", 
+        "contains соевый", 
         "contains соус", 
         "contains соус + аджика", 
         "contains соус + бальзамический", 
@@ -2793,14 +3388,21 @@
         "contains соус + ст", 
         "contains соус + томатный", 
         "contains соус + чесночный", 
+        "contains соус-глазурь", 
+        "contains соус-маринад", 
         "contains суп + вермишелью", 
         "contains суп + с вермишелью", 
+        "contains суши", 
         "contains томатная", 
         "contains томатная + паста", 
+        "contains укроп", 
         "contains уксус", 
         "contains уксус + бальзамич", 
         "contains уксус + винный", 
-        "contains хрен"
+        "contains фигурки", 
+        "contains фруктовый", 
+        "contains хрен", 
+        "contains циновка"
     ], 
     "#рис": [
         30, 
@@ -2808,21 +3410,51 @@
         "almost[(0.97, 29)]~ крупа + рис", 
         "almost[(0.13, 4)]~ крупа + экстра", 
         "contains крупа + рис + экстра", 
+        "contains ризотто", 
+        "similar[0.86]~ рис", 
         "subset_of #бакалея", 
         "subset_of #крупы"
     ], 
     "#рыба вяленая, сушеная, снэки рыбные": [
         28, 
         "almost[(0.29, 8)]~ кальмар", 
+        "contains желтый", 
+        "contains жёлтый", 
         "contains кальмар + сол/сушеный", 
         "contains кальмар + стружка", 
+        "contains кольца", 
+        "contains корюшка", 
+        "contains красноперка", 
+        "contains лакедра", 
+        "contains лещ", 
+        "contains путассу", 
+        "contains рыбка", 
+        "contains ставрида", 
+        "contains ставридка", 
+        "contains янтарная", 
         "subset_of #рыба, морепродукты и икра", 
         "subset_of #рыбная гастрономия"
     ], 
     "#рыба охлажденная и замороженная": [
         46, 
         "almost[(0.09, 4)]~ форель", 
+        "contains аргентина", 
+        "contains дорада", 
+        "contains мега", 
+        "contains мега-филе", 
+        "contains мини-филе", 
+        "contains минтай", 
+        "contains нототения", 
+        "contains окунь", 
+        "contains пангасиус", 
+        "contains пикша", 
+        "contains рыбные", 
+        "contains стерлядь", 
+        "contains судак", 
+        "contains тилапия", 
+        "contains треска", 
         "contains форель + охл", 
+        "contains хек", 
         "subset_of #рыба, морепродукты и икра"
     ], 
     "#рыба соленая и копченая": [
@@ -2832,6 +3464,11 @@
         "almost[(0.22, 14)]~ форель", 
         "contains горбуша + балык", 
         "contains горбуша + х/к", 
+        "contains лососевые", 
+        "contains минога", 
+        "contains мойва", 
+        "contains осетр", 
+        "contains ряпушка", 
         "contains семга", 
         "contains семга + кусок", 
         "contains семга + кусок + с/с", 
@@ -2846,6 +3483,7 @@
         "contains семга + филе + с/с + кусок", 
         "contains семга + филе-кусок", 
         "contains семга + филе-кусок + с/с", 
+        "contains семга/форель", 
         "contains форель + кусок", 
         "contains форель + кусок + с/с", 
         "contains форель + кусок + с/с + филе", 
@@ -2893,8 +3531,13 @@
         "contains #рыба охлажденная и замороженная", 
         "contains #рыба соленая и копченая", 
         "contains #рыбная гастрономия", 
+        "contains анчоус", 
+        "contains аргентина", 
         "contains горбуша + балык", 
         "contains горбуша + х/к", 
+        "contains дорада", 
+        "contains желтый", 
+        "contains жёлтый", 
         "contains икра + в соусе", 
         "contains икра + деликатесная", 
         "contains икра + зернистая", 
@@ -2912,6 +3555,7 @@
         "contains кальмар + сол/сушеный", 
         "contains кальмар + стружка", 
         "contains кета", 
+        "contains кижуч", 
         "contains коктейль + в масле", 
         "contains коктейль + из морепродуктов", 
         "contains коктейль + из морепродуктов + в масле", 
@@ -2920,6 +3564,8 @@
         "contains коктейль + морепродуктов", 
         "contains коктейль + морепродуктов + в масле", 
         "contains коктейль + морепродуктов + масле", 
+        "contains кольца", 
+        "contains корюшка", 
         "contains крабовое", 
         "contains крабовое + мясо", 
         "contains крабовое + мясо + охл", 
@@ -2928,6 +3574,9 @@
         "contains крабовые + охл", 
         "contains крабовые + палочки", 
         "contains крабовые + палочки + охл", 
+        "contains крабовый", 
+        "contains красноперка", 
+        "contains креветка", 
         "contains креветки", 
         "contains креветки + в/м", 
         "contains креветки + в/м + королевские", 
@@ -2937,13 +3586,36 @@
         "contains креветки + королевские + с/г", 
         "contains креветки + очищ", 
         "contains креветки + с/г", 
+        "contains лакедра", 
+        "contains лещ", 
+        "contains лососевые", 
         "contains лосось", 
+        "contains масляная", 
+        "contains мега", 
+        "contains мега-филе", 
         "contains мидии", 
         "contains мидии + в масле", 
         "contains мидии + масле", 
+        "contains мини-филе", 
+        "contains минога", 
+        "contains минтай", 
+        "contains мойва", 
+        "contains молодые", 
         "contains морской", 
         "contains морской + коктейль", 
+        "contains нерка", 
+        "contains нототения", 
+        "contains окунь", 
+        "contains осетр", 
+        "contains осьминоги", 
         "contains палтус", 
+        "contains пангасиус", 
+        "contains пикша", 
+        "contains путассу", 
+        "contains раковые", 
+        "contains рыбка", 
+        "contains рыбные", 
+        "contains ряпушка", 
         "contains сельдь + атл", 
         "contains сельдь + в вине", 
         "contains сельдь + в красном", 
@@ -3030,6 +3702,14 @@
         "contains семга + филе + с/с + кусок", 
         "contains семга + филе-кусок", 
         "contains семга + филе-кусок + с/с", 
+        "contains семга/форель", 
+        "contains ставрида", 
+        "contains ставридка", 
+        "contains стерлядь", 
+        "contains судак", 
+        "contains сурими", 
+        "contains тилапия", 
+        "contains треска", 
         "contains форель", 
         "contains форель + кусок", 
         "contains форель + кусок + с/с", 
@@ -3045,7 +3725,9 @@
         "contains форель + филе + с/с", 
         "contains форель + филе + с/с + кусок", 
         "contains форель + филе-кусок", 
-        "contains форель + филе-кусок + с/с"
+        "contains форель + филе-кусок + с/с", 
+        "contains хек", 
+        "contains янтарная"
     ], 
     "#рыбная гастрономия": [
         191, 
@@ -3079,8 +3761,11 @@
         "contains #пресервы", 
         "contains #рыба вяленая, сушеная, снэки рыбные", 
         "contains #рыба соленая и копченая", 
+        "contains анчоус", 
         "contains горбуша + балык", 
         "contains горбуша + х/к", 
+        "contains желтый", 
+        "contains жёлтый", 
         "contains кальмар + сол/сушеный", 
         "contains кальмар + стружка", 
         "contains коктейль + в масле", 
@@ -3091,12 +3776,27 @@
         "contains коктейль + морепродуктов", 
         "contains коктейль + морепродуктов + в масле", 
         "contains коктейль + морепродуктов + масле", 
+        "contains кольца", 
+        "contains корюшка", 
         "contains крабовое + мясо + охл", 
         "contains крабовое + охл", 
         "contains крабовые + охл", 
         "contains крабовые + палочки + охл", 
+        "contains крабовый", 
+        "contains красноперка", 
+        "contains лакедра", 
+        "contains лещ", 
+        "contains лососевые", 
         "contains мидии + в масле", 
         "contains мидии + масле", 
+        "contains минога", 
+        "contains мойва", 
+        "contains молодые", 
+        "contains осетр", 
+        "contains путассу", 
+        "contains раковые", 
+        "contains рыбка", 
+        "contains ряпушка", 
         "contains сельдь + атл", 
         "contains сельдь + в вине", 
         "contains сельдь + в красном", 
@@ -3183,6 +3883,9 @@
         "contains семга + филе + с/с + кусок", 
         "contains семга + филе-кусок", 
         "contains семга + филе-кусок + с/с", 
+        "contains семга/форель", 
+        "contains ставрида", 
+        "contains ставридка", 
         "contains форель + кусок", 
         "contains форель + кусок + с/с", 
         "contains форель + кусок + с/с + филе", 
@@ -3196,6 +3899,7 @@
         "contains форель + филе + с/с + кусок", 
         "contains форель + филе-кусок", 
         "contains форель + филе-кусок + с/с", 
+        "contains янтарная", 
         "subset_of #рыба, морепродукты и икра"
     ], 
     "#рыбные консервы": [
@@ -3212,11 +3916,18 @@
         "almost[(0.07, 4)]~ салат + морской + капусты", 
         "almost[(0.07, 4)]~ сельдь", 
         "almost[(0.17, 10)]~ тунец", 
+        "contains бычки", 
         "contains печень + трески", 
         "contains сайра", 
         "contains сайра + натуральная", 
+        "contains сардина", 
+        "contains сардинелла", 
+        "contains сардины", 
+        "contains сом", 
+        "contains трубач", 
         "contains тунец + ключ", 
         "contains шпроты", 
+        "contains щука", 
         "similar[0.91]~ #грибные консервы", 
         "subset_of #консервация"
     ], 
@@ -3224,6 +3935,10 @@
         44, 
         "almost[(0.73, 32)]~ сахар", 
         "contains заменитель + сахара", 
+        "contains песок", 
+        "contains подсластитель", 
+        "contains прессов", 
+        "contains пудра", 
         "contains рафинад", 
         "contains рафинад + сахар", 
         "contains сахар + коричневый", 
@@ -3234,7 +3949,11 @@
         "contains сахар + рафинад", 
         "contains сахар + трост", 
         "contains сахар + тростниковый", 
+        "contains сахар-песок", 
+        "contains сахар-прессов", 
         "contains сахар-рафинад", 
+        "contains сахарная", 
+        "contains сорбит", 
         "contains фруктоза", 
         "subset_of #бакалея"
     ], 
@@ -3317,6 +4036,7 @@
         "contains сардельки + говяжьи", 
         "contains сардельки + докторские", 
         "contains сардельки + свиные", 
+        "contains сосиска", 
         "contains сосиски", 
         "contains сосиски + 1", 
         "contains сосиски + 1 + сорт", 
@@ -3329,6 +4049,7 @@
         "contains сосиски + сливочные", 
         "contains сосиски + сорт", 
         "contains сосиски + сыром", 
+        "contains шпикачки", 
         "subset_of #мясная гастрономия"
     ], 
     "#соусы": [
@@ -3338,14 +4059,28 @@
         "almost[(0.63, 75)]~ соус", 
         "almost[(0.03, 4)]~ соус + томатный", 
         "almost[(0.03, 4)]~ суп", 
+        "contains Долмио", 
+        "contains бумага", 
+        "contains васаби", 
+        "contains водоросли", 
+        "contains вок", 
+        "contains вок-соус", 
+        "contains дип", 
+        "contains дип-соус", 
         "contains заправка", 
+        "contains морские", 
+        "contains соевый", 
         "contains соус + аджика", 
         "contains соус + песто", 
         "contains соус + соевый", 
         "contains соус + ст", 
         "contains соус + чесночный", 
+        "contains соус-маринад", 
+        "contains суши", 
         "contains томатная", 
         "contains томатная + паста", 
+        "contains фруктовый", 
+        "contains циновка", 
         "subset_of #растительные масла, соусы и приправы"
     ], 
     "#специи, приправы": [
@@ -3356,6 +4091,12 @@
         "almost[(0.07, 10)]~ смесь", 
         "almost[(0.05, 8)]~ суп", 
         "contains бульон", 
+        "contains гвоздика", 
+        "contains лавровый", 
+        "contains мельница", 
+        "contains панировочная", 
+        "contains панировочные", 
+        "contains петрушка", 
         "contains приправа + горошек", 
         "contains приправа + д/курицы", 
         "contains приправа + молотый", 
@@ -3378,6 +4119,7 @@
         "contains смесь + на второе", 
         "contains суп + вермишелью", 
         "contains суп + с вермишелью", 
+        "contains укроп", 
         "subset_of #растительные масла, соусы и приправы"
     ], 
     "#супы и блюда быстрого приготовления": [
@@ -3385,6 +4127,11 @@
         "almost[(0.07, 4)]~ вермишель", 
         "almost[(0.34, 20)]~ лапша", 
         "almost[(0.33, 19)]~ пюре", 
+        "contains быстросуп", 
+        "contains быстросуп-пюре", 
+        "contains гороховый", 
+        "contains готовый", 
+        "contains куриный", 
         "contains лапша + говядина", 
         "contains лапша + домашнему", 
         "contains лапша + домашнему + по", 
@@ -3392,14 +4139,19 @@
         "contains лапша + по", 
         "contains лапша + по + домашнему", 
         "contains лапша + по-домашнему", 
+        "contains луковый", 
         "contains пюре + картоф", 
         "contains пюре + картоф + т/ст", 
         "contains пюре + т/ст", 
+        "contains рис", 
+        "contains рисовая", 
+        "contains томатный", 
         "subset_of #бакалея"
     ], 
     "#сухарики, баранки, сушки": [
         36, 
         "almost[(0.17, 6)]~ мини", 
+        "contains cухарики", 
         "contains баранки", 
         "contains мини + сушки", 
         "contains мини-сушки", 
@@ -3410,6 +4162,7 @@
         "contains сушка + малышка", 
         "contains сушки", 
         "contains сушки + мини", 
+        "contains сушки-мини", 
         "contains хлебные", 
         "contains хлебные + палочки", 
         "subset_of #хлебобулочные изделия"
@@ -3420,6 +4173,8 @@
         "almost[(0.16, 13)]~ батончик + мюсли", 
         "almost[(0.37, 29)]~ каша", 
         "almost[(0.14, 11)]~ хлопья", 
+        "contains bioкаша", 
+        "contains bioмюсли", 
         "contains батончики", 
         "contains батончики + мюсли", 
         "contains гот", 
@@ -3447,7 +4202,13 @@
         "contains #плавленные, копченые, колбасные сыры", 
         "contains #твердые сыры", 
         "contains #творожистые и рассольные сыры", 
+        "contains cыр", 
+        "contains брынза", 
+        "contains грана", 
+        "contains моцарелла", 
+        "contains плавленый", 
         "contains продукт + рассольный", 
+        "contains рассольный", 
         "contains сыр", 
         "contains сыр + ассорти", 
         "contains сыр + безлактозный", 
@@ -3494,13 +4255,17 @@
         "contains сыр + чечил + спагетти", 
         "contains сыр + чечил-спагетти", 
         "contains сыр + швейцарский", 
+        "contains сырная", 
         "contains сырный + продукт", 
+        "contains эдам", 
         "subset_of #молочные продукты, сыры, яйцо"
     ], 
     "#твердые сыры": [
         67, 
         "almost[(0.91, 61)]~ сыр", 
         "almost[(0.06, 4)]~ сыр + безлактозный", 
+        "contains cыр", 
+        "contains грана", 
         "contains сыр + гауда", 
         "contains сыр + грюйер", 
         "contains сыр + российский", 
@@ -3508,6 +4273,7 @@
         "contains сыр + твердый", 
         "contains сыр + тильзитер", 
         "contains сыр + швейцарский", 
+        "contains эдам", 
         "subset_of #молочные продукты, сыры, яйцо", 
         "subset_of #сыры"
     ], 
@@ -3520,7 +4286,10 @@
         "almost[(0.18, 12)]~ сыр + моцарелла", 
         "almost[(0.09, 6)]~ сырный", 
         "almost[(0.08, 5)]~ сырный + продукт", 
+        "contains брынза", 
+        "contains моцарелла", 
         "contains продукт + рассольный", 
+        "contains рассольный", 
         "contains сыр + брынза", 
         "contains сыр + зеленью", 
         "contains сыр + мягкий", 
@@ -3531,6 +4300,7 @@
         "contains сыр + чечил", 
         "contains сыр + чечил + спагетти", 
         "contains сыр + чечил-спагетти", 
+        "contains сырная", 
         "subset_of #молочные продукты, сыры, яйцо", 
         "subset_of #сыры"
     ], 
@@ -3539,11 +4309,13 @@
         "almost[(0.34, 17)]~ творог", 
         "contains масса", 
         "contains масса + творож", 
+        "contains сырки", 
         "contains сырок", 
         "contains сырок + ваниль", 
         "contains сырок + глазир", 
         "contains сырок + глазир + ваниль", 
         "contains сырок + глазированный", 
+        "contains сырок-суфле", 
         "contains творог + зернен", 
         "subset_of #молочные продукты", 
         "subset_of #молочные продукты, сыры, яйцо"
@@ -3551,6 +4323,7 @@
     "#тесто": [
         9, 
         "almost[(0.78, 7)]~ тесто", 
+        "contains основа", 
         "contains тесто + дрожжевое", 
         "contains тесто + слоеное", 
         "subset_of #замороженные продукты", 
@@ -3559,12 +4332,14 @@
     "#томат": [
         10, 
         "almost[(0.9, 9)]~ томаты", 
+        "contains томат", 
         "subset_of #овощи", 
         "subset_of #овощи, фрукты, грибы, ягоды"
     ], 
     "#томатная паста, томаты консервированные": [
         13, 
         "almost[(0.85, 11)]~ томаты", 
+        "contains помидоры", 
         "contains томаты + маринованные", 
         "subset_of #консервация", 
         "subset_of #овощные консервы"
@@ -3588,6 +4363,10 @@
         "almost[(0.19, 5)]~ крем", 
         "almost[(0.23, 6)]~ соус", 
         "almost[(0.54, 14)]~ уксус", 
+        "contains бальзамический", 
+        "contains белый", 
+        "contains кислота", 
+        "contains красный", 
         "contains крем + бальзамический", 
         "contains крем + соус", 
         "contains крем + соус + бальзамический", 
@@ -3596,6 +4375,7 @@
         "contains соус + бальзамический", 
         "contains соус + крем", 
         "contains соус + крем + бальзамический", 
+        "contains соус-глазурь", 
         "contains уксус + бальзамич", 
         "contains уксус + винный", 
         "subset_of #растительные масла, соусы и приправы"
@@ -3605,6 +4385,7 @@
         "almost[(0.9, 18)]~ фасоль", 
         "almost[(0.3, 6)]~ фасоль + белая", 
         "almost[(0.25, 5)]~ фасоль + красная", 
+        "contains бобы", 
         "contains фасоль + белая + в т/с", 
         "contains фасоль + белая + т/с", 
         "contains фасоль + в т/с", 
@@ -3619,18 +4400,43 @@
         "contains варенье", 
         "contains джем", 
         "contains джем + б/сахара", 
+        "contains земляника", 
         "contains компот", 
+        "contains манго", 
+        "contains облепиха", 
         "contains персики", 
         "contains персики + половинки", 
+        "contains повидло", 
         "contains сироп", 
+        "contains черная", 
         "subset_of #консервация"
     ], 
     "#фрукты, ягоды": [
         66, 
         "almost[(0.09, 6)]~ виноград", 
         "contains апельсины", 
+        "contains бананы", 
+        "contains голубика", 
+        "contains гранат", 
+        "contains гранаты", 
+        "contains грейпфрут", 
+        "contains грейпфруты", 
         "contains груша", 
+        "contains дыня", 
+        "contains ежевика", 
+        "contains киви", 
+        "contains кокос", 
+        "contains кумкват", 
+        "contains лайм", 
+        "contains лимоны", 
+        "contains манго", 
         "contains мандарины", 
+        "contains миннеола", 
+        "contains питахайя", 
+        "contains помело", 
+        "contains смородина", 
+        "contains физалис", 
+        "contains хурма", 
         "contains яблоки", 
         "subset_of #овощи, фрукты, грибы, ягоды"
     ], 
@@ -3639,14 +4445,23 @@
         "almost[(0.56, 38)]~ хлеб", 
         "contains батон", 
         "contains батон + нарезной", 
+        "contains горбушечки", 
         "contains лаваш", 
         "contains лаваш + армянский", 
+        "contains лепешка", 
+        "contains лепешки", 
+        "contains лепёшки", 
+        "contains матнакаш", 
+        "contains маца", 
+        "contains ролл", 
         "contains хлеб + в нарезке", 
         "contains хлеб + геркулес", 
         "contains хлеб + геркулес + в нарезке", 
         "contains хлеб + геркулес + нарезке", 
         "contains хлеб + дарницкий", 
         "contains хлеб + нарезке", 
+        "contains хлебушки", 
+        "contains шведские", 
         "subset_of #хлебобулочные изделия"
     ], 
     "#хлебобулочные изделия": [
@@ -3659,15 +4474,32 @@
         "contains #сухарики, баранки, сушки", 
         "contains #хлеб, батон, лепешки, лаваш", 
         "contains #хлебцы", 
+        "contains cухарики", 
         "contains Хлебцы", 
         "contains баранки", 
         "contains батон", 
         "contains батон + нарезной", 
         "contains булочка", 
+        "contains ватрушка", 
+        "contains горбушечки", 
+        "contains изделие", 
+        "contains коржик", 
         "contains лаваш", 
         "contains лаваш + армянский", 
+        "contains лепешка", 
+        "contains лепешки", 
+        "contains лепёшки", 
+        "contains матнакаш", 
+        "contains маца", 
         "contains мини + сушки", 
         "contains мини-сушки", 
+        "contains оладушки", 
+        "contains плюшка", 
+        "contains ролл", 
+        "contains ромовая", 
+        "contains сдоба", 
+        "contains слойка", 
+        "contains сочник", 
         "contains сухари", 
         "contains сухарики", 
         "contains сухарики + ржаные", 
@@ -3675,6 +4507,7 @@
         "contains сушка + малышка", 
         "contains сушки", 
         "contains сушки + мини", 
+        "contains сушки-мини", 
         "contains хлеб + в нарезке", 
         "contains хлеб + геркулес", 
         "contains хлеб + геркулес + в нарезке", 
@@ -3683,6 +4516,9 @@
         "contains хлеб + нарезке", 
         "contains хлебные", 
         "contains хлебные + палочки", 
+        "contains хлебушки", 
+        "contains шведские", 
+        "contains яблочный", 
         "contains ягодное", 
         "contains ягодное + лукошко", 
         "contains ягодный + пирог"
@@ -3697,6 +4533,8 @@
         25, 
         "almost[(0.24, 6)]~ маринад", 
         "contains горчица", 
+        "contains дым", 
+        "contains рассол", 
         "contains хрен", 
         "subset_of #растительные масла, соусы и приправы"
     ], 
@@ -3705,6 +4543,7 @@
         "almost[(0.97, 36)]~ чай", 
         "almost[(0.16, 6)]~ чай + лист", 
         "almost[(0.11, 4)]~ чай + листовой", 
+        "contains промонабор", 
         "contains чай + green", 
         "contains чай + зеленый", 
         "contains чай + зеленый + лист", 
@@ -3748,8 +4587,10 @@
         "contains #чай зеленый", 
         "contains #чай травяной", 
         "contains #чай черный", 
+        "contains Кофе", 
         "contains какао", 
         "contains какао + растворимый", 
+        "contains какао-напиток", 
         "contains кофе + espresso", 
         "contains кофе + gold", 
         "contains кофе + presidentti", 
@@ -3813,9 +4654,12 @@
         "contains кофе + стекло", 
         "contains кофе + суб", 
         "contains кофе + эспрессо", 
+        "contains кофейный", 
+        "contains молотый", 
         "contains напиток + быстрорастворимый", 
         "contains напиток + шоколадный", 
         "contains напиток + шоколадный + быстрорастворимый", 
+        "contains промонабор", 
         "contains цикорий", 
         "contains цикорий + раств", 
         "contains чай + earl", 
@@ -3851,6 +4695,9 @@
         "almost[(0.83, 70)]~ шоколад", 
         "almost[(0.06, 5)]~ шоколад + фундуком", 
         "almost[(0.05, 4)]~ шоколадный", 
+        "contains Чупа", 
+        "contains конфета", 
+        "contains плитка", 
         "contains шоколад + excellence", 
         "contains шоколад + белый", 
         "contains шоколад + в кусочках", 
@@ -3877,6 +4724,8 @@
         "contains шоколад + с цельным", 
         "contains шоколад + темный", 
         "contains шоколад + цельным", 
+        "contains шоколадка", 
+        "contains шоколадное", 
         "contains шоколадный + батончик", 
         "subset_of #кондитерские изделия"
     ], 
@@ -3913,25 +4762,41 @@
         "subset_of #молочные продукты, сыры, яйцо"
     ], 
     "bioкаша": [
-        1
+        1, 
+        "subset_of #бакалея", 
+        "subset_of #сухие завтраки"
     ], 
     "bioмюсли": [
-        2
+        2, 
+        "subset_of #бакалея", 
+        "subset_of #сухие завтраки"
     ], 
     "cмесь": [
-        1
+        1, 
+        "subset_of #замороженные продукты", 
+        "subset_of #овощи, ягоды, грибы замороженные"
     ], 
     "cухарики": [
-        2
+        2, 
+        "similar[0.88]~ сухарики", 
+        "subset_of #сухарики, баранки, сушки", 
+        "subset_of #хлебобулочные изделия"
     ], 
     "cыр": [
-        1
+        1, 
+        "subset_of #молочные продукты, сыры, яйцо", 
+        "subset_of #сыры", 
+        "subset_of #твердые сыры"
     ], 
     "Долмио": [
-        1
+        1, 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #соусы"
     ], 
     "Кофе": [
-        1
+        1, 
+        "subset_of #какао, цикорий", 
+        "subset_of #чай, кофе, какао"
     ], 
     "Хлебцы": [
         6, 
@@ -3939,20 +4804,28 @@
         "subset_of #хлебцы"
     ], 
     "Чупа": [
-        1
+        1, 
+        "subset_of #кондитерские изделия", 
+        "subset_of #шоколад"
     ], 
     "абрикосы": [
         2
     ], 
     "авокадо": [
-        1
+        1, 
+        "subset_of #овощи", 
+        "subset_of #овощи другие", 
+        "subset_of #овощи, фрукты, грибы, ягоды"
     ], 
     "азу": [
         3, 
         "subset_of #мясо и птица"
     ], 
     "айвар": [
-        1
+        1, 
+        "subset_of #икра овощная", 
+        "subset_of #консервация", 
+        "subset_of #овощные консервы"
     ], 
     "ананас": [
         5, 
@@ -3965,7 +4838,9 @@
         "subset_of #фруктово-ягодная консервация"
     ], 
     "анчоус": [
-        2
+        2, 
+        "subset_of #рыба, морепродукты и икра", 
+        "subset_of #рыбная гастрономия"
     ], 
     "апельсины": [
         4, 
@@ -3978,10 +4853,15 @@
         "subset_of #орехи, сухофрукты"
     ], 
     "аргентина": [
-        1
+        1, 
+        "subset_of #рыба охлажденная и замороженная", 
+        "subset_of #рыба, морепродукты и икра"
     ], 
     "артишоки": [
-        1
+        1, 
+        "subset_of #другие овощные консервы", 
+        "subset_of #консервация", 
+        "subset_of #овощные консервы"
     ], 
     "ассорти": [
         11, 
@@ -3990,16 +4870,24 @@
         "almost[(0.36, 4)]~ #овощные консервы"
     ], 
     "ацидофилин": [
-        1
+        1, 
+        "subset_of #кисломолочные продукты", 
+        "subset_of #молочные продукты", 
+        "subset_of #молочные продукты, сыры, яйцо"
     ], 
     "баклажан": [
-        1
+        1, 
+        "similar[0.94]~ баклажаны", 
+        "subset_of #овощи", 
+        "subset_of #овощи другие", 
+        "subset_of #овощи, фрукты, грибы, ягоды"
     ], 
     "баклажаны": [
         7, 
         "almost[(0.86, 6)]~ #икра овощная", 
         "almost[(0.86, 6)]~ #консервация", 
-        "almost[(0.86, 6)]~ #овощные консервы"
+        "almost[(0.86, 6)]~ #овощные консервы", 
+        "similar[0.94]~ баклажан"
     ], 
     "балык": [
         5, 
@@ -4014,10 +4902,14 @@
         "subset_of балык"
     ], 
     "бальзамический": [
-        1
+        1, 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #уксус"
     ], 
     "бананы": [
-        2
+        2, 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #фрукты, ягоды"
     ], 
     "баранина": [
         8, 
@@ -4057,10 +4949,14 @@
         "subset_of #хлебобулочные изделия"
     ], 
     "барбекю": [
-        2
+        2, 
+        "subset_of #мясо и птица", 
+        "subset_of #мясо охлажденное"
     ], 
     "бастурма": [
-        1
+        1, 
+        "subset_of #мясная гастрономия", 
+        "subset_of #мясные деликатесы"
     ], 
     "батон": [
         8, 
@@ -4080,17 +4976,26 @@
         "almost[(0.18, 4)]~ #безглютеновые продукты", 
         "almost[(0.59, 13)]~ #сухие завтраки", 
         "contains батончик + мюсли", 
+        "contains батончик-мюсли", 
+        "contains мюсли", 
         "similar[0.94]~ батончики"
     ], 
     "батончик + мюсли": [
         18, 
         "almost[(0.72, 13)]~ #сухие завтраки", 
+        "contains батончик-мюсли", 
+        "contains мюсли", 
         "similar[0.97]~ батончики + мюсли", 
         "subset_of #бакалея", 
         "subset_of батончик"
     ], 
     "батончик-мюсли": [
-        2
+        2, 
+        "equals мюсли", 
+        "subset_of #бакалея", 
+        "subset_of #продукты для похудения", 
+        "subset_of батончик", 
+        "subset_of батончик + мюсли"
     ], 
     "батончики": [
         4, 
@@ -4144,10 +5049,13 @@
         "almost[(0.8, 4)]~ #мясные деликатесы"
     ], 
     "белый": [
-        1
+        1, 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #уксус"
     ], 
     "бефстроганов": [
-        2
+        2, 
+        "subset_of #мясо и птица"
     ], 
     "биойогурт": [
         39, 
@@ -4300,10 +5208,16 @@
         "subset_of биойогурт"
     ], 
     "биокефир": [
-        2
+        2, 
+        "subset_of #кисломолочные продукты", 
+        "subset_of #молочные продукты", 
+        "subset_of #молочные продукты, сыры, яйцо"
     ], 
     "биопрод": [
-        1
+        1, 
+        "subset_of #кисломолочные продукты", 
+        "subset_of #молочные продукты", 
+        "subset_of #молочные продукты, сыры, яйцо"
     ], 
     "биопродукт": [
         11, 
@@ -4388,16 +5302,26 @@
         "subset_of #продукты молочные для детей и кормящих мам"
     ], 
     "бисквитное": [
-        1
+        1, 
+        "subset_of #кондитерские изделия", 
+        "subset_of #мучные кондитерские изделия"
     ], 
     "биточки": [
-        1
+        1, 
+        "subset_of #мясо и птица", 
+        "subset_of #птица охлажденная"
     ], 
     "бифидокефир": [
-        1
+        1, 
+        "subset_of #молочные продукты", 
+        "subset_of #молочные продукты, сыры, яйцо", 
+        "subset_of #продукты молочные для детей и кормящих мам"
     ], 
     "бифилайф": [
-        1
+        1, 
+        "subset_of #кисломолочные продукты", 
+        "subset_of #молочные продукты", 
+        "subset_of #молочные продукты, сыры, яйцо"
     ], 
     "бифштекс": [
         3
@@ -4495,25 +5419,38 @@
         "subset_of блины"
     ], 
     "бобы": [
-        1
+        1, 
+        "subset_of #консервация", 
+        "subset_of #овощные консервы", 
+        "subset_of #фасоль"
     ], 
     "бодрость": [
-        1
+        1, 
+        "subset_of #кондитерские изделия", 
+        "subset_of #мучные кондитерские изделия"
     ], 
     "борщ": [
         2
     ], 
     "брезаола": [
-        1
+        1, 
+        "subset_of #мясная гастрономия", 
+        "subset_of #мясные деликатесы"
     ], 
     "брокколи": [
-        2
+        2, 
+        "subset_of #замороженные продукты"
     ], 
     "брынза": [
-        2
+        2, 
+        "subset_of #молочные продукты, сыры, яйцо", 
+        "subset_of #сыры", 
+        "subset_of #творожистые и рассольные сыры"
     ], 
     "брюссельская": [
-        1
+        1, 
+        "subset_of #замороженные продукты", 
+        "subset_of #овощи, ягоды, грибы замороженные"
     ], 
     "буженина": [
         4, 
@@ -4522,10 +5459,14 @@
     ], 
     "булочка": [
         5, 
+        "similar[0.86]~ булочки", 
         "subset_of #хлебобулочные изделия"
     ], 
     "булочки": [
-        1
+        1, 
+        "similar[0.86]~ булочка", 
+        "subset_of #бакалея", 
+        "subset_of #безглютеновые продукты"
     ], 
     "бульон": [
         5, 
@@ -4533,25 +5474,45 @@
         "subset_of #специи, приправы"
     ], 
     "бумага": [
-        1
+        1, 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #соусы"
     ], 
     "быстросуп": [
-        2
+        2, 
+        "equals быстросуп-пюре", 
+        "subset_of #бакалея", 
+        "subset_of #супы и блюда быстрого приготовления", 
+        "subset_of пюре"
     ], 
     "быстросуп-пюре": [
-        2
+        2, 
+        "equals быстросуп", 
+        "subset_of #бакалея", 
+        "subset_of #супы и блюда быстрого приготовления", 
+        "subset_of пюре"
     ], 
     "бычки": [
-        1
+        1, 
+        "subset_of #консервация", 
+        "subset_of #рыбные консервы"
     ], 
     "ванилин": [
-        1
+        1, 
+        "subset_of #ингредиенты для выпечки", 
+        "subset_of #растительные масла, соусы и приправы"
     ], 
     "ванильный": [
-        1
+        1, 
+        "subset_of #ингредиенты для выпечки", 
+        "subset_of #растительные масла, соусы и приправы"
     ], 
     "варенец": [
-        1
+        1, 
+        "similar[0.86]~ варенье", 
+        "subset_of #кисломолочные продукты", 
+        "subset_of #молочные продукты", 
+        "subset_of #молочные продукты, сыры, яйцо"
     ], 
     "вареники": [
         7, 
@@ -4579,14 +5540,19 @@
     ], 
     "варенье": [
         11, 
+        "similar[0.86]~ варенец", 
         "subset_of #консервация", 
         "subset_of #фруктово-ягодная консервация"
     ], 
     "васаби": [
-        2
+        2, 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #соусы"
     ], 
     "ватрушка": [
-        3
+        3, 
+        "subset_of #выпечка, изделия сдобные", 
+        "subset_of #хлебобулочные изделия"
     ], 
     "вафельные": [
         2
@@ -4613,7 +5579,8 @@
         "almost[(0.95, 21)]~ #мясная гастрономия", 
         "almost[(0.95, 21)]~ #мясные деликатесы", 
         "contains ветчина + из окорока", 
-        "contains ветчина + окорока"
+        "contains ветчина + окорока", 
+        "similar[0.93]~ ветчинка"
     ], 
     "ветчина + из окорока": [
         4, 
@@ -4630,10 +5597,16 @@
         "subset_of ветчина"
     ], 
     "ветчинка": [
-        2
+        2, 
+        "similar[0.93]~ ветчина", 
+        "subset_of #готовые блюда консервированные", 
+        "subset_of #консервация"
     ], 
     "винегрет": [
-        1
+        1, 
+        "subset_of #икра овощная", 
+        "subset_of #консервация", 
+        "subset_of #овощные консервы"
     ], 
     "виноград": [
         7, 
@@ -7372,23 +8345,38 @@
         "subset_of вода + стол"
     ], 
     "водоросли": [
-        1
+        1, 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #соусы"
     ], 
     "вок": [
-        2
+        2, 
+        "equals вок-соус", 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #соусы", 
+        "subset_of соус"
     ], 
     "вок-соус": [
-        2
+        2, 
+        "equals вок", 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #соусы", 
+        "subset_of соус"
     ], 
     "гавайская": [
-        1
+        1, 
+        "subset_of #замороженные продукты", 
+        "subset_of #овощи, ягоды, грибы замороженные"
     ], 
     "гвоздика": [
-        1
+        1, 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #специи, приправы"
     ], 
     "глазурь": [
         5, 
         "almost[(0.8, 4)]~ #ингредиенты для выпечки", 
+        "contains соус-глазурь", 
         "subset_of #растительные масла, соусы и приправы"
     ], 
     "говядина": [
@@ -7539,10 +8527,14 @@
         "subset_of голень + цыпленка"
     ], 
     "голубика": [
-        1
+        1, 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #фрукты, ягоды"
     ], 
     "голубцы": [
-        1
+        1, 
+        "subset_of #готовые блюда консервированные", 
+        "subset_of #консервация"
     ], 
     "горбуша": [
         13, 
@@ -7567,13 +8559,19 @@
         "subset_of горбуша"
     ], 
     "горбушечки": [
-        1
+        1, 
+        "subset_of #хлеб, батон, лепешки, лаваш", 
+        "subset_of #хлебобулочные изделия"
     ], 
     "горлохват": [
-        1
+        1, 
+        "subset_of #кетчупы", 
+        "subset_of #растительные масла, соусы и приправы"
     ], 
     "гороховый": [
-        1
+        1, 
+        "subset_of #бакалея", 
+        "subset_of #супы и блюда быстрого приготовления"
     ], 
     "горошек": [
         6, 
@@ -7667,46 +8665,77 @@
         "subset_of гот + завтрак"
     ], 
     "готовый": [
-        1
+        1, 
+        "subset_of #бакалея", 
+        "subset_of #супы и блюда быстрого приготовления"
     ], 
     "грана": [
-        1
+        1, 
+        "similar[0.91]~ гранат", 
+        "subset_of #молочные продукты, сыры, яйцо", 
+        "subset_of #сыры", 
+        "subset_of #твердые сыры"
     ], 
     "гранат": [
-        1
+        1, 
+        "similar[0.91]~ грана", 
+        "similar[0.92]~ гранаты", 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #фрукты, ягоды"
     ], 
     "гранаты": [
-        1
+        1, 
+        "similar[0.92]~ гранат", 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #фрукты, ягоды"
     ], 
     "грейпфрут": [
-        1
+        1, 
+        "similar[0.95]~ грейпфруты", 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #фрукты, ягоды"
     ], 
     "грейпфруты": [
-        2
+        2, 
+        "similar[0.95]~ грейпфрут", 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #фрукты, ягоды"
     ], 
     "грецкий": [
-        1
+        1, 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #орехи, сухофрукты"
     ], 
     "греча": [
-        3
+        3, 
+        "subset_of #бакалея"
     ], 
     "греческая": [
-        1
+        1, 
+        "subset_of #замороженные продукты", 
+        "subset_of #овощи, ягоды, грибы замороженные"
     ], 
     "грибное": [
-        1
+        1, 
+        "similar[0.86]~ грибной", 
+        "subset_of #грибные консервы", 
+        "subset_of #консервация"
     ], 
     "грибной": [
-        2
+        2, 
+        "similar[0.86]~ грибное"
     ], 
     "грибочки": [
-        1
+        1, 
+        "subset_of #грибные консервы", 
+        "subset_of #консервация"
     ], 
     "грибы": [
         16, 
         "almost[(0.81, 13)]~ #грибные консервы", 
         "almost[(0.81, 13)]~ #консервация", 
         "almost[(0.25, 4)]~ #овощи, фрукты, грибы, ягоды", 
+        "contains #грибы свежие", 
         "contains грибы + белые", 
         "contains грибы + грузди", 
         "contains грибы + маринованные", 
@@ -7805,7 +8834,9 @@
         "subset_of грудка + цыпленка"
     ], 
     "грузди": [
-        2
+        2, 
+        "subset_of #грибные консервы", 
+        "subset_of #консервация"
     ], 
     "груша": [
         11, 
@@ -7823,7 +8854,9 @@
         "subset_of гуляш"
     ], 
     "гусь": [
-        1
+        1, 
+        "subset_of #мясо и птица", 
+        "subset_of #птица замороженная"
     ], 
     "десерт": [
         23, 
@@ -7891,10 +8924,18 @@
         "subset_of джем"
     ], 
     "дип": [
-        1
+        1, 
+        "equals дип-соус", 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #соусы", 
+        "subset_of соус"
     ], 
     "дип-соус": [
-        1
+        1, 
+        "equals дип", 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #соусы", 
+        "subset_of соус"
     ], 
     "докторская": [
         4, 
@@ -7902,10 +8943,14 @@
         "subset_of #мясная гастрономия"
     ], 
     "дольки": [
-        2
+        2, 
+        "subset_of #кондитерские изделия", 
+        "subset_of #мармелад, суфле, зефир, пастила"
     ], 
     "дорада": [
-        3
+        3, 
+        "subset_of #рыба охлажденная и замороженная", 
+        "subset_of #рыба, морепродукты и икра"
     ], 
     "дрожжи": [
         4, 
@@ -7913,22 +8958,37 @@
         "subset_of #растительные масла, соусы и приправы"
     ], 
     "дым": [
-        1
+        1, 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #хрен, горчица, маринад"
     ], 
     "дыня": [
-        1
+        1, 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #фрукты, ягоды"
     ], 
     "евроогурчики": [
-        1
+        1, 
+        "subset_of #консервация", 
+        "subset_of #овощные консервы", 
+        "subset_of #оливки"
     ], 
     "ежевика": [
-        1
+        1, 
+        "subset_of #замороженные продукты", 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #овощи, ягоды, грибы замороженные", 
+        "subset_of #фрукты, ягоды"
     ], 
     "жаркое": [
-        1
+        1, 
+        "subset_of #готовые блюда консервированные", 
+        "subset_of #консервация"
     ], 
     "жевательные": [
-        1
+        1, 
+        "subset_of #кондитерские изделия", 
+        "subset_of #конфеты"
     ], 
     "желатин": [
         1, 
@@ -7942,7 +9002,10 @@
         "almost[(0.8, 8)]~ #молочные продукты, сыры, яйцо"
     ], 
     "желтый": [
-        2
+        2, 
+        "subset_of #рыба вяленая, сушеная, снэки рыбные", 
+        "subset_of #рыба, морепродукты и икра", 
+        "subset_of #рыбная гастрономия"
     ], 
     "желудки": [
         3, 
@@ -7962,16 +9025,26 @@
         "subset_of желудки"
     ], 
     "жемчужины": [
-        1
+        1, 
+        "subset_of #ингредиенты для выпечки", 
+        "subset_of #растительные масла, соусы и приправы"
     ], 
     "жульен": [
-        2
+        2, 
+        "subset_of #готовые блюда замороженные", 
+        "subset_of #замороженные продукты"
     ], 
     "жёлтый": [
-        2
+        2, 
+        "subset_of #рыба вяленая, сушеная, снэки рыбные", 
+        "subset_of #рыба, морепродукты и икра", 
+        "subset_of #рыбная гастрономия"
     ], 
     "закуска": [
-        1
+        1, 
+        "subset_of #другие овощные консервы", 
+        "subset_of #консервация", 
+        "subset_of #овощные консервы"
     ], 
     "заменитель": [
         5, 
@@ -7984,7 +9057,10 @@
         "subset_of заменитель"
     ], 
     "запеканка": [
-        1
+        1, 
+        "subset_of #десерты, каши молочные", 
+        "subset_of #молочные продукты", 
+        "subset_of #молочные продукты, сыры, яйцо"
     ], 
     "заправка": [
         5, 
@@ -7992,13 +9068,20 @@
         "subset_of #соусы"
     ], 
     "зельц": [
-        2
+        2, 
+        "subset_of #мясная гастрономия", 
+        "subset_of #паштеты, ливер"
     ], 
     "земляника": [
-        1
+        1, 
+        "subset_of #консервация", 
+        "subset_of #фруктово-ягодная консервация"
     ], 
     "зерно": [
-        2
+        2, 
+        "subset_of #бакалея", 
+        "subset_of #другие крупы", 
+        "subset_of #крупы"
     ], 
     "зефир": [
         11, 
@@ -8006,16 +9089,25 @@
         "subset_of #мармелад, суфле, зефир, пастила"
     ], 
     "зразы": [
-        1
+        1, 
+        "subset_of #мясо и птица", 
+        "subset_of #птица охлажденная"
     ], 
     "зубчики": [
-        1
+        1, 
+        "subset_of #другие овощные консервы", 
+        "subset_of #консервация", 
+        "subset_of #овощные консервы"
     ], 
     "изделие": [
-        1
+        1, 
+        "similar[0.86]~ изделия", 
+        "subset_of #выпечка, изделия сдобные", 
+        "subset_of #хлебобулочные изделия"
     ], 
     "изделия": [
-        2
+        2, 
+        "similar[0.86]~ изделие"
     ], 
     "изюм": [
         4, 
@@ -8165,10 +9257,15 @@
         3
     ], 
     "ирис": [
-        2
+        2, 
+        "similar[0.86]~ рис", 
+        "subset_of #кондитерские изделия", 
+        "subset_of #конфеты"
     ], 
     "итальянская": [
-        1
+        1, 
+        "subset_of #замороженные продукты", 
+        "subset_of #овощи, ягоды, грибы замороженные"
     ], 
     "йогурт": [
         30, 
@@ -8231,17 +9328,24 @@
     "какао": [
         6, 
         "contains какао + растворимый", 
+        "contains какао-напиток", 
         "subset_of #какао, цикорий", 
         "subset_of #чай, кофе, какао"
     ], 
     "какао + растворимый": [
         4, 
+        "contains какао-напиток", 
         "subset_of #какао, цикорий", 
         "subset_of #чай, кофе, какао", 
         "subset_of какао"
     ], 
     "какао-напиток": [
-        1
+        1, 
+        "subset_of #какао, цикорий", 
+        "subset_of #чай, кофе, какао", 
+        "subset_of какао", 
+        "subset_of какао + растворимый", 
+        "subset_of напиток"
     ], 
     "кальмар": [
         20, 
@@ -8281,7 +9385,10 @@
         "subset_of кальмар"
     ], 
     "каперсы": [
-        1
+        1, 
+        "subset_of #другие овощные консервы", 
+        "subset_of #консервация", 
+        "subset_of #овощные консервы"
     ], 
     "капуста": [
         23, 
@@ -8356,6 +9463,7 @@
         13, 
         "contains карамель + ассорти", 
         "contains карамель + леденцовая", 
+        "contains мини-карамель", 
         "subset_of #кондитерские изделия", 
         "subset_of #конфеты"
     ], 
@@ -8372,7 +9480,9 @@
         "subset_of карамель"
     ], 
     "карандаши": [
-        2
+        2, 
+        "subset_of #ингредиенты для выпечки", 
+        "subset_of #растительные масла, соусы и приправы"
     ], 
     "карбонад": [
         8, 
@@ -8387,16 +9497,22 @@
         "subset_of карбонад"
     ], 
     "карпаччо": [
-        3
+        3, 
+        "subset_of #мясная гастрономия", 
+        "subset_of #мясные деликатесы"
     ], 
     "картофель": [
         9, 
         "almost[(0.67, 6)]~ #корнеплоды", 
         "almost[(0.67, 6)]~ #овощи", 
-        "almost[(0.67, 6)]~ #овощи, фрукты, грибы, ягоды"
+        "almost[(0.67, 6)]~ #овощи, фрукты, грибы, ягоды", 
+        "similar[0.86]~ картофельные"
     ], 
     "картофельные": [
-        1
+        1, 
+        "similar[0.86]~ картофель", 
+        "subset_of #бакалея", 
+        "subset_of #макаронные изделия"
     ], 
     "каша": [
         31, 
@@ -8450,14 +9566,21 @@
         "subset_of квас"
     ], 
     "кебаб": [
-        1
+        1, 
+        "equals люля", 
+        "equals люля-кебаб", 
+        "subset_of #мясо и птица", 
+        "subset_of #мясо охлажденное"
     ], 
     "кебапи": [
-        1
+        1, 
+        "subset_of #мясо и птица", 
+        "subset_of #мясо охлажденное"
     ], 
     "кедровые": [
         2, 
         "equals кедровые + орешки", 
+        "similar[0.88]~ кедровый", 
         "subset_of #овощи, фрукты, грибы, ягоды", 
         "subset_of #орехи, сухофрукты"
     ], 
@@ -8468,10 +9591,15 @@
         "subset_of #орехи, сухофрукты"
     ], 
     "кедровый": [
-        2
+        2, 
+        "similar[0.88]~ кедровые", 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #орехи, сухофрукты"
     ], 
     "кекс": [
-        5
+        5, 
+        "contains м", 
+        "contains м-кекс"
     ], 
     "кета": [
         9, 
@@ -8521,16 +9649,24 @@
         "subset_of кефир"
     ], 
     "кефирный": [
-        1
+        1, 
+        "subset_of #кисломолочные продукты", 
+        "subset_of #молочные продукты", 
+        "subset_of #молочные продукты, сыры, яйцо"
     ], 
     "кешью": [
-        3
+        3, 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #орехи, сухофрукты"
     ], 
     "киви": [
-        1
+        1, 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #фрукты, ягоды"
     ], 
     "кижуч": [
-        3
+        3, 
+        "subset_of #рыба, морепродукты и икра"
     ], 
     "килька": [
         7, 
@@ -8544,7 +9680,9 @@
         "subset_of килька"
     ], 
     "кинза": [
-        2
+        2, 
+        "subset_of #зелень", 
+        "subset_of #овощи, фрукты, грибы, ягоды"
     ], 
     "кисель": [
         19, 
@@ -8555,28 +9693,43 @@
         "almost[(0.53, 10)]~ #специи, приправы"
     ], 
     "кисломол": [
-        2
+        2, 
+        "subset_of #молочные продукты", 
+        "subset_of #молочные продукты, сыры, яйцо", 
+        "subset_of #продукты молочные для детей и кормящих мам"
     ], 
     "кислота": [
-        1
+        1, 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #уксус"
     ], 
     "кишмиш": [
-        1
+        1, 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #орехи, сухофрукты"
     ], 
     "клубника": [
-        2
+        2, 
+        "subset_of #замороженные продукты", 
+        "subset_of #овощи, ягоды, грибы замороженные"
     ], 
     "клюква": [
         3
     ], 
     "козинак": [
-        1
+        1, 
+        "subset_of #кондитерские изделия", 
+        "subset_of #мармелад, суфле, зефир, пастила"
     ], 
     "кокос": [
-        1
+        1, 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #фрукты, ягоды"
     ], 
     "кокосовая": [
-        2
+        2, 
+        "subset_of #ингредиенты для выпечки", 
+        "subset_of #растительные масла, соусы и приправы"
     ], 
     "коктейль": [
         34, 
@@ -8996,6 +10149,8 @@
         "contains колбаса + синюге", 
         "contains колбаса + телячья", 
         "contains колбаса + финский", 
+        "similar[0.93]~ колбаска", 
+        "similar[0.86]~ колбасу", 
         "subset_of #мясная гастрономия"
     ], 
     "колбаса + б/о": [
@@ -9287,7 +10442,11 @@
         "subset_of колбаса + в/к"
     ], 
     "колбаска": [
-        1
+        1, 
+        "similar[0.93]~ колбаса", 
+        "similar[0.88]~ колбаски", 
+        "subset_of #кондитерские изделия", 
+        "subset_of #мармелад, суфле, зефир, пастила"
     ], 
     "колбаски": [
         22, 
@@ -9301,7 +10460,8 @@
         "contains колбаски + п/к + охотничьи", 
         "contains колбаски + пиколини", 
         "contains колбаски + с/к", 
-        "contains колбаски + с/к + пиколини"
+        "contains колбаски + с/к + пиколини", 
+        "similar[0.88]~ колбаска"
     ], 
     "колбаски + для жарки": [
         4, 
@@ -9366,13 +10526,21 @@
         "subset_of колбаски + с/к"
     ], 
     "колбасу": [
-        1
+        1, 
+        "similar[0.86]~ колбаса", 
+        "subset_of #колбасы вареные", 
+        "subset_of #мясная гастрономия"
     ], 
     "колобки": [
-        1
+        1, 
+        "subset_of #готовые блюда замороженные", 
+        "subset_of #замороженные продукты"
     ], 
     "кольца": [
-        1
+        1, 
+        "subset_of #рыба вяленая, сушеная, снэки рыбные", 
+        "subset_of #рыба, морепродукты и икра", 
+        "subset_of #рыбная гастрономия"
     ], 
     "компот": [
         7, 
@@ -9380,13 +10548,20 @@
         "subset_of #фруктово-ягодная консервация"
     ], 
     "кондитерская": [
-        1
+        1, 
+        "subset_of #ингредиенты для выпечки", 
+        "subset_of #растительные масла, соусы и приправы"
     ], 
     "конина": [
-        1
+        1, 
+        "subset_of #консервация", 
+        "subset_of #мясные консервы"
     ], 
     "конфета": [
-        1
+        1, 
+        "similar[0.86]~ конфеты", 
+        "subset_of #кондитерские изделия", 
+        "subset_of #шоколад"
     ], 
     "конфеты": [
         60, 
@@ -9398,6 +10573,7 @@
         "contains конфеты + темный", 
         "contains конфеты + шок", 
         "contains конфеты + шоколадные", 
+        "similar[0.86]~ конфета", 
         "subset_of #кондитерские изделия", 
         "subset_of #конфеты"
     ], 
@@ -9456,25 +10632,45 @@
         "almost[(0.73, 8)]~ #фруктово-ягодная консервация"
     ], 
     "кордон": [
-        1
+        1, 
+        "subset_of #замороженные продукты", 
+        "subset_of #котлеты, нагетсы, галеты", 
+        "subset_of #полуфабрикаты замороженные"
     ], 
     "корейка": [
-        1
+        1, 
+        "subset_of #мясная гастрономия", 
+        "subset_of #мясные деликатесы"
     ], 
     "корень": [
-        1
+        1, 
+        "subset_of #корнеплоды", 
+        "subset_of #овощи", 
+        "subset_of #овощи, фрукты, грибы, ягоды"
     ], 
     "корж": [
-        1
+        1, 
+        "similar[0.89]~ коржи", 
+        "subset_of #ингредиенты для выпечки", 
+        "subset_of #растительные масла, соусы и приправы"
     ], 
     "коржи": [
-        1
+        1, 
+        "similar[0.89]~ корж", 
+        "similar[0.91]~ коржик", 
+        "subset_of #ингредиенты для выпечки", 
+        "subset_of #растительные масла, соусы и приправы"
     ], 
     "коржик": [
-        1
+        1, 
+        "similar[0.91]~ коржи", 
+        "subset_of #выпечка, изделия сдобные", 
+        "subset_of #хлебобулочные изделия"
     ], 
     "корица": [
-        1
+        1, 
+        "subset_of #ингредиенты для выпечки", 
+        "subset_of #растительные масла, соусы и приправы"
     ], 
     "корнишоны": [
         5, 
@@ -9483,10 +10679,15 @@
         "subset_of #огурцы соленые и маринованные"
     ], 
     "корюшка": [
-        1
+        1, 
+        "subset_of #рыба вяленая, сушеная, снэки рыбные", 
+        "subset_of #рыба, морепродукты и икра", 
+        "subset_of #рыбная гастрономия"
     ], 
     "кости": [
-        1
+        1, 
+        "subset_of #мясо и птица", 
+        "subset_of #мясо охлажденное"
     ], 
     "котлета": [
         4, 
@@ -10533,7 +11734,9 @@
         "subset_of кофе"
     ], 
     "кофейный": [
-        1
+        1, 
+        "subset_of #какао, цикорий", 
+        "subset_of #чай, кофе, какао"
     ], 
     "крабовое": [
         7, 
@@ -10581,6 +11784,7 @@
         "contains крабовые + палочки + охл", 
         "equals крабовые + палочки", 
         "similar[0.88]~ крабовое", 
+        "similar[0.88]~ крабовый", 
         "subset_of #рыба, морепродукты и икра"
     ], 
     "крабовые + охл": [
@@ -10612,16 +11816,28 @@
         "subset_of крабовые + палочки"
     ], 
     "крабовый": [
-        1
+        1, 
+        "similar[0.88]~ крабовые", 
+        "subset_of #крабовое мясо и палочки", 
+        "subset_of #рыба, морепродукты и икра", 
+        "subset_of #рыбная гастрономия"
     ], 
     "красноперка": [
-        1
+        1, 
+        "subset_of #рыба вяленая, сушеная, снэки рыбные", 
+        "subset_of #рыба, морепродукты и икра", 
+        "subset_of #рыбная гастрономия"
     ], 
     "красный": [
-        1
+        1, 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #уксус"
     ], 
     "креветка": [
-        1
+        1, 
+        "similar[0.88]~ креветки", 
+        "subset_of #морепродукты", 
+        "subset_of #рыба, морепродукты и икра"
     ], 
     "креветки": [
         22, 
@@ -10634,6 +11850,7 @@
         "contains креветки + королевские + с/г", 
         "contains креветки + очищ", 
         "contains креветки + с/г", 
+        "similar[0.88]~ креветка", 
         "subset_of #рыба, морепродукты и икра"
     ], 
     "креветки + в/м": [
@@ -10721,11 +11938,15 @@
     ], 
     "крекер": [
         11, 
+        "similar[0.92]~ крекеры", 
         "subset_of #кондитерские изделия", 
         "subset_of #мучные кондитерские изделия"
     ], 
     "крекеры": [
-        1
+        1, 
+        "similar[0.92]~ крекер", 
+        "subset_of #кондитерские изделия", 
+        "subset_of #мучные кондитерские изделия"
     ], 
     "крем": [
         16, 
@@ -10745,6 +11966,7 @@
         "contains крем + спрей", 
         "contains крем-соус", 
         "contains крем-соус + бальзамический", 
+        "contains крем-суп", 
         "contains соус + бальзамический", 
         "contains соус + крем", 
         "contains соус + крем + бальзамический"
@@ -10847,10 +12069,16 @@
         "subset_of соус"
     ], 
     "крем-суп": [
-        1
+        1, 
+        "subset_of #готовые блюда замороженные", 
+        "subset_of #замороженные продукты", 
+        "subset_of крем", 
+        "subset_of суп"
     ], 
     "крокеты": [
-        1
+        1, 
+        "subset_of #мясо и птица", 
+        "subset_of #птица охлажденная"
     ], 
     "кролик": [
         5, 
@@ -10865,7 +12093,9 @@
         "subset_of кролик"
     ], 
     "кроллы": [
-        3
+        3, 
+        "subset_of #готовые блюда замороженные", 
+        "subset_of #замороженные продукты"
     ], 
     "круассан": [
         11, 
@@ -10873,7 +12103,8 @@
         "almost[(0.82, 9)]~ #мучные кондитерские изделия", 
         "contains круассан + 1", 
         "contains круассан + 3", 
-        "contains круассан + 3 + 1"
+        "contains круассан + 3 + 1", 
+        "similar[0.94]~ круассаны"
     ], 
     "круассан + 1": [
         4, 
@@ -10900,7 +12131,11 @@
         "subset_of круассан"
     ], 
     "круассаны": [
-        1
+        1, 
+        "similar[0.94]~ круассан", 
+        "subset_of #блинчики, мучные изделия", 
+        "subset_of #замороженные продукты", 
+        "subset_of #полуфабрикаты замороженные"
     ], 
     "крупа": [
         60, 
@@ -11006,7 +12241,9 @@
         "subset_of крыло + цыпленка"
     ], 
     "крылышки": [
-        3
+        3, 
+        "subset_of #мясо и птица", 
+        "subset_of #птица охлажденная"
     ], 
     "кукуруза": [
         7, 
@@ -11023,28 +12260,44 @@
         "subset_of кукуруза"
     ], 
     "кумкват": [
-        1
+        1, 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #фрукты, ягоды"
     ], 
     "кунафа": [
-        1
+        1, 
+        "subset_of #кондитерские изделия", 
+        "subset_of #мармелад, суфле, зефир, пастила"
     ], 
     "кунжут": [
-        1
+        1, 
+        "subset_of #ингредиенты для выпечки", 
+        "subset_of #растительные масла, соусы и приправы"
     ], 
     "купаты": [
-        3
+        3, 
+        "subset_of #мясо и птица", 
+        "subset_of #мясо охлажденное"
     ], 
     "курага": [
         2
     ], 
     "куриное": [
-        2
+        2, 
+        "subset_of #замороженные продукты", 
+        "subset_of #котлеты, нагетсы, галеты", 
+        "subset_of #полуфабрикаты замороженные"
     ], 
     "куриный": [
-        2
+        2, 
+        "subset_of #бакалея", 
+        "subset_of #супы и блюда быстрого приготовления"
     ], 
     "кусочки": [
-        1
+        1, 
+        "subset_of #замороженные продукты", 
+        "subset_of #котлеты, нагетсы, галеты", 
+        "subset_of #полуфабрикаты замороженные"
     ], 
     "лаваш": [
         3, 
@@ -11059,16 +12312,25 @@
         "subset_of #хлебобулочные изделия"
     ], 
     "лавровый": [
-        1
+        1, 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #специи, приправы"
     ], 
     "лазанья": [
-        1
+        1, 
+        "subset_of #готовые блюда замороженные", 
+        "subset_of #замороженные продукты"
     ], 
     "лайм": [
-        1
+        1, 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #фрукты, ягоды"
     ], 
     "лакедра": [
-        1
+        1, 
+        "subset_of #рыба вяленая, сушеная, снэки рыбные", 
+        "subset_of #рыба, морепродукты и икра", 
+        "subset_of #рыбная гастрономия"
     ], 
     "лапша": [
         21, 
@@ -11145,16 +12407,28 @@
         "subset_of лапша"
     ], 
     "леденцы": [
-        1
+        1, 
+        "subset_of #кондитерские изделия", 
+        "subset_of #конфеты"
     ], 
     "лепешка": [
-        2
+        2, 
+        "similar[0.86]~ лепешки", 
+        "subset_of #хлеб, батон, лепешки, лаваш", 
+        "subset_of #хлебобулочные изделия"
     ], 
     "лепешки": [
-        3
+        3, 
+        "similar[0.86]~ лепешка", 
+        "similar[0.86]~ лепёшки", 
+        "subset_of #хлеб, батон, лепешки, лаваш", 
+        "subset_of #хлебобулочные изделия"
     ], 
     "лепёшки": [
-        2
+        2, 
+        "similar[0.86]~ лепешки", 
+        "subset_of #хлеб, батон, лепешки, лаваш", 
+        "subset_of #хлебобулочные изделия"
     ], 
     "лечо": [
         2, 
@@ -11163,7 +12437,10 @@
         "subset_of #овощные консервы"
     ], 
     "лещ": [
-        2
+        2, 
+        "subset_of #рыба вяленая, сушеная, снэки рыбные", 
+        "subset_of #рыба, морепродукты и икра", 
+        "subset_of #рыбная гастрономия"
     ], 
     "лимонад": [
         4, 
@@ -11171,13 +12448,20 @@
         "subset_of #напитки, соки"
     ], 
     "лимонная": [
-        1
+        1, 
+        "subset_of #ингредиенты для выпечки", 
+        "subset_of #растительные масла, соусы и приправы"
     ], 
     "лимоны": [
-        1
+        1, 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #фрукты, ягоды"
     ], 
     "лососевые": [
-        1
+        1, 
+        "subset_of #рыба соленая и копченая", 
+        "subset_of #рыба, морепродукты и икра", 
+        "subset_of #рыбная гастрономия"
     ], 
     "лосось": [
         4, 
@@ -11198,30 +12482,56 @@
         "subset_of лук"
     ], 
     "луковки": [
-        1
+        1, 
+        "subset_of #другие овощные консервы", 
+        "subset_of #консервация", 
+        "subset_of #овощные консервы"
     ], 
     "луковый": [
-        1
+        1, 
+        "subset_of #бакалея", 
+        "subset_of #супы и блюда быстрого приготовления"
     ], 
     "лукум": [
         4, 
+        "contains рахат", 
+        "contains рахат-лукум", 
         "subset_of #кондитерские изделия", 
         "subset_of #мармелад, суфле, зефир, пастила"
     ], 
     "люля": [
-        1
+        1, 
+        "equals кебаб", 
+        "equals люля-кебаб", 
+        "subset_of #мясо и птица", 
+        "subset_of #мясо охлажденное"
     ], 
     "люля-кебаб": [
-        1
+        1, 
+        "equals кебаб", 
+        "equals люля", 
+        "subset_of #мясо и птица", 
+        "subset_of #мясо охлажденное"
     ], 
     "лютеница": [
-        1
+        1, 
+        "subset_of #икра овощная", 
+        "subset_of #консервация", 
+        "subset_of #овощные консервы"
     ], 
     "м": [
-        2
+        2, 
+        "equals м-кекс", 
+        "subset_of #кондитерские изделия", 
+        "subset_of #мучные кондитерские изделия", 
+        "subset_of кекс"
     ], 
     "м-кекс": [
-        2
+        2, 
+        "equals м", 
+        "subset_of #кондитерские изделия", 
+        "subset_of #мучные кондитерские изделия", 
+        "subset_of кекс"
     ], 
     "майонез": [
         23, 
@@ -11369,10 +12679,14 @@
         "subset_of майонез"
     ], 
     "майонезный": [
-        3
+        3, 
+        "subset_of #майонез", 
+        "subset_of #растительные масла, соусы и приправы"
     ], 
     "мак": [
-        1
+        1, 
+        "subset_of #ингредиенты для выпечки", 
+        "subset_of #растительные масла, соусы и приправы"
     ], 
     "макаронные": [
         7, 
@@ -11432,7 +12746,11 @@
         2
     ], 
     "манго": [
-        1
+        1, 
+        "subset_of #консервация", 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #фруктово-ягодная консервация", 
+        "subset_of #фрукты, ягоды"
     ], 
     "мандарины": [
         4, 
@@ -11440,7 +12758,10 @@
         "subset_of #фрукты, ягоды"
     ], 
     "манты": [
-        2
+        2, 
+        "subset_of #замороженные продукты", 
+        "subset_of #пельмени, вареники, хинкали", 
+        "subset_of #полуфабрикаты замороженные"
     ], 
     "маргарин": [
         6, 
@@ -11451,6 +12772,7 @@
     "маринад": [
         7, 
         "almost[(0.86, 6)]~ #хрен, горчица, маринад", 
+        "contains соус-маринад", 
         "subset_of #растительные масла, соусы и приправы"
     ], 
     "мармелад": [
@@ -11473,7 +12795,9 @@
         "subset_of мармелад"
     ], 
     "мармеладные": [
-        2
+        2, 
+        "subset_of #кондитерские изделия", 
+        "subset_of #мармелад, суфле, зефир, пастила"
     ], 
     "маслины": [
         17, 
@@ -11729,7 +13053,8 @@
         "subset_of масло"
     ], 
     "масляная": [
-        2
+        2, 
+        "subset_of #рыба, морепродукты и икра"
     ], 
     "масса": [
         6, 
@@ -11746,38 +13071,54 @@
         "subset_of масса"
     ], 
     "матнакаш": [
-        1
+        1, 
+        "subset_of #хлеб, батон, лепешки, лаваш", 
+        "subset_of #хлебобулочные изделия"
     ], 
     "маффины": [
-        1
+        1, 
+        "subset_of #бакалея", 
+        "subset_of #мука"
     ], 
     "маца": [
-        1
+        1, 
+        "subset_of #хлеб, батон, лепешки, лаваш", 
+        "subset_of #хлебобулочные изделия"
     ], 
     "мега": [
-        1
+        1, 
+        "equals мега-филе", 
+        "subset_of #рыба охлажденная и замороженная", 
+        "subset_of #рыба, морепродукты и икра", 
+        "subset_of филе"
     ], 
     "мега-филе": [
-        1
+        1, 
+        "equals мега", 
+        "subset_of #рыба охлажденная и замороженная", 
+        "subset_of #рыба, морепродукты и икра", 
+        "subset_of филе"
     ], 
     "мед": [
-        30, 
+        31, 
         "contains мед + алтайский", 
         "contains мед + горный", 
         "contains мед + натуральный", 
         "contains мед + натуральный + алтайский", 
         "contains мед + натуральный + горный", 
         "contains мед + цветочный", 
+        "contains фито", 
+        "contains фито-мед", 
         "subset_of #консервация", 
         "subset_of #мед"
     ], 
     "мед + алтайский": [
-        5, 
-        "equals мед + натуральный + алтайский", 
+        7, 
+        "almost[(0.71, 5)]~ мед + натуральный", 
+        "contains мед + натуральный + алтайский", 
         "subset_of #консервация", 
         "subset_of #мед", 
-        "subset_of мед", 
-        "subset_of мед + натуральный"
+        "subset_of мед"
     ], 
     "мед + горный": [
         4, 
@@ -11789,7 +13130,7 @@
     ], 
     "мед + натуральный": [
         14, 
-        "contains мед + алтайский", 
+        "almost[(0.36, 5)]~ мед + алтайский", 
         "contains мед + горный", 
         "contains мед + натуральный + алтайский", 
         "contains мед + натуральный + горный", 
@@ -11799,10 +13140,10 @@
     ], 
     "мед + натуральный + алтайский": [
         5, 
-        "equals мед + алтайский", 
         "subset_of #консервация", 
         "subset_of #мед", 
         "subset_of мед", 
+        "subset_of мед + алтайский", 
         "subset_of мед + натуральный"
     ], 
     "мед + натуральный + горный": [
@@ -11814,19 +13155,25 @@
         "subset_of мед + натуральный"
     ], 
     "мед + цветочный": [
-        3, 
+        4, 
         "subset_of #консервация", 
         "subset_of #мед", 
         "subset_of мед"
     ], 
     "медальоны": [
-        1
+        1, 
+        "subset_of #мясо и птица", 
+        "subset_of #мясо охлажденное"
     ], 
     "мексиканская": [
-        1
+        1, 
+        "subset_of #замороженные продукты", 
+        "subset_of #овощи, ягоды, грибы замороженные"
     ], 
     "мельница": [
-        1
+        1, 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #специи, приправы"
     ], 
     "мидии": [
         5, 
@@ -11861,12 +13208,16 @@
         "almost[(0.6, 6)]~ #хлебобулочные изделия", 
         "almost[(0.6, 6)]~ сушки", 
         "contains мини + сушки", 
+        "contains мини-карамель", 
         "contains мини-сушки", 
-        "contains сушки + мини"
+        "contains мини-филе", 
+        "contains сушки + мини", 
+        "contains сушки-мини"
     ], 
     "мини + сушки": [
         6, 
         "contains мини-сушки", 
+        "contains сушки-мини", 
         "equals сушки + мини", 
         "subset_of #сухарики, баранки, сушки", 
         "subset_of #хлебобулочные изделия", 
@@ -11874,7 +13225,11 @@
         "subset_of сушки"
     ], 
     "мини-карамель": [
-        1
+        1, 
+        "subset_of #кондитерские изделия", 
+        "subset_of #конфеты", 
+        "subset_of карамель", 
+        "subset_of мини"
     ], 
     "мини-сушки": [
         4, 
@@ -11886,22 +13241,38 @@
         "subset_of сушки + мини"
     ], 
     "мини-филе": [
-        1
+        1, 
+        "subset_of #рыба охлажденная и замороженная", 
+        "subset_of #рыба, морепродукты и икра", 
+        "subset_of мини", 
+        "subset_of филе"
     ], 
     "миннеола": [
-        1
+        1, 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #фрукты, ягоды"
     ], 
     "минога": [
-        1
+        1, 
+        "subset_of #рыба соленая и копченая", 
+        "subset_of #рыба, морепродукты и икра", 
+        "subset_of #рыбная гастрономия"
     ], 
     "минтай": [
-        2
+        2, 
+        "subset_of #рыба охлажденная и замороженная", 
+        "subset_of #рыба, морепродукты и икра"
     ], 
     "мисо": [
-        1
+        1, 
+        "subset_of #бакалея", 
+        "subset_of #продукты для похудения"
     ], 
     "мойва": [
-        1
+        1, 
+        "subset_of #рыба соленая и копченая", 
+        "subset_of #рыба, морепродукты и икра", 
+        "subset_of #рыбная гастрономия"
     ], 
     "мол": [
         7, 
@@ -12080,7 +13451,10 @@
         "subset_of мол + сост + прод"
     ], 
     "молодые": [
-        1
+        1, 
+        "subset_of #пресервы", 
+        "subset_of #рыба, морепродукты и икра", 
+        "subset_of #рыбная гастрономия"
     ], 
     "молоко": [
         50, 
@@ -12217,25 +13591,41 @@
         "subset_of молоко"
     ], 
     "молокосодержащий": [
-        1
+        1, 
+        "subset_of #консервация", 
+        "subset_of #молочные консервы"
     ], 
     "молотый": [
-        3
+        3, 
+        "subset_of #кофе", 
+        "subset_of #чай, кофе, какао"
     ], 
     "молочная": [
-        2
+        2, 
+        "subset_of #колбасы вареные", 
+        "subset_of #мясная гастрономия"
     ], 
     "молочный": [
         4
     ], 
     "молсод": [
-        3
+        3, 
+        "subset_of #десерты, каши молочные", 
+        "subset_of #молочные продукты", 
+        "subset_of #молочные продукты, сыры, яйцо"
     ], 
     "монте": [
-        1
+        1, 
+        "subset_of #десерты, каши молочные", 
+        "subset_of #молочные продукты", 
+        "subset_of #молочные продукты, сыры, яйцо"
     ], 
     "моороженое": [
-        1
+        1, 
+        "similar[0.9]~ мороженное", 
+        "similar[0.95]~ мороженое", 
+        "subset_of #молочные продукты, сыры, яйцо", 
+        "subset_of #мороженое"
     ], 
     "морковь": [
         8, 
@@ -12298,7 +13688,11 @@
         "subset_of морковь"
     ], 
     "мороженное": [
-        1
+        1, 
+        "similar[0.9]~ моороженое", 
+        "similar[0.95]~ мороженое", 
+        "subset_of #молочные продукты, сыры, яйцо", 
+        "subset_of #мороженое"
     ], 
     "мороженое": [
         92, 
@@ -12369,6 +13763,8 @@
         "contains мороженое + эскимо + глазури", 
         "contains мороженое + эскимо + пломбир", 
         "contains мороженое + эскимо + шок", 
+        "similar[0.95]~ моороженое", 
+        "similar[0.95]~ мороженное", 
         "subset_of #молочные продукты, сыры, яйцо", 
         "subset_of #мороженое"
     ], 
@@ -14103,7 +15499,9 @@
         "subset_of морская"
     ], 
     "морские": [
-        1
+        1, 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #соусы"
     ], 
     "морской": [
         4, 
@@ -14116,7 +15514,10 @@
         "subset_of #рыба, морепродукты и икра"
     ], 
     "моцарелла": [
-        1
+        1, 
+        "subset_of #молочные продукты, сыры, яйцо", 
+        "subset_of #сыры", 
+        "subset_of #творожистые и рассольные сыры"
     ], 
     "мука": [
         11, 
@@ -14151,13 +15552,20 @@
         "subset_of мука + пшеничная"
     ], 
     "мюсли": [
-        2
+        2, 
+        "equals батончик-мюсли", 
+        "subset_of #бакалея", 
+        "subset_of #продукты для похудения", 
+        "subset_of батончик", 
+        "subset_of батончик + мюсли"
     ], 
     "мясо": [
         6
     ], 
     "мята": [
-        1
+        1, 
+        "subset_of #зелень", 
+        "subset_of #овощи, фрукты, грибы, ягоды"
     ], 
     "мёд": [
         15, 
@@ -14202,12 +15610,17 @@
     ], 
     "наггетсы": [
         6, 
+        "similar[0.93]~ нагетсы", 
         "subset_of #замороженные продукты", 
         "subset_of #котлеты, нагетсы, галеты", 
         "subset_of #полуфабрикаты замороженные"
     ], 
     "нагетсы": [
-        1
+        1, 
+        "similar[0.93]~ наггетсы", 
+        "subset_of #замороженные продукты", 
+        "subset_of #котлеты, нагетсы, галеты", 
+        "subset_of #полуфабрикаты замороженные"
     ], 
     "напиток": [
         167, 
@@ -14223,6 +15636,7 @@
         "almost[(0.02, 4)]~ #чай травяной", 
         "almost[(0.05, 9)]~ #чай, кофе, какао", 
         "contains #энергетические напитки", 
+        "contains какао-напиток", 
         "contains напиток + neo", 
         "contains напиток + адреналин", 
         "contains напиток + адреналин + б/а", 
@@ -17004,37 +18418,62 @@
         "subset_of нектар"
     ], 
     "нерка": [
-        2
+        2, 
+        "subset_of #рыба, морепродукты и икра"
     ], 
     "ножки": [
-        2
+        2, 
+        "subset_of #мясо замороженное", 
+        "subset_of #мясо и птица"
     ], 
     "нототения": [
-        1
+        1, 
+        "subset_of #рыба охлажденная и замороженная", 
+        "subset_of #рыба, морепродукты и икра"
     ], 
     "нуга": [
-        1
+        1, 
+        "subset_of #кондитерские изделия", 
+        "subset_of #мармелад, суфле, зефир, пастила"
     ], 
     "обед": [
-        1
+        1, 
+        "subset_of #готовые блюда консервированные", 
+        "subset_of #консервация"
     ], 
     "облепиха": [
-        1
+        1, 
+        "subset_of #консервация", 
+        "subset_of #фруктово-ягодная консервация"
     ], 
     "овощи": [
-        1
+        1, 
+        "similar[0.91]~ #овощи", 
+        "subset_of #замороженные продукты", 
+        "subset_of #овощи, ягоды, грибы замороженные"
     ], 
     "овощная": [
-        3
+        3, 
+        "subset_of #замороженные продукты", 
+        "subset_of #овощи, ягоды, грибы замороженные"
     ], 
     "овощное": [
-        2
+        2, 
+        "similar[0.86]~ овощные", 
+        "subset_of #замороженные продукты", 
+        "subset_of #овощи, ягоды, грибы замороженные"
     ], 
     "овощные": [
-        1
+        1, 
+        "similar[0.86]~ овощное", 
+        "subset_of #замороженные продукты", 
+        "subset_of #котлеты, нагетсы, галеты", 
+        "subset_of #полуфабрикаты замороженные"
     ], 
     "огузок": [
-        1
+        1, 
+        "subset_of #мясо и птица", 
+        "subset_of #мясо охлажденное"
     ], 
     "огурцы": [
         18, 
@@ -17054,22 +18493,37 @@
         "subset_of огурцы"
     ], 
     "огурчики": [
-        2
+        2, 
+        "subset_of #консервация", 
+        "subset_of #овощные консервы", 
+        "subset_of #огурцы соленые и маринованные"
     ], 
     "окорок": [
-        2
+        2, 
+        "similar[0.86]~ окорочок", 
+        "subset_of #мясо и птица"
     ], 
     "окорочок": [
-        1
+        1, 
+        "similar[0.86]~ окорок", 
+        "subset_of #мясо и птица", 
+        "subset_of #птица замороженная"
     ], 
     "окунь": [
-        1
+        1, 
+        "subset_of #рыба охлажденная и замороженная", 
+        "subset_of #рыба, морепродукты и икра"
     ], 
     "оладушки": [
-        2
+        2, 
+        "subset_of #выпечка, изделия сдобные", 
+        "subset_of #хлебобулочные изделия"
     ], 
     "оладьи": [
-        1
+        1, 
+        "subset_of #блинчики, мучные изделия", 
+        "subset_of #замороженные продукты", 
+        "subset_of #полуфабрикаты замороженные"
     ], 
     "оливки": [
         37, 
@@ -17155,22 +18609,38 @@
         3
     ], 
     "орешки": [
-        1
+        1, 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #орехи, сухофрукты"
     ], 
     "осетр": [
-        3
+        3, 
+        "subset_of #рыба соленая и копченая", 
+        "subset_of #рыба, морепродукты и икра", 
+        "subset_of #рыбная гастрономия"
     ], 
     "основа": [
-        2
+        2, 
+        "subset_of #замороженные продукты", 
+        "subset_of #полуфабрикаты замороженные", 
+        "subset_of #тесто"
     ], 
     "острый": [
-        1
+        1, 
+        "subset_of #другие овощные консервы", 
+        "subset_of #консервация", 
+        "subset_of #овощные консервы"
     ], 
     "осьминоги": [
-        1
+        1, 
+        "subset_of #морепродукты", 
+        "subset_of #рыба, морепродукты и икра"
     ], 
     "отбивная": [
-        1
+        1, 
+        "subset_of #замороженные продукты", 
+        "subset_of #котлеты, нагетсы, галеты", 
+        "subset_of #полуфабрикаты замороженные"
     ], 
     "палочки": [
         5
@@ -17180,13 +18650,19 @@
         "subset_of #рыба, морепродукты и икра"
     ], 
     "пангасиус": [
-        1
+        1, 
+        "subset_of #рыба охлажденная и замороженная", 
+        "subset_of #рыба, морепродукты и икра"
     ], 
     "панировочная": [
-        1
+        1, 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #специи, приправы"
     ], 
     "панировочные": [
-        2
+        2, 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #специи, приправы"
     ], 
     "паста": [
         6, 
@@ -17206,10 +18682,15 @@
         "subset_of #мармелад, суфле, зефир, пастила"
     ], 
     "патиссоны": [
-        1
+        1, 
+        "subset_of #другие овощные консервы", 
+        "subset_of #консервация", 
+        "subset_of #овощные консервы"
     ], 
     "пахлава": [
-        3
+        3, 
+        "subset_of #кондитерские изделия", 
+        "subset_of #мармелад, суфле, зефир, пастила"
     ], 
     "паштет": [
         46, 
@@ -17352,10 +18833,14 @@
         "subset_of паштет"
     ], 
     "паэлья": [
-        1
+        1, 
+        "subset_of #готовые блюда замороженные", 
+        "subset_of #замороженные продукты"
     ], 
     "пекан": [
-        1
+        1, 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #орехи, сухофрукты"
     ], 
     "пельмени": [
         31, 
@@ -17398,13 +18883,23 @@
         "subset_of пельмени"
     ], 
     "пельмешки": [
-        2
+        2, 
+        "subset_of #замороженные продукты", 
+        "subset_of #пельмени, вареники, хинкали", 
+        "subset_of #полуфабрикаты замороженные"
     ], 
     "пеперони": [
-        1
+        1, 
+        "equals перец-пеперони", 
+        "subset_of #другие овощные консервы", 
+        "subset_of #консервация", 
+        "subset_of #овощные консервы", 
+        "subset_of перец"
     ], 
     "перепел": [
-        1
+        1, 
+        "subset_of #мясо и птица", 
+        "subset_of #птица замороженная"
     ], 
     "перец": [
         12, 
@@ -17413,10 +18908,17 @@
         "almost[(0.42, 5)]~ #овощи", 
         "almost[(0.42, 5)]~ #овощи, фрукты, грибы, ягоды", 
         "almost[(0.33, 4)]~ #овощные консервы", 
-        "contains #перец"
+        "contains #перец", 
+        "contains пеперони", 
+        "contains перец-пеперони"
     ], 
     "перец-пеперони": [
-        1
+        1, 
+        "equals пеперони", 
+        "subset_of #другие овощные консервы", 
+        "subset_of #консервация", 
+        "subset_of #овощные консервы", 
+        "subset_of перец"
     ], 
     "персики": [
         3, 
@@ -17431,10 +18933,18 @@
         "subset_of персики"
     ], 
     "песок": [
-        2
+        2, 
+        "equals сахар-песок", 
+        "subset_of #бакалея", 
+        "subset_of #сахар", 
+        "subset_of сахар"
     ], 
     "петрушка": [
-        1
+        1, 
+        "subset_of #зелень", 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #специи, приправы"
     ], 
     "печень": [
         12, 
@@ -17568,10 +19078,15 @@
         "subset_of печенье"
     ], 
     "пикша": [
-        2
+        2, 
+        "subset_of #рыба охлажденная и замороженная", 
+        "subset_of #рыба, морепродукты и икра"
     ], 
     "пинджур": [
-        1
+        1, 
+        "subset_of #икра овощная", 
+        "subset_of #консервация", 
+        "subset_of #овощные консервы"
     ], 
     "пирог": [
         5, 
@@ -17579,7 +19094,10 @@
         "almost[(0.8, 4)]~ #торты и пирожные свежие"
     ], 
     "пирожки": [
-        1
+        1, 
+        "subset_of #блинчики, мучные изделия", 
+        "subset_of #замороженные продукты", 
+        "subset_of #полуфабрикаты замороженные"
     ], 
     "пирожное": [
         31, 
@@ -17597,7 +19115,9 @@
         "subset_of #торты и пирожные свежие"
     ], 
     "питахайя": [
-        1
+        1, 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #фрукты, ягоды"
     ], 
     "пицца": [
         17, 
@@ -17624,49 +19144,86 @@
         "subset_of пицца"
     ], 
     "плавленый": [
-        3
+        3, 
+        "subset_of #молочные продукты, сыры, яйцо", 
+        "subset_of #плавленные, копченые, колбасные сыры", 
+        "subset_of #сыры"
     ], 
     "плитка": [
-        3
+        3, 
+        "subset_of #кондитерские изделия", 
+        "subset_of #шоколад"
     ], 
     "плов": [
-        1
+        1, 
+        "subset_of #готовые блюда замороженные", 
+        "subset_of #замороженные продукты"
     ], 
     "пломбир": [
-        1
+        1, 
+        "subset_of #молочные продукты, сыры, яйцо", 
+        "subset_of #мороженое"
     ], 
     "плюшка": [
-        1
+        1, 
+        "subset_of #выпечка, изделия сдобные", 
+        "subset_of #хлебобулочные изделия"
     ], 
     "по": [
-        1
+        1, 
+        "equals цыпленок-по", 
+        "subset_of #готовые блюда замороженные", 
+        "subset_of #замороженные продукты", 
+        "subset_of цыпленок"
     ], 
     "повидло": [
-        2
+        2, 
+        "subset_of #консервация", 
+        "subset_of #фруктово-ягодная консервация"
     ], 
     "поджарка": [
-        1
+        1, 
+        "subset_of #мясо и птица", 
+        "subset_of #мясо охлажденное"
     ], 
     "подсластитель": [
-        2
+        2, 
+        "subset_of #бакалея", 
+        "subset_of #сахар"
     ], 
     "помело": [
-        1
+        1, 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #фрукты, ягоды"
     ], 
     "помидоры": [
-        2
+        2, 
+        "subset_of #консервация", 
+        "subset_of #овощные консервы", 
+        "subset_of #томатная паста, томаты консервированные"
     ], 
     "португальская": [
-        1
+        1, 
+        "subset_of #замороженные продукты", 
+        "subset_of #овощи, ягоды, грибы замороженные"
     ], 
     "посыпка": [
-        1
+        1, 
+        "subset_of #ингредиенты для выпечки", 
+        "subset_of #растительные масла, соусы и приправы"
     ], 
     "похлебка": [
-        1
+        1, 
+        "subset_of #готовые блюда замороженные", 
+        "subset_of #замороженные продукты"
     ], 
     "прессов": [
-        1
+        1, 
+        "equals сахар-прессов", 
+        "subset_of #бакалея", 
+        "subset_of #сахар", 
+        "subset_of сахар", 
+        "subset_of сахар + трост"
     ], 
     "приправа": [
         108, 
@@ -17896,7 +19453,9 @@
         "subset_of приправа"
     ], 
     "программа": [
-        2
+        2, 
+        "subset_of #бакалея", 
+        "subset_of #продукты для похудения"
     ], 
     "продукт": [
         85, 
@@ -18238,7 +19797,9 @@
         "subset_of продукт"
     ], 
     "промонабор": [
-        1
+        1, 
+        "subset_of #чай зеленый", 
+        "subset_of #чай, кофе, какао"
     ], 
     "пудинг": [
         7, 
@@ -18247,18 +19808,26 @@
         "subset_of #молочные продукты, сыры, яйцо"
     ], 
     "пудра": [
-        1
+        1, 
+        "subset_of #бакалея", 
+        "subset_of #сахар"
     ], 
     "путассу": [
-        2
+        2, 
+        "subset_of #рыба вяленая, сушеная, снэки рыбные", 
+        "subset_of #рыба, морепродукты и икра", 
+        "subset_of #рыбная гастрономия"
     ], 
     "пюре": [
         21, 
         "almost[(0.95, 20)]~ #бакалея", 
         "almost[(0.9, 19)]~ #супы и блюда быстрого приготовления", 
+        "contains быстросуп", 
+        "contains быстросуп-пюре", 
         "contains пюре + картоф", 
         "contains пюре + картоф + т/ст", 
-        "contains пюре + т/ст"
+        "contains пюре + т/ст", 
+        "contains суп-пюре"
     ], 
     "пюре + картоф": [
         17, 
@@ -18285,7 +19854,9 @@
         "subset_of пюре + картоф"
     ], 
     "рагу": [
-        1
+        1, 
+        "subset_of #мясо и птица", 
+        "subset_of #мясо охлажденное"
     ], 
     "разрыхлитель": [
         2, 
@@ -18300,13 +19871,21 @@
         "subset_of #растительные масла, соусы и приправы"
     ], 
     "раковые": [
-        1
+        1, 
+        "subset_of #пресервы", 
+        "subset_of #рыба, морепродукты и икра", 
+        "subset_of #рыбная гастрономия"
     ], 
     "рассол": [
-        2
+        2, 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #хрен, горчица, маринад"
     ], 
     "рассольный": [
-        1
+        1, 
+        "subset_of #молочные продукты, сыры, яйцо", 
+        "subset_of #сыры", 
+        "subset_of #творожистые и рассольные сыры"
     ], 
     "рататуй": [
         3
@@ -18330,13 +19909,23 @@
         "subset_of сахар"
     ], 
     "рахат": [
-        2
+        2, 
+        "equals рахат-лукум", 
+        "subset_of #кондитерские изделия", 
+        "subset_of #мармелад, суфле, зефир, пастила", 
+        "subset_of лукум"
     ], 
     "рахат-лукум": [
-        2
+        2, 
+        "equals рахат", 
+        "subset_of #кондитерские изделия", 
+        "subset_of #мармелад, суфле, зефир, пастила", 
+        "subset_of лукум"
     ], 
     "ребрышки": [
-        2
+        2, 
+        "subset_of #мясо и птица", 
+        "subset_of #мясо охлажденное"
     ], 
     "редис": [
         4, 
@@ -18345,46 +19934,79 @@
         "subset_of #овощи, фрукты, грибы, ягоды"
     ], 
     "редька": [
-        1
+        1, 
+        "subset_of #корнеплоды", 
+        "subset_of #овощи", 
+        "subset_of #овощи, фрукты, грибы, ягоды"
     ], 
     "ризотто": [
-        1
+        1, 
+        "subset_of #бакалея", 
+        "subset_of #крупы", 
+        "subset_of #рис"
     ], 
     "рис": [
-        2
+        2, 
+        "similar[0.86]~ #рис", 
+        "similar[0.86]~ ирис", 
+        "subset_of #бакалея", 
+        "subset_of #супы и блюда быстрого приготовления"
     ], 
     "рисовая": [
-        1
+        1, 
+        "subset_of #бакалея", 
+        "subset_of #супы и блюда быстрого приготовления"
     ], 
     "розмарин": [
-        1
+        1, 
+        "subset_of #зелень", 
+        "subset_of #овощи, фрукты, грибы, ягоды"
     ], 
     "ролл": [
-        1
+        1, 
+        "subset_of #хлеб, батон, лепешки, лаваш", 
+        "subset_of #хлебобулочные изделия"
     ], 
     "ромовая": [
-        1
+        1, 
+        "subset_of #выпечка, изделия сдобные", 
+        "subset_of #хлебобулочные изделия"
     ], 
     "рукола": [
-        1
+        1, 
+        "subset_of #зелень", 
+        "subset_of #овощи, фрукты, грибы, ягоды"
     ], 
     "рулет": [
-        4
+        4, 
+        "contains торт-рулет"
     ], 
     "рулька": [
-        2
+        2, 
+        "subset_of #мясо и птица", 
+        "subset_of #мясо охлажденное"
     ], 
     "рыбка": [
-        1
+        1, 
+        "subset_of #рыба вяленая, сушеная, снэки рыбные", 
+        "subset_of #рыба, морепродукты и икра", 
+        "subset_of #рыбная гастрономия"
     ], 
     "рыбные": [
-        3
+        3, 
+        "subset_of #рыба охлажденная и замороженная", 
+        "subset_of #рыба, морепродукты и икра"
     ], 
     "ряпушка": [
-        1
+        1, 
+        "subset_of #рыба соленая и копченая", 
+        "subset_of #рыба, морепродукты и икра", 
+        "subset_of #рыбная гастрономия"
     ], 
     "с/к": [
-        1
+        1, 
+        "subset_of #колбасы копченые", 
+        "subset_of #мясная гастрономия"
     ], 
     "сайра": [
         6, 
@@ -18557,13 +20179,20 @@
         "subset_of салат + капусты"
     ], 
     "сальтисон": [
-        1
+        1, 
+        "subset_of #мясная гастрономия", 
+        "subset_of #паштеты, ливер"
     ], 
     "салями": [
-        3
+        3, 
+        "subset_of #колбасы копченые", 
+        "subset_of #мясная гастрономия"
     ], 
     "самса": [
-        1
+        1, 
+        "subset_of #замороженные продукты", 
+        "subset_of #котлеты, нагетсы, галеты", 
+        "subset_of #полуфабрикаты замороженные"
     ], 
     "сардельки": [
         16, 
@@ -18592,18 +20221,28 @@
         "subset_of сардельки"
     ], 
     "сардина": [
-        2
+        2, 
+        "similar[0.86]~ сардины", 
+        "subset_of #консервация", 
+        "subset_of #рыбные консервы"
     ], 
     "сардинелла": [
-        1
+        1, 
+        "subset_of #консервация", 
+        "subset_of #рыбные консервы"
     ], 
     "сардины": [
-        2
+        2, 
+        "similar[0.86]~ сардина", 
+        "subset_of #консервация", 
+        "subset_of #рыбные консервы"
     ], 
     "сахар": [
         34, 
         "almost[(0.94, 32)]~ #бакалея", 
         "almost[(0.94, 32)]~ #сахар", 
+        "contains песок", 
+        "contains прессов", 
         "contains рафинад", 
         "contains рафинад + сахар", 
         "contains сахар + коричневый", 
@@ -18614,6 +20253,8 @@
         "contains сахар + рафинад", 
         "contains сахар + трост", 
         "contains сахар + тростниковый", 
+        "contains сахар-песок", 
+        "contains сахар-прессов", 
         "contains сахар-рафинад"
     ], 
     "сахар + коричневый": [
@@ -18661,6 +20302,8 @@
     ], 
     "сахар + трост": [
         4, 
+        "contains прессов", 
+        "contains сахар-прессов", 
         "subset_of #бакалея", 
         "subset_of #сахар", 
         "subset_of сахар"
@@ -18674,10 +20317,19 @@
         "subset_of сахар"
     ], 
     "сахар-песок": [
-        2
+        2, 
+        "equals песок", 
+        "subset_of #бакалея", 
+        "subset_of #сахар", 
+        "subset_of сахар"
     ], 
     "сахар-прессов": [
-        1
+        1, 
+        "equals прессов", 
+        "subset_of #бакалея", 
+        "subset_of #сахар", 
+        "subset_of сахар", 
+        "subset_of сахар + трост"
     ], 
     "сахар-рафинад": [
         2, 
@@ -18689,7 +20341,9 @@
         "subset_of сахар"
     ], 
     "сахарная": [
-        2
+        2, 
+        "subset_of #бакалея", 
+        "subset_of #сахар"
     ], 
     "свекла": [
         2
@@ -18768,10 +20422,14 @@
         "subset_of свинина"
     ], 
     "сгущенка": [
-        1
+        1, 
+        "subset_of #консервация", 
+        "subset_of #молочные консервы"
     ], 
     "сдоба": [
-        3
+        3, 
+        "subset_of #выпечка, изделия сдобные", 
+        "subset_of #хлебобулочные изделия"
     ], 
     "сельдь": [
         43, 
@@ -21245,7 +22903,10 @@
         "subset_of семга + филе-кусок"
     ], 
     "семга/форель": [
-        1
+        1, 
+        "subset_of #рыба соленая и копченая", 
+        "subset_of #рыба, морепродукты и икра", 
+        "subset_of #рыбная гастрономия"
     ], 
     "семена": [
         2
@@ -21397,7 +23058,9 @@
         "subset_of сливки"
     ], 
     "слойка": [
-        2
+        2, 
+        "subset_of #выпечка, изделия сдобные", 
+        "subset_of #хлебобулочные изделия"
     ], 
     "смесь": [
         46, 
@@ -21502,16 +23165,25 @@
         "subset_of #сметана"
     ], 
     "смородина": [
-        1
+        1, 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #фрукты, ягоды"
     ], 
     "снэк": [
-        1
+        1, 
+        "subset_of #десерты, каши молочные", 
+        "subset_of #молочные продукты", 
+        "subset_of #молочные продукты, сыры, яйцо"
     ], 
     "сода": [
-        1
+        1, 
+        "subset_of #ингредиенты для выпечки", 
+        "subset_of #растительные масла, соусы и приправы"
     ], 
     "соевый": [
-        2
+        2, 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #соусы"
     ], 
     "сок": [
         48, 
@@ -21656,16 +23328,25 @@
         "subset_of соль"
     ], 
     "солянка": [
-        1
+        1, 
+        "subset_of #готовые блюда замороженные", 
+        "subset_of #замороженные продукты"
     ], 
     "сом": [
-        1
+        1, 
+        "subset_of #консервация", 
+        "subset_of #рыбные консервы"
     ], 
     "сорбит": [
-        1
+        1, 
+        "subset_of #бакалея", 
+        "subset_of #сахар"
     ], 
     "сосиска": [
-        1
+        1, 
+        "similar[0.86]~ сосиски", 
+        "subset_of #мясная гастрономия", 
+        "subset_of #сосиски, сардельки, колбаски"
     ], 
     "сосиски": [
         44, 
@@ -21680,6 +23361,7 @@
         "contains сосиски + сливочные", 
         "contains сосиски + сорт", 
         "contains сосиски + сыром", 
+        "similar[0.86]~ сосиска", 
         "subset_of #мясная гастрономия", 
         "subset_of #сосиски, сардельки, колбаски"
     ], 
@@ -21778,7 +23460,9 @@
         "subset_of сосиски"
     ], 
     "сотэ": [
-        1
+        1, 
+        "subset_of #готовые блюда замороженные", 
+        "subset_of #замороженные продукты"
     ], 
     "соус": [
         88, 
@@ -21786,6 +23470,10 @@
         "almost[(0.85, 75)]~ #соусы", 
         "almost[(0.07, 6)]~ #уксус", 
         "almost[(0.06, 5)]~ крем", 
+        "contains вок", 
+        "contains вок-соус", 
+        "contains дип", 
+        "contains дип-соус", 
         "contains крем + бальзамический", 
         "contains крем + соус", 
         "contains крем + соус + бальзамический", 
@@ -21805,6 +23493,8 @@
         "contains соус + ст", 
         "contains соус + томатный", 
         "contains соус + чесночный", 
+        "contains соус-глазурь", 
+        "contains соус-маринад", 
         "subset_of #растительные масла, соусы и приправы"
     ], 
     "соус + аджика": [
@@ -21912,16 +23602,31 @@
         "subset_of соус"
     ], 
     "соус-глазурь": [
-        1
+        1, 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #уксус", 
+        "subset_of глазурь", 
+        "subset_of соус"
     ], 
     "соус-маринад": [
-        1
+        1, 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #соусы", 
+        "subset_of маринад", 
+        "subset_of соус"
     ], 
     "сочни": [
-        1
+        1, 
+        "similar[0.91]~ сочник", 
+        "subset_of #блинчики, мучные изделия", 
+        "subset_of #замороженные продукты", 
+        "subset_of #полуфабрикаты замороженные"
     ], 
     "сочник": [
-        2
+        2, 
+        "similar[0.91]~ сочни", 
+        "subset_of #выпечка, изделия сдобные", 
+        "subset_of #хлебобулочные изделия"
     ], 
     "спаржа": [
         2
@@ -21933,13 +23638,23 @@
         "subset_of #молочные продукты, сыры, яйцо"
     ], 
     "ставрида": [
-        1
+        1, 
+        "similar[0.94]~ ставридка", 
+        "subset_of #рыба вяленая, сушеная, снэки рыбные", 
+        "subset_of #рыба, морепродукты и икра", 
+        "subset_of #рыбная гастрономия"
     ], 
     "ставридка": [
-        1
+        1, 
+        "similar[0.94]~ ставрида", 
+        "subset_of #рыба вяленая, сушеная, снэки рыбные", 
+        "subset_of #рыба, морепродукты и икра", 
+        "subset_of #рыбная гастрономия"
     ], 
     "стебель": [
-        1
+        1, 
+        "subset_of #зелень", 
+        "subset_of #овощи, фрукты, грибы, ягоды"
     ], 
     "стейк": [
         7, 
@@ -21974,13 +23689,20 @@
         "subset_of #мясо охлажденное"
     ], 
     "стерлядь": [
-        1
+        1, 
+        "subset_of #рыба охлажденная и замороженная", 
+        "subset_of #рыба, морепродукты и икра"
     ], 
     "стриплоин": [
-        1
+        1, 
+        "subset_of #мясо и птица", 
+        "subset_of #мясо охлажденное"
     ], 
     "стрипсы": [
-        2
+        2, 
+        "subset_of #замороженные продукты", 
+        "subset_of #котлеты, нагетсы, галеты", 
+        "subset_of #полуфабрикаты замороженные"
     ], 
     "студень": [
         4, 
@@ -21988,15 +23710,19 @@
         "subset_of #паштеты, ливер"
     ], 
     "судак": [
-        2
+        2, 
+        "subset_of #рыба охлажденная и замороженная", 
+        "subset_of #рыба, морепродукты и икра"
     ], 
     "суп": [
         15, 
         "almost[(0.8, 12)]~ #растительные масла, соусы и приправы", 
         "almost[(0.27, 4)]~ #соусы", 
         "almost[(0.53, 8)]~ #специи, приправы", 
+        "contains крем-суп", 
         "contains суп + вермишелью", 
-        "contains суп + с вермишелью"
+        "contains суп + с вермишелью", 
+        "contains суп-пюре"
     ], 
     "суп + вермишелью": [
         4, 
@@ -22013,16 +23739,24 @@
         "subset_of суп"
     ], 
     "суп-пюре": [
-        1
+        1, 
+        "subset_of #бакалея", 
+        "subset_of #продукты для похудения", 
+        "subset_of пюре", 
+        "subset_of суп"
     ], 
     "суповой": [
-        1
+        1, 
+        "subset_of #мясо и птица", 
+        "subset_of #мясо охлажденное"
     ], 
     "сурими": [
-        2
+        2, 
+        "subset_of #рыба, морепродукты и икра"
     ], 
     "суфле": [
-        3
+        3, 
+        "contains сырок-суфле"
     ], 
     "сухари": [
         7, 
@@ -22033,6 +23767,7 @@
     "сухарики": [
         6, 
         "contains сухарики + ржаные", 
+        "similar[0.88]~ cухарики", 
         "similar[0.86]~ сухари", 
         "subset_of #сухарики, баранки, сушки", 
         "subset_of #хлебобулочные изделия"
@@ -22044,7 +23779,10 @@
         "subset_of сухарики"
     ], 
     "суши": [
-        1
+        1, 
+        "similar[0.89]~ сушки", 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #соусы"
     ], 
     "сушка": [
         3, 
@@ -22064,12 +23802,15 @@
         "contains мини + сушки", 
         "contains мини-сушки", 
         "contains сушки + мини", 
+        "contains сушки-мини", 
+        "similar[0.89]~ суши", 
         "subset_of #сухарики, баранки, сушки", 
         "subset_of #хлебобулочные изделия"
     ], 
     "сушки + мини": [
         6, 
         "contains мини-сушки", 
+        "contains сушки-мини", 
         "equals мини + сушки", 
         "subset_of #сухарики, баранки, сушки", 
         "subset_of #хлебобулочные изделия", 
@@ -22077,7 +23818,13 @@
         "subset_of сушки"
     ], 
     "сушки-мини": [
-        2
+        2, 
+        "subset_of #сухарики, баранки, сушки", 
+        "subset_of #хлебобулочные изделия", 
+        "subset_of мини", 
+        "subset_of мини + сушки", 
+        "subset_of сушки", 
+        "subset_of сушки + мини"
     ], 
     "сыр": [
         153, 
@@ -22549,16 +24296,26 @@
         "subset_of сыр"
     ], 
     "сырки": [
-        2
+        2, 
+        "subset_of #молочные продукты", 
+        "subset_of #молочные продукты, сыры, яйцо", 
+        "subset_of #творожные изделия"
     ], 
     "сырная": [
-        2
+        2, 
+        "subset_of #молочные продукты, сыры, яйцо", 
+        "subset_of #сыры", 
+        "subset_of #творожистые и рассольные сыры"
     ], 
     "сырники": [
-        1
+        1, 
+        "subset_of #готовые блюда замороженные", 
+        "subset_of #замороженные продукты"
     ], 
     "сырные": [
-        1
+        1, 
+        "subset_of #готовые блюда замороженные", 
+        "subset_of #замороженные продукты"
     ], 
     "сырный": [
         10, 
@@ -22580,6 +24337,7 @@
         "contains сырок + глазир", 
         "contains сырок + глазир + ваниль", 
         "contains сырок + глазированный", 
+        "contains сырок-суфле", 
         "subset_of #молочные продукты", 
         "subset_of #молочные продукты, сыры, яйцо", 
         "subset_of #творожные изделия"
@@ -22617,7 +24375,12 @@
         "subset_of сырок"
     ], 
     "сырок-суфле": [
-        1
+        1, 
+        "subset_of #молочные продукты", 
+        "subset_of #молочные продукты, сыры, яйцо", 
+        "subset_of #творожные изделия", 
+        "subset_of суфле", 
+        "subset_of сырок"
     ], 
     "творог": [
         30, 
@@ -22650,13 +24413,21 @@
         "subset_of творог"
     ], 
     "творож": [
-        2
+        2, 
+        "subset_of #йогурты и творожки", 
+        "subset_of #молочные продукты", 
+        "subset_of #молочные продукты, сыры, яйцо"
     ], 
     "творожный": [
-        2
+        2, 
+        "subset_of #десерты, каши молочные", 
+        "subset_of #молочные продукты", 
+        "subset_of #молочные продукты, сыры, яйцо"
     ], 
     "телятина": [
-        3
+        3, 
+        "subset_of #мясо и птица", 
+        "subset_of #мясо охлажденное"
     ], 
     "тесто": [
         8, 
@@ -22681,16 +24452,26 @@
         "subset_of тесто"
     ], 
     "тибон": [
-        1
+        1, 
+        "subset_of #мясо и птица", 
+        "subset_of #мясо охлажденное"
     ], 
     "тилапия": [
-        2
+        2, 
+        "subset_of #рыба охлажденная и замороженная", 
+        "subset_of #рыба, морепродукты и икра"
     ], 
     "тимьян": [
-        1
+        1, 
+        "subset_of #зелень", 
+        "subset_of #овощи, фрукты, грибы, ягоды"
     ], 
     "томат": [
-        1
+        1, 
+        "similar[0.91]~ томаты", 
+        "subset_of #овощи", 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #томат"
     ], 
     "томатная": [
         2, 
@@ -22705,7 +24486,10 @@
         "subset_of #соусы"
     ], 
     "томатный": [
-        1
+        1, 
+        "similar[0.86]~ томаты", 
+        "subset_of #бакалея", 
+        "subset_of #супы и блюда быстрого приготовления"
     ], 
     "томаты": [
         22, 
@@ -22716,7 +24500,9 @@
         "almost[(0.41, 9)]~ #томат", 
         "almost[(0.5, 11)]~ #томатная паста, томаты консервированные", 
         "contains томаты + маринованные", 
-        "contains томаты + черри"
+        "contains томаты + черри", 
+        "similar[0.91]~ томат", 
+        "similar[0.86]~ томатный"
     ], 
     "томаты + маринованные": [
         3, 
@@ -22738,7 +24524,8 @@
         "contains торт + киевский", 
         "contains торт + молоко", 
         "contains торт + птичье", 
-        "contains торт + птичье + молоко"
+        "contains торт + птичье + молоко", 
+        "contains торт-рулет"
     ], 
     "торт + киевский": [
         3, 
@@ -22771,19 +24558,32 @@
         "subset_of торт"
     ], 
     "торт-рулет": [
-        1
+        1, 
+        "subset_of #молочные продукты, сыры, яйцо", 
+        "subset_of #мороженое", 
+        "subset_of рулет", 
+        "subset_of торт"
     ], 
     "треска": [
-        3
+        3, 
+        "subset_of #рыба охлажденная и замороженная", 
+        "subset_of #рыба, морепродукты и икра"
     ], 
     "трубач": [
-        1
+        1, 
+        "subset_of #консервация", 
+        "subset_of #рыбные консервы"
     ], 
     "трубочка": [
-        2
+        2, 
+        "subset_of #десерты, каши молочные", 
+        "subset_of #молочные продукты", 
+        "subset_of #молочные продукты, сыры, яйцо"
     ], 
     "трюфели": [
-        2
+        2, 
+        "subset_of #кондитерские изделия", 
+        "subset_of #конфеты"
     ], 
     "тунец": [
         13, 
@@ -22806,7 +24606,11 @@
         2
     ], 
     "укроп": [
-        1
+        1, 
+        "subset_of #зелень", 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #специи, приправы"
     ], 
     "уксус": [
         15, 
@@ -23089,22 +24893,36 @@
         "subset_of фасоль"
     ], 
     "фенхель": [
-        1
+        1, 
+        "subset_of #овощи", 
+        "subset_of #овощи другие", 
+        "subset_of #овощи, фрукты, грибы, ягоды"
     ], 
     "феттучини": [
-        1
+        1, 
+        "subset_of #готовые блюда замороженные", 
+        "subset_of #замороженные продукты"
     ], 
     "фигурки": [
-        1
+        1, 
+        "subset_of #ингредиенты для выпечки", 
+        "subset_of #растительные масла, соусы и приправы"
     ], 
     "физалис": [
-        1
+        1, 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #фрукты, ягоды"
     ], 
     "филе": [
-        9
+        9, 
+        "contains мега", 
+        "contains мега-филе", 
+        "contains мини-филе"
     ], 
     "финики": [
-        1
+        1, 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #орехи, сухофрукты"
     ], 
     "фисташки": [
         2, 
@@ -23139,10 +24957,18 @@
         "subset_of фисташки"
     ], 
     "фито": [
-        1
+        1, 
+        "equals фито-мед", 
+        "subset_of #консервация", 
+        "subset_of #мед", 
+        "subset_of мед"
     ], 
     "фито-мед": [
-        1
+        1, 
+        "equals фито", 
+        "subset_of #консервация", 
+        "subset_of #мед", 
+        "subset_of мед"
     ], 
     "форель": [
         18, 
@@ -23373,13 +25199,18 @@
         "subset_of форель + филе-кусок"
     ], 
     "фрикадельки": [
-        3
+        3, 
+        "subset_of #замороженные продукты"
     ], 
     "фруктовая": [
-        1
+        1, 
+        "subset_of #замороженные продукты", 
+        "subset_of #овощи, ягоды, грибы замороженные"
     ], 
     "фруктовый": [
-        3
+        3, 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #соусы"
     ], 
     "фруктоза": [
         3, 
@@ -23395,10 +25226,14 @@
         "subset_of #мармелад, суфле, зефир, пастила"
     ], 
     "харчо": [
-        1
+        1, 
+        "subset_of #готовые блюда консервированные", 
+        "subset_of #консервация"
     ], 
     "хек": [
-        1
+        1, 
+        "subset_of #рыба охлажденная и замороженная", 
+        "subset_of #рыба, морепродукты и икра"
     ], 
     "хинкали": [
         4, 
@@ -23486,7 +25321,9 @@
         "subset_of #хлебобулочные изделия"
     ], 
     "хлебушки": [
-        2
+        2, 
+        "subset_of #хлеб, батон, лепешки, лаваш", 
+        "subset_of #хлебобулочные изделия"
     ], 
     "хлебцы": [
         20, 
@@ -23535,7 +25372,9 @@
         "subset_of хлопья + овсяные"
     ], 
     "холодец": [
-        2
+        2, 
+        "subset_of #мясная гастрономия", 
+        "subset_of #паштеты, ливер"
     ], 
     "хрен": [
         8, 
@@ -23543,7 +25382,9 @@
         "subset_of #хрен, горчица, маринад"
     ], 
     "хурма": [
-        2
+        2, 
+        "subset_of #овощи, фрукты, грибы, ягоды", 
+        "subset_of #фрукты, ягоды"
     ], 
     "цветная": [
         4, 
@@ -23556,7 +25397,9 @@
         "subset_of #замороженные продукты"
     ], 
     "цветочный": [
-        1
+        1, 
+        "subset_of #консервация", 
+        "subset_of #мед"
     ], 
     "цикорий": [
         10, 
@@ -23571,12 +25414,17 @@
         "subset_of цикорий"
     ], 
     "циновка": [
-        1
+        1, 
+        "subset_of #растительные масла, соусы и приправы", 
+        "subset_of #соусы"
     ], 
     "цыпленок": [
         7, 
         "almost[(0.86, 6)]~ #мясо и птица", 
-        "contains цыпленок + охл"
+        "contains по", 
+        "contains цыпленок + охл", 
+        "contains цыпленок-по", 
+        "similar[0.88]~ цыплёнок"
     ], 
     "цыпленок + охл": [
         3, 
@@ -23585,10 +25433,17 @@
         "subset_of цыпленок"
     ], 
     "цыпленок-по": [
-        1
+        1, 
+        "equals по", 
+        "subset_of #готовые блюда замороженные", 
+        "subset_of #замороженные продукты", 
+        "subset_of цыпленок"
     ], 
     "цыплёнок": [
-        1
+        1, 
+        "similar[0.88]~ цыпленок", 
+        "subset_of #мясо и птица", 
+        "subset_of #птица охлажденная"
     ], 
     "чай": [
         124, 
@@ -23837,19 +25692,35 @@
         "subset_of чай"
     ], 
     "чахохбили": [
-        1
+        1, 
+        "subset_of #готовые блюда замороженные", 
+        "subset_of #замороженные продукты"
     ], 
     "чебурек": [
-        2
+        2, 
+        "similar[0.93]~ чебуреки", 
+        "similar[0.88]~ чебуречки", 
+        "subset_of #готовые блюда замороженные", 
+        "subset_of #замороженные продукты"
     ], 
     "чебуреки": [
-        1
+        1, 
+        "similar[0.93]~ чебурек", 
+        "similar[0.94]~ чебуречки", 
+        "subset_of #готовые блюда замороженные", 
+        "subset_of #замороженные продукты"
     ], 
     "чебуречки": [
-        1
+        1, 
+        "similar[0.88]~ чебурек", 
+        "similar[0.94]~ чебуреки", 
+        "subset_of #готовые блюда замороженные", 
+        "subset_of #замороженные продукты"
     ], 
     "черная": [
-        1
+        1, 
+        "subset_of #консервация", 
+        "subset_of #фруктово-ягодная консервация"
     ], 
     "черника": [
         2
@@ -23867,17 +25738,24 @@
         "subset_of #крупы"
     ], 
     "чудо": [
-        1
+        1, 
+        "subset_of #икра овощная", 
+        "subset_of #консервация", 
+        "subset_of #овощные консервы"
     ], 
     "шампиньон": [
-        1
+        1, 
+        "similar[0.95]~ шампиньоны", 
+        "subset_of #готовые блюда замороженные", 
+        "subset_of #замороженные продукты"
     ], 
     "шампиньоны": [
         6, 
         "almost[(0.83, 5)]~ #грибные консервы", 
         "almost[(0.83, 5)]~ #консервация", 
         "contains шампиньоны + резаные", 
-        "contains шампиньоны + целые"
+        "contains шампиньоны + целые", 
+        "similar[0.95]~ шампиньон"
     ], 
     "шампиньоны + резаные": [
         3, 
@@ -23892,7 +25770,9 @@
         "subset_of шампиньоны"
     ], 
     "шарики": [
-        1
+        1, 
+        "subset_of #мясо и птица", 
+        "subset_of #птица охлажденная"
     ], 
     "шашлык": [
         5, 
@@ -23900,16 +25780,23 @@
         "subset_of #мясо и птица"
     ], 
     "шведские": [
-        1
+        1, 
+        "subset_of #хлеб, батон, лепешки, лаваш", 
+        "subset_of #хлебобулочные изделия"
     ], 
     "шеи": [
-        2
+        2, 
+        "subset_of #мясо и птица"
     ], 
     "шербет": [
-        2
+        2, 
+        "subset_of #молочные продукты, сыры, яйцо", 
+        "subset_of #мороженое"
     ], 
     "шея": [
-        1
+        1, 
+        "subset_of #мясо и птица", 
+        "subset_of #мясо охлажденное"
     ], 
     "шницель": [
         3
@@ -23953,6 +25840,7 @@
         "contains шоколад + форме + конфет", 
         "contains шоколад + фундуком", 
         "contains шоколад + цельным", 
+        "similar[0.88]~ шоколадка", 
         "subset_of #кондитерские изделия"
     ], 
     "шоколад + excellence": [
@@ -24297,10 +26185,15 @@
         "subset_of шоколад"
     ], 
     "шоколадка": [
-        1
+        1, 
+        "similar[0.88]~ шоколад", 
+        "subset_of #кондитерские изделия", 
+        "subset_of #шоколад"
     ], 
     "шоколадное": [
-        2
+        2, 
+        "subset_of #кондитерские изделия", 
+        "subset_of #шоколад"
     ], 
     "шоколадный": [
         5, 
@@ -24315,7 +26208,9 @@
         "subset_of шоколадный"
     ], 
     "шпикачки": [
-        3
+        3, 
+        "subset_of #мясная гастрономия", 
+        "subset_of #сосиски, сардельки, колбаски"
     ], 
     "шпинат": [
         3
@@ -24329,7 +26224,9 @@
         5
     ], 
     "щавель": [
-        1
+        1, 
+        "subset_of #зелень", 
+        "subset_of #овощи, фрукты, грибы, ягоды"
     ], 
     "щербет": [
         4, 
@@ -24337,13 +26234,19 @@
         "subset_of #мармелад, суфле, зефир, пастила"
     ], 
     "щука": [
-        1
+        1, 
+        "subset_of #консервация", 
+        "subset_of #рыбные консервы"
     ], 
     "эдам": [
-        1
+        1, 
+        "subset_of #молочные продукты, сыры, яйцо", 
+        "subset_of #сыры", 
+        "subset_of #твердые сыры"
     ], 
     "эскалоп": [
-        2
+        2, 
+        "subset_of #мясо и птица"
     ], 
     "яблоки": [
         13, 
@@ -24351,10 +26254,13 @@
         "subset_of #фрукты, ягоды"
     ], 
     "яблочный": [
-        1
+        1, 
+        "subset_of #выпечка, изделия сдобные", 
+        "subset_of #хлебобулочные изделия"
     ], 
     "ягнятина": [
-        2
+        2, 
+        "subset_of #мясо и птица"
     ], 
     "ягодное": [
         4, 
@@ -24381,7 +26287,8 @@
         "subset_of ягодный"
     ], 
     "язык": [
-        2
+        2, 
+        "subset_of #мясо и птица"
     ], 
     "яйцо": [
         18, 
@@ -24456,6 +26363,9 @@
         "subset_of яйцо + куриное"
     ], 
     "янтарная": [
-        1
+        1, 
+        "subset_of #рыба вяленая, сушеная, снэки рыбные", 
+        "subset_of #рыба, морепродукты и икра", 
+        "subset_of #рыбная гастрономия"
     ]
 }
