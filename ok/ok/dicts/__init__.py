@@ -3,6 +3,7 @@
 """
 Basic text processing utils
 """
+from collections import namedtuple
 import os
 import re
 from sys import argv
@@ -61,11 +62,16 @@ def remove_nbsp(s):
     return None if s is None else s.replace(u'\u00a0', u' ') if isinstance(s, unicode) else s.replace('\xc2\xa0', ' ')
 
 
+conf_type = namedtuple('OKConfig', 'toprint baseline_dir prodcsvname cat_csvname '
+                       'brands_in_csvname brands_out_csvname '
+                       'products_meta_in_csvname products_meta_out_csvname '
+                       'product_types_in_json product_types_out_json')
+
 def main_options(opts=argv):
     """
     @param list[str] opts: command line tokens starts with script name
     @return: config
-    @rtype: dict of (str,str)
+    @rtype: conf_type
     """
     opts = opts[:]
     baseline_dir = None
@@ -110,7 +116,7 @@ def main_options(opts=argv):
     prodcsvname = prodcsvname or os.path.abspath(os.path.join(baseline_dir, 'products_raw.csv'))
     # products_meta_in_csvname = products_meta_in_csvname or os.path.abspath(os.path.join(baseline_dir, 'products_meta.csv'))
     product_types_in_json = product_types_in_json or os.path.abspath(os.path.join(baseline_dir, 'product_types.json'))
-    return dict(
+    return conf_type(
         toprint=toprint,
         baseline_dir=baseline_dir,
         prodcsvname=prodcsvname,
@@ -122,3 +128,30 @@ def main_options(opts=argv):
         product_types_in_json=product_types_in_json,
         product_types_out_json=product_types_out_json,
     )
+
+__pymorph_analyzer = None
+"""@type: pymorphy2.MorphAnalyzer"""
+def get_word_normal_form(word, strict=False):
+    """
+    Return first (most relevant by pymorph) normal form of specified russian word.
+    @param unicode word: w
+    @param bool strict: if True - process nouns and adverbs only because participle and similar has verbs
+            as normal form which is useless for product parsing
+    @return:
+    """
+    global __pymorph_analyzer
+    import pymorphy2
+    if not __pymorph_analyzer:
+        __pymorph_analyzer = pymorphy2.MorphAnalyzer()
+
+    if not strict:
+        return __pymorph_analyzer.normal_forms(word)[0]
+
+    # Skip short words or multi-tokens (proposition forms?)
+    if len(word) <= 3 or u' ' in word: return word
+
+    # Strict - ignore all except noun and adverbs
+    p_variants = __pymorph_analyzer.parse(word)
+    """@type: list[pymorphy2.analyzer.Parse]"""
+    w_norm = next((p.normal_form for p in p_variants if p.tag.POS in ('NOUN', 'ADJF', 'ADJS')), word)
+    return w_norm if len(w_norm) > 3 else word
