@@ -337,7 +337,7 @@ class Brand(object):
 
     RE_MANUFACTURER_MAIN_GROUP = u'(?:\s|"|«|„)*(.+?)(?:"|»|“)*'
     RE_MANUFACTURER_PATTERN = u'^(?:Филиал\s+)?(?:С-?)?(?:АО|ЗАО|ООО|ОАО|ПАО|СП|Холдинговая\s+Компания|ХК)' + \
-                              u'\s*(?:(?:"|«|„)+(?:ТК|ТПК|Компания|Фирма|ПО|МПК)\s*)?' + \
+                              u'(?:\s+|\s*(?:(?:"|«|„)+)(?:ТК|ТПК|Компания|Фирма|ПО|МПК)\s*)?' + \
                               RE_MANUFACTURER_MAIN_GROUP + u'(?:\s*,\s*\S+)?\s*$'
     RE_MANUFACTURER_PATTERN_ENG = u'^(?:AO|ZAO|OOO|OAO|PAO)\s*(?:(?:"|«|„)+(?:TK|TPK|PO|MPK)\s*)?' + \
                                   RE_MANUFACTURER_MAIN_GROUP + u'(?:\s*,\s*\S+)?\s*$'
