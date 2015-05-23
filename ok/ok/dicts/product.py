@@ -34,6 +34,9 @@ class Product(dict):
     def sqn(self, sqn):
         self["sqn"] = sqn
 
+    def __hash__(self):
+        return self.pfqn.__hash__()
+
     @property
     def raw_item(self):
         """
