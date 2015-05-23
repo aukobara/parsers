@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from collections import OrderedDict
 
 import csv
 import re
@@ -58,7 +59,7 @@ class ProductFQNParser(object):
     __pfqn_re_pack = re.compile(RE_TEMPLATE_PFQN_PACK, re.IGNORECASE | re.UNICODE)
 
     def __init__(self):
-        self.products = dict()
+        self.products = OrderedDict()
         """ @type types: dict of (unicode, Product) """
         self.weights = dict()
         self.fats = dict()
@@ -168,7 +169,7 @@ class ProductFQNParser(object):
             tags.add(self.cats.get_cat_title_by_id(cat_id))
         return tags
 
-    def update_product_with_parser_knowledge(self, product):
+    def update_product_with_parser_knowledge(self, product, skip_analysis=True):
         """
         Take product dict with basic data fulfilled that can be obtained from external source without special semantic
         knowledge, like:
@@ -188,24 +189,58 @@ class ProductFQNParser(object):
         """
 
         # ######## TAGS #############
+        existing_product_tags = set(product.get('tags')) if product.get('tags') else None
         tags = self.recognize_product_cats(product)
         product["tags"] = product.get("tags", set())
         product["tags"].update(tags)
+        new_product_tags = product.get('tags')
+        if existing_product_tags and existing_product_tags != new_product_tags:
+            print u'Product[%s] have changed its tags. Diff: %s' % \
+                  (product.sqn, u', '.join(map(unicode, new_product_tags - existing_product_tags)))
 
         # ######### TYPES ############
+        existing_product_types = set(product.get('types')) if product.get('types') else None
         types_dict = self.get_product_types_dict()
         # TODO: do we need tags here?
         all_matched_types = types_dict.collect_sqn_type_tuples(product.sqn)
         suggested_relations = types_dict.find_type_tuples_relationship(all_matched_types, ignore_sqns=True)
+        major_rel_count = 0
         for p_type, relations in suggested_relations.iteritems():
             for rel in relations:
                 if rel.rel_type == TYPE_TUPLE_RELATION_IDENTICAL or rel.rel_type == TYPE_TUPLE_RELATION_EQUALS:
                     product['types'] = product.get('types', set())
                     product['types'].add(rel.to_type)
+                    major_rel_count += 1
 
+        if not skip_analysis and major_rel_count <= 1 and u' ' in product.sqn:
+            # Try to merge first word to second as MultiWord and check what happen. Sometimes before core type word some
+            # BS is added. Like propositions, adverbs, numbers, etc
+            # TODO: refactor
+
+            print 'No one major relation has been suggested for Product[%s]. Will try another variant.' % product.sqn,
+            if suggested_relations:
+                print ' Current non-major suggestions: %s' % u', '.join(unicode(r)
+                                                        for t, rels in suggested_relations.iteritems() for r in rels),
+            print
+
+            all_matched_types = types_dict.collect_sqn_type_tuples(product.sqn.replace(u' ', u'-', 1))
+            suggested_relations = types_dict.find_type_tuples_relationship(all_matched_types, ignore_sqns=True, max_similarity=0.7, force_deep_scan=True)
+            for p_type, relations in suggested_relations.iteritems():
+                for rel in relations:
+                    if rel.rel_type == TYPE_TUPLE_RELATION_IDENTICAL or rel.rel_type == TYPE_TUPLE_RELATION_EQUALS:
+                        product['types'] = product.get('types', set())
+                        product['types'].add(rel.to_type)
+
+            print 'After attempt new suggestions: %s' % u', '.join(unicode(r)
+                                                    for t, rels in suggested_relations.iteritems() for r in rels)
+
+        new_product_types = product.get('types')
+        if existing_product_types and existing_product_types != new_product_types:
+            print u'Product[%s] have changed its types. Diff: %s' % \
+                  (product.sqn, u', '.join(map(unicode, new_product_types - existing_product_types)))
         return product
 
-    def add_product(self, product, **kwargs):
+    def add_product(self, product, take_as_is=False, **kwargs):
         """
         Add product to types. Also extend product data with additional data inspired by parser knowledge.
         @param product:
@@ -213,7 +248,7 @@ class ProductFQNParser(object):
         """
         product_copy = Product(product)
         product_copy.update(kwargs)
-        self.update_product_with_parser_knowledge(product_copy)
+        self.update_product_with_parser_knowledge(product_copy, skip_analysis=take_as_is)
         self.products[product_copy.pfqn] = product_copy  # TODO: Check if types already contain specified PFQN
 
     def from_csv(self, prodcsvname):
@@ -340,9 +375,10 @@ class ProductFQNParser(object):
 
             guesses = self.guess_one_sqn(product)
             for guess in guesses:
-                print u"Brand [%s] may be in product type [sqn:%s, brand: %s, manufacturer: %s]" % \
+                print u"Brand [%s] may be in product name [sqn:%s, brand: %s, manufacturer: %s]" % \
                       (guess[0] + u'|' + u'|'.join(Brand.exist(guess[0]).get_synonyms()),
-                       product.sqn, product["brand"], product["product_manufacturer"])
+                       product.sqn, product.get("brand", Brand.UNKNOWN_BRAND_NAME),
+                       product.get("product_manufacturer", Brand.UNKNOWN_BRAND_NAME))
 
     def get_sqn_dict(self):
         """
@@ -372,6 +408,8 @@ def main_parse_products(prodcsvname, cat_csvname=None, brands_in_csvname=None, b
                         products_meta_in_csvname=None, products_meta_out_csvname=None, product_types_in_json=None, **kwargs):
     pfqnParser = ProductFQNParser()
 
+    print
+    print "================== Load dictionaries ======================================================================"
     if cat_csvname:
         pfqnParser.use_cats_from_csv(cat_csvname)
         print "Categories've been loaded from '%s': %d" % (cat_csvname, len(pfqnParser.cats))
@@ -393,6 +431,7 @@ def main_parse_products(prodcsvname, cat_csvname=None, brands_in_csvname=None, b
         print
         print "================== Parse products - marketing brands part - from '%s' =====================" % prodcsvname
         pfqnParser.from_csv(prodcsvname)
+        print "Parsed %d products" % len(pfqnParser.products)
         print
         print "============== Parse products - manufacturers brands part - from '%s' =================" % prodcsvname
         pfqnParser.process_manufacturers_as_brands()
@@ -407,16 +446,22 @@ def main_parse_products(prodcsvname, cat_csvname=None, brands_in_csvname=None, b
         # pfqnParser.guess_unknown_brands()
 
     else:
+        print
+        print "================== Load products - pre-processed meta data - from '%s' =====================" % products_meta_in_csvname
         for product in Product.from_meta_csv(products_meta_in_csvname):
-            pfqnParser.add_product(product)
+            pfqnParser.add_product(product, take_as_is=True)
         print "Products meta data 's been loaded from '%s': %d products total" % (products_meta_in_csvname, len(pfqnParser.products))
 
     # ########### SAVE RESULTS ####################
     if brands_out_csvname:
+        print
+        print "================== Store brands to '%s' ============================================" % brands_out_csvname
         Brand.to_csv(brands_out_csvname)
         print "Stored %d brands to csv[%s]" % (len(Brand.all()), brands_out_csvname)
 
     if products_meta_out_csvname:
+        print
+        print "================== Store products - processed meta data - to '%s' =====================" % products_meta_out_csvname
         Product.to_meta_csv(products_meta_out_csvname, pfqnParser.products.itervalues())
         print "Stored %d products to csv[%s]" % (len(pfqnParser.products), products_meta_out_csvname)
 
@@ -568,7 +613,7 @@ if __name__ == '__main__':
 
     __config = main_options(argv)
 
-    __pfqnParser = main_parse_products(**__config)
+    __pfqnParser = main_parse_products(**__config._asdict())
 
     # ############ PRINT RESULTS ##################
     toprint = __config["toprint"]
