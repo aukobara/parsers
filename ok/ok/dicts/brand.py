@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import csv
 import re
-from Levenshtein import distance
+import Levenshtein
 
 from transliterate import translit
 
@@ -42,6 +42,10 @@ class Brand(object):
     @staticmethod
     def all(skip_no_brand=False, skip_duplicate=True):
         """
+        Return all brands with some possible filters
+        @param bool skip_no_brand: do not return brands marked as no-brand
+        @param bool skip_duplicate: default logic is to not return brand records marked as TYPE_DUPLICATE.
+                    However, you can if you wish
         @rtype: list[Brand]
         """
         return sorted([b for b in Brand._brands.values()
@@ -242,7 +246,7 @@ class Brand(object):
                     if cache_key in Brand.__distance_cache:
                         dist = Brand.__distance_cache.get(cache_key)
                     else:
-                        dist = distance(b_token0, s_token)
+                        dist = Levenshtein.distance(b_token0, s_token)
                         Brand.__distance_cache[cache_key] = dist
                     if 0 < dist <= (2 if len(s_token) > 5 else 1):
                         # TODO: Ignore (log only) if distance is 2 and both changes are immediately one after another
