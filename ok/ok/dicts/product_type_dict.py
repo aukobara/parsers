@@ -10,7 +10,7 @@ import Levenshtein
 from ok.dicts import get_word_normal_form, main_options, remove_nbsp
 from ok.dicts.product import Product
 from ok.dicts.product_type import TYPE_TUPLE_PROPOSITION_LIST, \
-    TYPE_TUPLE_PROPOSITION_AND_WORD_LIST, ProductType, TYPE_TUPLE_RELATION_IDENTICAL, TYPE_TUPLE_RELATION_CONTAINS, \
+    TYPE_TUPLE_PROPOSITION_AND_WORD_LIST, ProductType, TYPE_TUPLE_RELATION_CONTAINS, \
     TYPE_TUPLE_RELATION_EQUALS, TYPE_TUPLE_RELATION_SUBSET_OF
 
 TYPE_TUPLE_MIN_CAPACITY = 4  # Number of SQNs covered by word combination
@@ -333,50 +333,7 @@ class ProductTypeDict(object):
 
         return relation
 
-    def update_type_tuples_relationship(self, type_tuples, cleanup_prev_relations=True, ignore_sqns=False):
-        """
-        Calculate all non-repeatable combinations of type tuples with capacity not less than MIN_TUPLE_CAPACITY
-        and check if one tuple is equals or contains (in terms of sqn set) another.
-        NOTE: If type_tuples is big (10+K types) or/and TYPE_TUPLE_MIN_CAPACITY is too low (3 or less) this operation
-        can work WAY TOO LONG. Be careful.
-        @param dict of (ProductType, list[unicode]) type_tuples: from collect_type_tuples()
-        @param bool ignore_sqns: if True do not match sqns, only match types. This is useful when SQNs are unknown or
-                do not represent whole type (e.g. when merge with smaller type subset)
-        """
-
-        if self.VERBOSE:
-            print u'Updating type tuples relationships[ignore_sqns=%s]' % ignore_sqns
-
-        if cleanup_prev_relations:
-            for t in type_tuples:
-                t.brake_relations()
-
-        i_count = 0
-        for t1, t2 in combinations(self.filter_meaningful_types(type_tuples.iteritems()), 2):
-            s1 = set(t1[1]) if not ignore_sqns else None
-            s2 = set(t2[1]) if not ignore_sqns else None
-            type1 = t1[0]
-            """@type: ProductType"""
-            type2 = t2[0]
-            """@type: ProductType"""
-
-            if cleanup_prev_relations and type1.get_relation(type2):
-                # Perf optimization - relation has been found already in previous combination of this phase. Skip
-                pass
-            else:
-                rel = self.find_relation(type1, s1, type2, s2, 0.85, almost_min_size=self.min_meaningful_type_capacity)
-                if rel and rel.rel_type != TYPE_TUPLE_RELATION_IDENTICAL:
-                    # Do not link types with themselves. Actually last conditions should never fail, just for spare case.
-                    # Make real relation if found one
-                    type1.copy_relation(rel)
-
-            i_count += 1
-            if self.VERBOSE and i_count % 10000 == 0: print u'.',
-            if self.VERBOSE and i_count % 1000000 == 0: print i_count
-        if self.VERBOSE: print
-        pass
-
-    def update_type_tuples_relationship2(self, type_tuples):
+    def update_type_tuples_relationship(self, type_tuples):
         """
         Calculate all non-repeatable combinations of type tuples with capacity not less than MIN_TUPLE_CAPACITY
         and check if one tuple is equals or contains (in terms of sqn set) another.
@@ -562,17 +519,15 @@ class ProductTypeDict(object):
                     tag_type.contains(t)
                 # TODO - implement 'almost' relation
 
-    def build_from_products(self, products, strict_products=False, match_types_only=False):
+    def build_from_products(self, products, strict_products=False):
         """
         Build types graph from sequence of products
-        @param collections.Iterable[Product] products: seq of Product
+        @param collections.Iterable[Product] products: iterator of Product
         @param bool strict_products: see comments for collect_type_tuples()
-        @param bool match_types_only: if True use sqns for tuple generation only. During match phase use type tuples
-            only and ignore sqn sets assigned to them
         """
         p_it1, p_it2 = itertools.tee(products)
         type_tuples = self.collect_type_tuples(p_it1, strict_products=strict_products)
-        self.update_type_tuples_relationship2(type_tuples)
+        self.update_type_tuples_relationship(type_tuples)
 
         self.build_tag_types_from_products(p_it2, type_tuples)
 
@@ -681,7 +636,7 @@ def dump_json():
     products = Product.from_meta_csv(config.products_meta_in_csvname)
     types = ProductTypeDict()
     ProductTypeDict.VERBOSE = True
-    types.build_from_products(products, match_types_only=True)
+    types.build_from_products(products)
     types.to_json('out/product_types_2.json')
 
 
@@ -745,7 +700,7 @@ def from_hdiet_csv(prodcsvname):
     types = ProductTypeDict()
     ProductTypeDict.VERBOSE = True
     types.min_meaningful_type_capacity = 1
-    type_tuples = types.build_from_products(products, strict_products=True, match_types_only=True)
+    type_tuples = types.build_from_products(products, strict_products=True)
     for t in type_tuples:
         t.meaningful = True
     types.to_json('out/product_types_hdiet.json')
@@ -755,7 +710,7 @@ def from_hdiet_csv(prodcsvname):
     products, len_p = itertools.tee(products)
     print("Try to merge generated types from meta: %d products" % len(list(len_p)))
     types.min_meaningful_type_capacity = TYPE_TUPLE_MIN_CAPACITY
-    type_tuples = types.build_from_products(products, match_types_only=True)
+    type_tuples = types.build_from_products(products)
     types.to_json('out/product_types_merged.json')
     print("Total types after merge: %d/%d" % (len(type_tuples), len(types.get_type_tuples(meaningful_only=True))))
 
