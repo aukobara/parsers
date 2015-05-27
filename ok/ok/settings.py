@@ -7,7 +7,6 @@
 #
 #     http://doc.scrapy.org/en/latest/topics/settings.html
 #
-from scrapy.logformatter import LogFormatter
 
 BOT_NAME = 'ok'
 
@@ -27,19 +26,6 @@ ITEM_PIPELINES = {
     "ok.pipelines.OkPipeline" : 100
 }
 
-LOG_FORMATTER = "ok.settings.FixEncodingLogFormatter"
+LOG_FORMATTER = "ok.FixEncodingLogFormatter"
 
-DICT_BASELINE_DEFAULT_DIR = 'resources/data/ok/baseline150522'
-
-class FixEncodingLogFormatter(LogFormatter):
-    def encodeDumpObject(self, obj):
-        """
-        @return: unicode
-        """
-        return ("%r" % obj).decode("unicode-escape").encode(LOG_ENCODING)
-
-    def dropped(self, item, exception, response, spider):
-        dropped = super(FixEncodingLogFormatter, self).dropped(item, exception, response, spider)
-        """@type dropped: dict of (unicode, unicode)"""
-        dropped["item"] = self.encodeDumpObject(dropped["item"])
-        return dropped
+DICT_BASELINE_DEFAULT_DIR = 'resources/data/ok/baseline150527'
