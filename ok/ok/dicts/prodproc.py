@@ -7,9 +7,10 @@ import json
 from sys import argv
 
 from ok.dicts.product import Product, PRODUCT_ATTRIBUTE_RAW_ID
-from ok.dicts.product_type import ProductTypeDict, TYPE_TUPLE_MIN_CAPACITY, TYPE_TUPLE_RELATION_EQUALS, \
+from ok.dicts.product_type import TYPE_TUPLE_RELATION_EQUALS, \
     TYPE_TUPLE_RELATION_SIMILAR, TYPE_TUPLE_RELATION_CONTAINS, TYPE_TUPLE_RELATION_SUBSET_OF, TYPE_TUPLE_RELATION_ALMOST, \
     TYPE_TUPLE_RELATION_IDENTICAL
+from ok.dicts.product_type_dict import ProductTypeDict
 from ok.items import ProductItem
 from ok.dicts import cleanup_token_str, remove_nbsp, main_options
 from ok.dicts.brand import Brand
@@ -36,7 +37,7 @@ RE_TEMPLATE_PFQN_WEIGHT_SHORT = u'(\D' + RE_TEMPLATE_PFQN_PRE + u')((?:кг|г|�
 RE_TEMPLATE_PFQN_FAT_MDZH = u'(?:\s*(?:с\s)?м\.?д\.?ж\.? в сух(?:ом)?\.?\s?вещ(?:-|ест)ве\s*' + \
                             u'|\s*массовая доля жира в сухом веществе\s*)?'
 RE_TEMPLATE_PFQN_FAT = u'(' + RE_TEMPLATE_PFQN_PRE + u')(' + RE_TEMPLATE_PFQN_FAT_MDZH + \
-                       u'(?:\d+(?:[\.,]\d+)?%?-)?\d+(?:[\.,]\d+)?\s*%(?:\s*жирн(?:\.|ости)?)?' + \
+                       u'(?:\d+(?:[\.,]\d+)?%?\s*-\s*)?\d+(?:[\.,]\d+)?\s*%(?:\s*жирн(?:\.|ости)?)?' + \
                        RE_TEMPLATE_PFQN_FAT_MDZH + u")" + RE_TEMPLATE_PFQN_POST
 
 RE_TEMPLATE_PFQN_PACK = u'(' + RE_TEMPLATE_PFQN_PRE + u')' \
@@ -45,7 +46,7 @@ RE_TEMPLATE_PFQN_PACK = u'(' + RE_TEMPLATE_PFQN_PRE + u')' \
                         u'|(?:\d+\s*)?шт\.?|упак\.?|уп\.?|в/у|п/э|жесть|круг|обрам' + \
                         u'|вакуум|нарезка|нар|стакан|ванночка|в\sванночке|дой-пак|дой/пак|пюр-пак|пюр\sпак' + \
                         u'|зип|зип-пакет|д/пак|п/пак|пл\.упаковка|пэт|пакет|туба|ведро|бан|лоток|фольга' + \
-                        u'|фас(?:ованные)?|н/подл\.?|ф/пакет|0[.,]5|0[.,]75|0[.,]33)' + RE_TEMPLATE_PFQN_POST
+                        u'|фас(?:ованные)?|н/подл\.?|ф/пакет|0[.,]5|0[.,]75|0[.,]33|0[.,]57)' + RE_TEMPLATE_PFQN_POST
 
 
 class ProductFQNParser(object):
@@ -541,12 +542,12 @@ def print_type_tuples(pfqn_parser):
             """@type: ProductType"""
             p_ids = type_tuples[t]
             c = len(p_ids)
-            if c < TYPE_TUPLE_MIN_CAPACITY: continue
+            if c < type_dict.min_meaningful_type_capacity: continue
             print u"%sTuple[%s] %s: %d" % (indent, u'ROOT' if t in root_types else '', t, len(set(p_ids))),
             num_tuples[c] = num_tuples.get(c, 0) + 1
             sqn_selected_set.update(p_ids)
 
-            equal_relations = t.relations(TYPE_TUPLE_RELATION_EQUALS, TYPE_TUPLE_RELATION_SIMILAR, TYPE_TUPLE_RELATION_ALMOST)
+            equal_relations = t.relations(TYPE_TUPLE_RELATION_IDENTICAL, TYPE_TUPLE_RELATION_EQUALS, TYPE_TUPLE_RELATION_SIMILAR, TYPE_TUPLE_RELATION_ALMOST)
             if equal_relations:
                 # Print equals relations only, because other are in structure
                 print u' *** %s' % (u', '.join([u'%s[%d]' % (rel, len(set(type_tuples[rel.to_type]))) for rel in equal_relations])),
@@ -578,7 +579,7 @@ def print_type_tuples(pfqn_parser):
     sqn_unselected_set = set()
     unselected_count = 0
     for t in sorted(root_types, key=lambda k: unicode(k)):
-        if len(t) > 1 or len(type_tuples[t]) >= TYPE_TUPLE_MIN_CAPACITY: continue
+        if len(t) > 1 or len(type_tuples[t]) >= type_dict.min_meaningful_type_capacity: continue
         # Print only core tuples
         print u"Tuple[*] %s: %d" % (t, len(set(type_tuples[t])))
         unselected_count += 1
@@ -616,7 +617,7 @@ if __name__ == '__main__':
     __pfqnParser = main_parse_products(**__config._asdict())
 
     # ############ PRINT RESULTS ##################
-    toprint = __config["toprint"]
+    toprint = __config.toprint
     if toprint == "brands":
         print_brands()
 
