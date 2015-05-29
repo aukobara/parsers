@@ -131,7 +131,7 @@ def main_options(opts=argv):
 
 __pymorph_analyzer = None
 """@type: pymorphy2.MorphAnalyzer"""
-def get_word_normal_form(word, strict=True):
+def get_word_normal_form(word, strict=True, verbose=False):
     """
     Return first (most relevant by pymorph) normal form of specified russian word.
     @param unicode word: w
@@ -148,16 +148,26 @@ def get_word_normal_form(word, strict=True):
         return __pymorph_analyzer.normal_forms(word)[0]
 
     # Skip short words or multi-tokens (proposition forms?)
-    if len(word) <= 3 or u' ' in word: return word
+    # if len(word) <= 3 or u' ' in word: return word
+    if len(word) <= 3: return word
 
     # Strict - ignore all except noun and adverbs
     p_variants = __pymorph_analyzer.parse(word)
     """@type: list[pymorphy2.analyzer.Parse]"""
-    p_selected = p_variants[0]
+    p_selected = None
+    warning_printed = False
     for p in p_variants:
         if p.tag.POS in ('NOUN', 'ADJF', 'ADJS', 'PRTF', 'PRTS'):
-            p_selected = p
-            break
+            if not p_selected:
+                p_selected = p
+            elif verbose and p_selected.inflect({'nomn', 'masc', 'sing'}) != p.inflect({'nomn', 'masc', 'sing'}):
+                if not warning_printed:
+                    print "Morphological ambiguity has been detected for word: %s (selected: %s, %s (%f))" % \
+                          (word, p_selected.normal_form, p_selected.tag, p_selected.score),
+                warning_printed = True
+                print "\r\n%s => %s (%f)" % (p.normal_form, p.tag, p.score),
+    if warning_printed: print
+    p_selected = p_selected or p_variants[0]
     parse_norm = p_selected.inflect({'nomn', 'masc', 'sing'})
     if parse_norm:
         w_norm = parse_norm.word
