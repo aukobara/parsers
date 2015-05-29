@@ -237,7 +237,7 @@ class ProductTypeDict(object):
         relations_created = 0
         for t, sqns in sorted(self.filter_meaningful_types(type_tuples.iteritems()), key=lambda _i: len(_i[0])):
             terms = t.get_terms_ids()
-            terms_set = set(terms)
+            main_form_terms_set = set(t.get_main_form_term_ids())
             for i in xrange(len(t)):
                 for variant in itertools.combinations(terms, i+1):
                     v_hash_key = ProductType.calculate_same_same_hash(variant)
@@ -245,7 +245,7 @@ class ProductTypeDict(object):
                     if v_hash_key in seen_type_tuples:
                         found_types = seen_type_tuples[v_hash_key]
                         for f_type in found_types:
-                            inter = terms_set.intersection(f_type.get_terms_ids())
+                            inter = main_form_terms_set.intersection(f_type.get_main_form_term_ids())
                             t_is_more = len(terms) > len(inter)
                             f_is_more = len(f_type) > len(inter)
                             r = None
@@ -286,6 +286,7 @@ class ProductTypeDict(object):
                         t.similar(sibling, round(similarity, 2))
                         relations_created += 1
             same_length_group[similarity_hash_key].append(t)
+
             seen_type_tuples[t.get_same_same_hash()].add(t)
 
             i_count += 1
@@ -534,8 +535,8 @@ def dump_json():
     products = Product.from_meta_csv(config.products_meta_in_csvname)
     types = ProductTypeDict()
     ProductTypeDict.VERBOSE = True
-    # types.min_meaningful_type_capacity = 4
-    types.build_from_products(products)
+    types.min_meaningful_type_capacity = 2
+    types.build_from_products(products, strict_products=True)
     types.to_json('out/product_types_2.json')
 
 
@@ -585,7 +586,7 @@ def from_hdiet_csv(prodcsvname):
     ProductTypeDict.VERBOSE = True
     types.min_meaningful_type_capacity = 1
 
-    if not config.product_types_in_json:
+    if True or not config.product_types_in_json:
         products = []
         with open(prodcsvname, "rb") as f:
             reader = csv.reader(f)
@@ -624,7 +625,7 @@ def from_hdiet_csv(prodcsvname):
     products, len_p = itertools.tee(products)
     print("Try to merge generated types from meta: %d products" % len(list(len_p)))
     types.min_meaningful_type_capacity = TYPE_TUPLE_MIN_CAPACITY
-    type_tuples = types.build_from_products(products)
+    type_tuples = types.build_from_products(products, strict_products=True)
     types.to_json('out/product_types_merged.json')
     print("Total types after merge: %d/%d" % (len(type_tuples), len(types.get_type_tuples(meaningful_only=True))))
 
@@ -666,10 +667,10 @@ if __name__ == '__main__':
     import sys
     try:
         # print_sqn_tails()
-        dump_json()
+        # dump_json()
         # load_from_json()
 
-        # from_hdiet_csv(sys.argv[1])
+        from_hdiet_csv(sys.argv[1])
     except Exception as e:
         print
         print "Exception caught: %s" % e.message
