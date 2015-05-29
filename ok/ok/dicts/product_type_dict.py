@@ -8,11 +8,10 @@ import re
 
 import Levenshtein
 
-from ok.dicts import main_options, remove_nbsp, cleanup_token_str
 from ok.dicts.product import Product
-from ok.dicts.product_type import ProductType, TypeTerm, \
-    TYPE_TUPLE_RELATION_CONTAINS, TYPE_TUPLE_RELATION_EQUALS, TYPE_TUPLE_RELATION_SUBSET_OF, CompoundTypeTerm, \
-    WithPropositionTypeTerm
+from ok.dicts.product_type import ProductType,\
+    TYPE_TUPLE_RELATION_CONTAINS, TYPE_TUPLE_RELATION_EQUALS, TYPE_TUPLE_RELATION_SUBSET_OF
+from ok.dicts.term import TypeTerm, CompoundTypeTerm, WithPropositionTypeTerm
 
 
 TYPE_TUPLE_MIN_CAPACITY = 4  # Number of SQNs covered by word combination
@@ -53,58 +52,6 @@ class ProductTypeDict(object):
             self._meaningful_type_tuples = None
 
     @staticmethod
-    def parse_sqn(sqn):
-        """
-        Parse SQN and return list of TypeTerms with respectful types. Main processing here is compound terms with
-        proposition detection. Proposition is added to next word(s) as well. Also 'and' proposition is processed.
-        All other work is delegated to TypeTerm.make()
-        @param sqn:
-        @return:
-        """
-        words = re.split(u'\s+', cleanup_token_str(sqn))
-        terms = []
-        """@type: list[TypeTerm]"""
-        buf = u''
-        buf_count = 0
-        for w in words:
-            if w and TypeTerm.is_a_term(w):
-                term = None
-                if TypeTerm.is_proposition(w) and not buf:
-                    buf = w  # join proposition to the next words
-                    if TypeTerm.is_proposition_and_word(w):
-                        # Some propositions can participate also as words (e.g. when char O is used instead of number 0)
-                        # Add such propositions as simple word
-                        terms.append(TypeTerm.make(w))
-                    continue
-                if buf:
-                    if w == u'и':
-                        # Ignore 'and' if already in proposition mode
-                        continue
-
-                    if TypeTerm.is_proposition(w):
-                        # Break previous proposition sequence and start new
-                        buf = w
-                        buf_count = 0
-                        if TypeTerm.is_proposition_and_word(w):
-                            # See above comments about dual prop/word cases
-                            terms.append(TypeTerm.make(w))
-                        continue
-
-                    term = TypeTerm.make(u'%s %s' % (buf, w))
-                    buf_count += 1
-
-                    if buf_count == 2:
-                        buf = u''
-                        buf_count = 0
-
-                if not term:
-                    term = TypeTerm.make(w)
-                terms.append(term)
-        if buf and buf_count == 0: terms.append(TypeTerm.make(buf))
-
-        return list(OrderedDict.fromkeys(terms))  # Filter duplicates
-
-    @staticmethod
     def collect_sqn_type_tuples(sqn, with_spellings=True):
         """
         Return dict with tuples for combinations of tokens in each parsed sqn. Source sqn will be as value.
@@ -117,7 +64,7 @@ class ProductTypeDict(object):
         """
         result = dict()
 
-        terms = ProductTypeDict.parse_sqn(sqn)
+        terms = TypeTerm.parse_term_string(sqn)
         first_word = terms.pop(0)
 
         def get_term_with_sub_terms(term):
@@ -582,16 +529,18 @@ class ProductTypeDict(object):
 
 
 def dump_json():
+    from ok.dicts import main_options
     config = main_options(sys.argv)
     products = Product.from_meta_csv(config.products_meta_in_csvname)
     types = ProductTypeDict()
     ProductTypeDict.VERBOSE = True
-    types.min_meaningful_type_capacity = 2
+    # types.min_meaningful_type_capacity = 4
     types.build_from_products(products)
     types.to_json('out/product_types_2.json')
 
 
 def load_from_json():
+    from ok.dicts import main_options
     config = main_options(sys.argv)
     types = ProductTypeDict()
     types.VERBOSE = True
@@ -629,6 +578,8 @@ def from_hdiet_csv(prodcsvname):
     @return:
     """
     from ok.dicts.prodproc import ProductFQNParser
+    from ok.dicts import main_options, remove_nbsp
+
     config = main_options(sys.argv)
     types = ProductTypeDict()
     ProductTypeDict.VERBOSE = True
@@ -681,6 +632,7 @@ def from_hdiet_csv(prodcsvname):
     TypeTerm.print_stats()
 
 def print_sqn_tails():
+    from ok.dicts import main_options
     config = main_options(sys.argv)
     products = Product.from_meta_csv(config.products_meta_in_csvname)
     types = ProductTypeDict()
