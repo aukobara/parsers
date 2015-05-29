@@ -19,7 +19,7 @@ def cleanup_token_str(s, ext_symbols=None):
     @rtype: unicode
     """
     ext = u'|'.join(ext_symbols) if ext_symbols else None
-    return re.sub(u'(?:\s|"|,|\.|«|»|“|”|\(|\)|\?|\+' + (u'|' + ext if ext else u'') + ')+', u' ', s).strip()
+    return re.sub(u'(?:\s|"|,|\.|«|»|“|”|\(|\)|\?|\+|:' + (u'|' + ext if ext else u'') + ')+', u' ', s).strip()
 
 
 def isenglish(s):
