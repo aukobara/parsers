@@ -214,7 +214,7 @@ class ProductFQNParser(object):
                     major_rel_count += 1
 
         if not skip_analysis and major_rel_count <= 1 and u' ' in product.sqn:
-            # Try to merge first word to second as MultiWord and check what happen. Sometimes before core type word some
+            # Try to merge first word to second as TypeTerm and check what happen. Sometimes before core type word some
             # BS is added. Like propositions, adverbs, numbers, etc
             # TODO: refactor
 

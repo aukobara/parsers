@@ -2,16 +2,18 @@
 from ast import literal_eval
 from collections import OrderedDict, defaultdict
 import csv
-from itertools import product as iter_product, combinations, permutations, chain
 import itertools
 import json
 import re
+
 import Levenshtein
-from ok.dicts import get_word_normal_form, main_options, remove_nbsp
+
+from ok.dicts import main_options, remove_nbsp, cleanup_token_str
 from ok.dicts.product import Product
-from ok.dicts.product_type import TYPE_TUPLE_PROPOSITION_LIST, \
-    TYPE_TUPLE_PROPOSITION_AND_WORD_LIST, ProductType, TYPE_TUPLE_RELATION_CONTAINS, \
-    TYPE_TUPLE_RELATION_EQUALS, TYPE_TUPLE_RELATION_SUBSET_OF
+from ok.dicts.product_type import ProductType, TypeTerm, \
+    TYPE_TUPLE_RELATION_CONTAINS, TYPE_TUPLE_RELATION_EQUALS, TYPE_TUPLE_RELATION_SUBSET_OF, CompoundTypeTerm, \
+    WithPropositionTypeTerm
+
 
 TYPE_TUPLE_MIN_CAPACITY = 4  # Number of SQNs covered by word combination
 
@@ -33,7 +35,7 @@ class ProductTypeDict(object):
 
         # Dict of all ProductTypes mapped to list of SQNs produced them. It is built from Products SQNs or pre-loaded
         # from external source (like file)
-        self._type_tuples = None
+        self._type_tuples = defaultdict(list)
         # This is a cache of _type_tuples with filtered meaningful items only (see filter_meaningful_types())
         # It MUST be dropped always when _type_tuples is changed
         self._meaningful_type_tuples = None
@@ -50,35 +52,57 @@ class ProductTypeDict(object):
             self._min_meaningful_type_capacity = min_meaningful_type_capacity
             self._meaningful_type_tuples = None
 
-    class MultiWord(unicode):
-        # Multi-variant string. It has main representation but also additional variants which can be used for
-        # combinations. Typical example is compound words separated by hyphen.
+    @staticmethod
+    def parse_sqn(sqn):
+        """
+        Parse SQN and return list of TypeTerms with respectful types. Main processing here is compound terms with
+        proposition detection. Proposition is added to next word(s) as well. Also 'and' proposition is processed.
+        All other work is delegated to TypeTerm.make()
+        @param sqn:
+        @return:
+        """
+        words = re.split(u'\s+', cleanup_token_str(sqn))
+        terms = []
+        """@type: list[TypeTerm]"""
+        buf = u''
+        buf_count = 0
+        for w in words:
+            if w and TypeTerm.is_a_term(w):
+                term = None
+                if TypeTerm.is_proposition(w) and not buf:
+                    buf = w  # join proposition to the next words
+                    if TypeTerm.is_proposition_and_word(w):
+                        # Some propositions can participate also as words (e.g. when char O is used instead of number 0)
+                        # Add such propositions as simple word
+                        terms.append(TypeTerm.make(w))
+                    continue
+                if buf:
+                    if w == u'и':
+                        # Ignore 'and' if already in proposition mode
+                        continue
 
-        def __init__(self, object=''):
-            super(ProductTypeDict.MultiWord, self).__init__(object)
-            self._variants = set()
-            self._do_not_pair = set()
+                    if TypeTerm.is_proposition(w):
+                        # Break previous proposition sequence and start new
+                        buf = w
+                        buf_count = 0
+                        if TypeTerm.is_proposition_and_word(w):
+                            # See above comments about dual prop/word cases
+                            terms.append(TypeTerm.make(w))
+                        continue
 
-        @property
-        def variants(self):
-            return frozenset(self._variants)
+                    term = TypeTerm.make(u'%s %s' % (buf, w))
+                    buf_count += 1
 
-        def add_variants(self, *variants):
-            for v in variants:
-                self._variants.add(v)
-                # Do not pair word with own variants. However, variants can pair each other
-                v._do_not_pair.add(self)
-                self._do_not_pair.add(v)
+                    if buf_count == 2:
+                        buf = u''
+                        buf_count = 0
 
-        def clear_variants(self):
-            self._variants.clear()
+                if not term:
+                    term = TypeTerm.make(w)
+                terms.append(term)
+        if buf and buf_count == 0: terms.append(TypeTerm.make(buf))
 
-        def can_pair(self, w):
-            return w not in self._do_not_pair
-
-        def do_not_pair(self, *dnp):
-            self._do_not_pair.update(dnp)
-
+        return list(OrderedDict.fromkeys(terms))  # Filter duplicates
 
     @staticmethod
     def collect_sqn_type_tuples(sqn, with_spellings=True):
@@ -91,146 +115,56 @@ class ProductTypeDict(object):
             word spellings like morph.normal_form, synonyms etc
         @rtype: dict of (ProductType, unicode)
         """
-        # TODO: Implement synonyms pre-processing for unfolding of abbreviations to normal forms
-        synonyms = [
-                    {u'охл', u'охлажденная'},
-                    {u'сельдь', u'селедка'},
-                    {u'олив', u'оливковое'},
-                    ]  # First ugly implementation
-        synonyms_index = {syn: syn_set for syn_set in synonyms for syn in syn_set}
-        def add_synonyms(_w):
-            # Already MultiWord - add its variants synonyms as well. Must go first to avoid infinite loop
-            syns = set()
-            """@type: set of ProductTypeDict.MultiWord"""
-            for _v in set(_w.variants):
-                _v = add_synonyms(_v)
-                syns |= _v.variants - {_w}
-                _v.clear_variants()  # We don't need recursive synonyms data
-
-            if _w in synonyms_index:
-                syns |= set(map(ProductTypeDict.MultiWord, synonyms_index[_w])) - {_w}
-
-            else:
-                # Try to guess about normal form of word and treat it as synonym
-                _w_normal_form = get_word_normal_form(_w, strict=True)
-                if _w != _w_normal_form:
-                    syns.add(ProductTypeDict.MultiWord(_w_normal_form))
-
-            _w.add_variants(*syns)
-
-            # Do not pair word and its variants with word own synonyms
-            [_v.do_not_pair(*syns) for _v in _w.variants]
-
-            return _w
-
         result = dict()
 
-        words = re.split(u'\s+', sqn)
-        words1 = []
-        buf = u''
-        buf_count = 0
-        prev_words_with_prop = []
-        """@type: list[ProductTypeDict.MultiWord]"""
-        for w in words:
-            if w:
-                w = ProductTypeDict.MultiWord(w)
-                if w in TYPE_TUPLE_PROPOSITION_LIST and not buf:
-                    buf = w  # join proposition to the next words
-                    if w in TYPE_TUPLE_PROPOSITION_AND_WORD_LIST:
-                        # Some propositions can participate also as words (e.g. when char O is used instead of number 0)
-                        # Add such propositions as simple word
-                        words1.append(w)
-                    continue
-                if buf:
-                    if w == u'и':
-                        # Ignore 'and' if already in proposition mode
-                        continue
+        terms = ProductTypeDict.parse_sqn(sqn)
+        first_word = terms.pop(0)
 
-                    if w in TYPE_TUPLE_PROPOSITION_LIST:
-                        # Break previous proposition sequence and start new
-                        buf = w
-                        buf_count = 0
-                        [w_p.do_not_pair(*prev_words_with_prop) for w_p in prev_words_with_prop]
-                        prev_words_with_prop = []
-                        if w in TYPE_TUPLE_PROPOSITION_AND_WORD_LIST:
-                            # See above comments about dual prop/word cases
-                            words1.append(w)
-                        continue
+        def get_term_with_sub_terms(term):
+            term_list = {term}
+            if isinstance(term, CompoundTypeTerm):
+                term_list.update(term.sub_terms)
+            if with_spellings:
+                term_list.update([wf for t in term_list for wf in t.word_forms])
 
-                    # Add both word variants with proposition and w/o.
-                    w_with_prop = ProductTypeDict.MultiWord(buf + u' ' + w)
-                    w.add_variants(w_with_prop)
-                    prev_words_with_prop.append(w_with_prop)
-                    buf_count += 1
+            return term_list
 
-                    if buf_count == 2:
-                        buf = u''
-                        buf_count = 0
-                        [w_p.do_not_pair(*prev_words_with_prop) for w_p in prev_words_with_prop]
-                        prev_words_with_prop = []
-                    # Proposition is added itself as well
-                    # words1.append(buf)
-                if u'-' in w:
-                    # Now it is important the order of words they are added to list. First word is most important in
-                    # type detection. Thus, compound words must present meaningful part first
-                    # TODO: implement compound terms (~) that can be compared separately but in result are always together
-                    variants = set(map(ProductTypeDict.MultiWord, w.split(u'-')))
-                    w.add_variants(*variants)
+        def add_result(pt_terms):
+            result[ProductType(*pt_terms)] = sqn
+            # Also add type with expanded compound terms
+            if any(isinstance(pt, CompoundTypeTerm) for pt in pt_terms):
+                exp_terms = []
+                for pt in pt_terms:
+                    if isinstance(pt, CompoundTypeTerm) and len(pt.simple_sub_terms) > 1:
+                        exp_terms.extend(pt.simple_sub_terms)
+                    else:
+                        exp_terms.append(pt)
+                if len(exp_terms) > len(pt_terms):
+                    # Found type with more terms
+                    result[ProductType(*exp_terms)] = sqn
 
-                if with_spellings:
-                    w = add_synonyms(w)
-                words1.append(w)
-        if buf and buf_count == 0: words1.append(buf)
-
-        def can_pair(w1, w2):
-            """
-            @param ProductTypeDict.MultiWord w1: word1
-            @param ProductTypeDict.MultiWord w2: word1
-            """
-            return w1.can_pair(w2) and w2.can_pair(w1)
-
-        words1 = list(OrderedDict.fromkeys(words1))
-        first_word = words1.pop(0)
-
-        def add_combinations(_words, n):
+        def add_combinations(_terms, n):
             vf = [[]]
-            vf[0] = [first_word] + list(first_word.variants)
-            if len(vf[0]) > 1:
-                # For MultiWord add optional combinations with itself
-                vf.append(vf[0] + [ProductTypeDict.MultiWord(u'')])
-            for wvf in iter_product(*vf):
-                for _w in combinations(_words, n):
+            vf[0] = get_term_with_sub_terms(first_word)
+            for wvf in itertools.product(*vf):
+                for _w in itertools.combinations(_terms, n):
                     v = [[]] * len(_w)
                     for i, _wi in enumerate(_w):
-                        v[i] = [_w[i]] + list(_w[i].variants)
-                        if len(v[i]) > 1:
-                            # For MultiWord add optional combinations with itself
-                            v.append(v[i] + [ProductTypeDict.MultiWord(u'')])
-                    for wv in iter_product(*v):
-                            if any(w_pair[0] == w_pair[1] or
-                                    w_pair[1] in w_pair[0].variants or
-                                    not can_pair(w_pair[0], w_pair[1])
-                                    for w_pair in permutations(chain(wvf, wv), 2) if w_pair[0] and w_pair[1]):
-                                # Do not join same world and form with proposition
-                                continue
-                            result[ProductType(*filter(len, chain(wvf, wv)))] = sqn
+                        v[i] = get_term_with_sub_terms(_w[i])
+                    for wv in itertools.product(*v):
+                        pt_terms = wvf + wv
+                        if any(not w_pair[0].is_compatible_with(w_pair[1]) or not w_pair[1].is_compatible_with(w_pair[0])
+                                for w_pair in itertools.permutations(pt_terms, 2) if w_pair[0] and w_pair[1]):
+                            # Do not join words that cannot be paired (like word and the same word with proposition)
+                            continue
+                        add_result(pt_terms)
 
-        add_combinations(words1, 0)
-        if words1:
-            add_combinations(words1, 1)
-            add_combinations(words1, 2)
+        add_combinations(terms, 0)
+        if len(terms) > 0:
+            add_combinations(terms, 1)
+        if len(terms) > 1:
+            add_combinations(terms, 2)
 
-    # Experimental algorithm when first_word is not considered as very special
-        # for w in words1:
-        #     result[ProductType(w)] = sqn
-        # for w1, w2 in permutations(words1, 2):
-        #     if is_proposition_form(w1, w2):
-        #         continue
-        #     result[ProductType(w1, w2)] = sqn
-        # for w1, w2, w3 in permutations(words1, 3):
-        #     if is_proposition_form(w1, w2) or is_proposition_form(w2, w3) or is_proposition_form(w1, w3):
-        #         continue
-        #     result[ProductType(w1, w2, w3)] = sqn
         return result
 
     @staticmethod
@@ -345,24 +279,12 @@ class ProductTypeDict(object):
         if self.VERBOSE:
             print u'Updating type tuples relationships'
 
-        import zlib
-
-        def get_hash(t):
-            """
-            @param ProductType|tuple t: type
-            @return: int hash
-            """
-            res = 0
-            for i in sorted(t.get_terms_ids() if isinstance(t, ProductType) else t):
-                res = zlib.adler32(str(i), res)
-            return res
-
         seen_type_tuples = defaultdict(set)
         """@type: dict of (int, set[ProductType])"""
         if self._type_tuples:
             for t in self._type_tuples:
-                seen_type_tuples[get_hash(t)].add(t)
-        same_length_group = set()
+                seen_type_tuples[t.get_same_same_hash()].add(t)
+        same_length_group = defaultdict(list)
         last_group_length = 0
         i_count = 0
         relations_created = 0
@@ -371,29 +293,25 @@ class ProductTypeDict(object):
             terms_set = set(terms)
             for i in xrange(len(t)):
                 for variant in itertools.combinations(terms, i+1):
-                    v_hash_key = get_hash(variant)
+                    v_hash_key = ProductType.calculate_same_same_hash(variant)
                     # Contains & Equals - transitive
                     if v_hash_key in seen_type_tuples:
                         found_types = seen_type_tuples[v_hash_key]
-                        if t in found_types:
-                            continue
                         for f_type in found_types:
                             inter = terms_set.intersection(f_type.get_terms_ids())
                             t_is_more = len(terms) > len(inter)
                             f_is_more = len(f_type) > len(inter)
+                            r = None
                             if f_is_more:
                                 if not t_is_more:
                                     # Longest tuple is more detailed or precise type
-                                    t.contains(f_type)
-                                    relations_created += 1
+                                    r = t.contains(f_type)
                             elif t_is_more:
                                 # Shortest tuple is more general type
-                                t.subset_of(f_type)
-                                relations_created += 1
-                            else:
-                                # Same type tokens in different order
-                                t.equals_to(f_type)
-                                relations_created += 1
+                                r = t.subset_of(f_type)
+                            elif t != f_type:
+                                # Same type terms in different order
+                                r = t.equals_to(f_type)
                                 # Transitive relation
                                 # - if a equals b than b's children are a's children and vise verse
                                 for f_sub in f_type.related_types(TYPE_TUPLE_RELATION_CONTAINS):
@@ -402,20 +320,26 @@ class ProductTypeDict(object):
                                 for t_sub in t.related_types(TYPE_TUPLE_RELATION_CONTAINS):
                                     f_type.contains(t_sub)
                                     relations_created += 1
+                            if r: relations_created += 1
 
             if last_group_length != len(t):
                 last_group_length = len(t)
-                same_length_group = set()
+                same_length_group.clear()
 
-            for sibling in same_length_group:
+            # Group terms with the same first char only
+            # TODO: optimize selection of group - actually first chars may have similar spellings as well (like е and ё)
+            similarity_hash_key = frozenset({_term[0] if not isinstance(_term, WithPropositionTypeTerm) else _term.sub_terms[0][0] for _term in t})
+            for sibling in same_length_group.get(similarity_hash_key, []):
                 if not t.get_relation(sibling):
                     similarity = Levenshtein.setratio(t, sibling)
+                    if len(t) > 1:
+                        similarity = max(similarity, Levenshtein.ratio(unicode(t), unicode(sibling)))
                     if similarity >= 0.85:
                         # Is it too smart??
                         t.similar(sibling, round(similarity, 2))
                         relations_created += 1
-            same_length_group.add(t)
-            seen_type_tuples[get_hash(terms)].add(t)
+            same_length_group[similarity_hash_key].append(t)
+            seen_type_tuples[t.get_same_same_hash()].add(t)
 
             i_count += 1
             if self.VERBOSE and i_count % 100 == 0: print u'.',
@@ -465,7 +389,7 @@ class ProductTypeDict(object):
             type_tuples_for_deep_scan.clear()
             # if self.VERBOSE: print "Identical type 's been found, skip deep scan"
 
-        for t1, t2 in iter_product(type_tuples_for_deep_scan.iteritems(), dict_types.iteritems()):
+        for t1, t2 in itertools.product(type_tuples_for_deep_scan.iteritems(), dict_types.iteritems()):
             s1 = set(t1[1]) if not ignore_sqns else None
             s2 = set(t2[1]) if not ignore_sqns else None
             type_input = t1[0]
@@ -473,7 +397,7 @@ class ProductTypeDict(object):
             type_dict = t2[0]
             """@type: ProductType"""
 
-            rel = self.find_relation(type_input, s1, type_dict, s2, max_similarity,almost_min_size=self.min_meaningful_type_capacity)
+            rel = self.find_relation(type_input, s1, type_dict, s2, max_similarity, almost_min_size=self.min_meaningful_type_capacity)
 
             if rel:
                 types_suggested_relations[type_input].append(rel)
@@ -497,7 +421,7 @@ class ProductTypeDict(object):
                 sqn_types[sqn].add(t)
         for product in products:
             for tag in product.get('tags', set()):
-                tag_type = ProductType(u'#' + tag.lower())
+                tag_type = ProductType(TypeTerm.make(u'#' + tag.lower()))
                 tag_type_relation_variants[tag_type].update(sqn_types[product.sqn])
                 type_tuples[tag_type].append(product.sqn)
         for tag_type, relation_to_variants in tag_type_relation_variants.iteritems():
@@ -526,19 +450,29 @@ class ProductTypeDict(object):
         @param bool strict_products: see comments for collect_type_tuples()
         """
         p_it1, p_it2 = itertools.tee(products)
+
+        # 1. Collect all possible type variants. Those are already in dict as meaningful existing types
+        # matches as singleton ProductType with meaningful flag
         type_tuples = self.collect_type_tuples(p_it1, strict_products=strict_products)
+
+        # 2. Find and update relations of types produced by products. Already existing meaningful types
+        # will be linked to new types
         self.update_type_tuples_relationship(type_tuples)
 
+        # 3. Build tag types basing on their relation with products. I.e. matching set will be restricted by types
+        # of products which have tag instead of type terms as for normal type
         self.build_tag_types_from_products(p_it2, type_tuples)
 
-        if not self._type_tuples:
-            self._type_tuples = type_tuples
-        else:
-            # merge
-            for t, sqns in type_tuples.iteritems():
-                self._type_tuples[t].extend(sqns)
-                # TODO: Update tag types as well - new sqns may add or break old tag type relations
+        # 4. Merge new types to existing
+        for t, sqns in type_tuples.iteritems():
+            self._type_tuples[t].extend(sqns)
+            # TODO: Update tag types as well - new sqns may add or break old tag type relations
+        # Clear meaningful types cache
         self._meaningful_type_tuples = None
+
+        # 5. Keep most meaningful synonym types only
+        # TODO
+
         return self._type_tuples
 
     def get_type_tuples(self, meaningful_only=False):
@@ -594,11 +528,13 @@ class ProductTypeDict(object):
             s = f.read().decode("utf-8")
         types = json.loads(s)
         ProductType.reload()
-        type_tuples = dict()
+        type_tuples = defaultdict(list)
         pseudo_sqn = 1
         seen_rel = dict()
         for type_str, rel_str in types.iteritems():
             type_items = type_str.split(u' + ')
+            # All types are loaded from external sources or knowledge base are considered meaningful regardless of
+            # other their characteristics
             pt = ProductType(*type_items, meaningful=True)
             type_tuples[pt] = []
             for i in xrange(int(rel_str[0])):
@@ -624,7 +560,8 @@ class ProductTypeDict(object):
                     else:
                         seen_rel[pt] = seen_rel.get(pt, dict())
                         seen_rel[pt][type_to] = r_to
-        self._type_tuples = type_tuples
+        self._type_tuples.clear()
+        self._type_tuples.update(type_tuples)
         self._meaningful_type_tuples = None
 
         if self.VERBOSE:
@@ -636,6 +573,7 @@ def dump_json():
     products = Product.from_meta_csv(config.products_meta_in_csvname)
     types = ProductTypeDict()
     ProductTypeDict.VERBOSE = True
+    types.min_meaningful_type_capacity = 2
     types.build_from_products(products)
     types.to_json('out/product_types_2.json')
 
@@ -649,8 +587,11 @@ def load_from_json():
     products_meta_in_csvname = config.products_meta_in_csvname
     if products_meta_in_csvname:
         products = list(Product.from_meta_csv(products_meta_in_csvname))
+        print 'Update product types for %d product in file: %s' % (len(products), products_meta_in_csvname)
         type_tuples = types.get_type_tuples()
         meaningful_tuples = set(type_tuples)
+        i_count = 0
+        type_found_count = 0
         for p in products:
             p_all_types = types.collect_sqn_type_tuples(p.sqn)
             type_variants = set(p_all_types)
@@ -658,10 +599,15 @@ def load_from_json():
             type_variants.update(p_all_types2)
             p_types = type_variants.intersection(meaningful_tuples)
             p['types'] = p_types
-
+            if p_types: type_found_count += 1
+            if i_count % 100 == 0: print '.',
+            i_count += 1
+        print
+        print 'Found types for %d products' % type_found_count
         products_meta_out_csvname = config.products_meta_out_csvname
         if products_meta_out_csvname:
             Product.to_meta_csv(products_meta_out_csvname, products)
+            print 'Save results to %s' % products_meta_out_csvname
 
 def from_hdiet_csv(prodcsvname):
     """
@@ -670,42 +616,46 @@ def from_hdiet_csv(prodcsvname):
     @return:
     """
     from ok.dicts.prodproc import ProductFQNParser
-    products = []
-    with open(prodcsvname, "rb") as f:
-        reader = csv.reader(f)
-        fields = next(reader)
-        parser = ProductFQNParser()
-        for row in reader:
-            prodrow = dict(zip(fields, row))
-            item = dict(prodrow)
-            pfqn = remove_nbsp(unicode(item["name"], "utf-8"))
-
-            top_cat = None
-            sub_cat = None
-            if item.get("details"):
-                details_raw = remove_nbsp(item["details"])
-                details = json.loads(details_raw)
-                """ @type details: dict of (unicode, unicode) """
-
-                top_cat = details.get('top_cat')
-                sub_cat = details.get('sub_cat')
-
-            if top_cat.lower() == u'Алкогольные напитки'.lower():
-                continue
-
-            product = parser.extract_product(pfqn)
-            product['tags'] = {cat for cat in (top_cat, sub_cat) if cat}
-            products.append(product)
-
+    config = main_options(sys.argv)
     types = ProductTypeDict()
     ProductTypeDict.VERBOSE = True
     types.min_meaningful_type_capacity = 1
-    type_tuples = types.build_from_products(products, strict_products=True)
-    for t in type_tuples:
-        t.meaningful = True
-    types.to_json('out/product_types_hdiet.json')
 
-    config = main_options(sys.argv)
+    if not config.product_types_in_json:
+        products = []
+        with open(prodcsvname, "rb") as f:
+            reader = csv.reader(f)
+            fields = next(reader)
+            parser = ProductFQNParser()
+            for row in reader:
+                prodrow = dict(zip(fields, row))
+                item = dict(prodrow)
+                pfqn = remove_nbsp(unicode(item["name"], "utf-8"))
+
+                top_cat = None
+                sub_cat = None
+                if item.get("details"):
+                    details_raw = remove_nbsp(item["details"])
+                    details = json.loads(details_raw)
+                    """ @type details: dict of (unicode, unicode) """
+
+                    top_cat = details.get('top_cat')
+                    sub_cat = details.get('sub_cat')
+
+                if top_cat.lower() == u'Алкогольные напитки'.lower():
+                    continue
+
+                product = parser.extract_product(pfqn)
+                product['tags'] = {cat for cat in (top_cat, sub_cat) if cat}
+                products.append(product)
+
+        type_tuples = types.build_from_products(products, strict_products=True)
+        for t in type_tuples:
+            t.meaningful = True
+        types.to_json('out/product_types_hdiet.json')
+    else:
+        types.from_json(config.product_types_in_json)
+
     products = Product.from_meta_csv(config.products_meta_in_csvname)
     products, len_p = itertools.tee(products)
     print("Try to merge generated types from meta: %d products" % len(list(len_p)))
@@ -715,6 +665,7 @@ def from_hdiet_csv(prodcsvname):
     print("Total types after merge: %d/%d" % (len(type_tuples), len(types.get_type_tuples(meaningful_only=True))))
 
     ProductType.print_stats()
+    TypeTerm.print_stats()
 
 def print_sqn_tails():
     config = main_options(sys.argv)
@@ -748,8 +699,13 @@ def print_sqn_tails():
 
 if __name__ == '__main__':
     import sys
-    # print_sqn_tails()
-    # dump_json()
-    load_from_json()
+    try:
+        # print_sqn_tails()
+        dump_json()
+        # load_from_json()
 
-    # from_hdiet_csv(sys.argv[1])
+        # from_hdiet_csv(sys.argv[1])
+    except Exception as e:
+        print
+        print "Exception caught: %s" % e.message
+        raise
