@@ -276,6 +276,9 @@ class CompoundTypeTerm(TypeTerm):
     """
     Term consists of two other simple TypeTerms
     If sub-terms are separated by non-space than space separated variant will be added as variant
+    NOTE: In common case it is not possible to determine the Main Form of compound term by its sub terms - all of them
+    have same rights. Hence, compound term is the own main form. However, in particular cases, like proposition and
+    abbreviation types - there may be clear what sub term is main. Thus, subclasses are override word form collection
     @type _sub_terms: list[TypeTerm]
     """
 
@@ -379,6 +382,14 @@ class WithPropositionTypeTerm(CompoundTypeTerm):
                 return False
         return True
 
+    def _collect_self_word_forms(self):
+        # For proposition it is clear which sub-term represent Main Form - it has only one real sub-term
+        collected_forms = super(WithPropositionTypeTerm, self)._collect_self_word_forms()
+        main_form = self.sub_terms[0].get_main_form()
+        if main_form not in collected_forms:
+            collected_forms = [main_form] + collected_forms
+        return collected_forms
+
 
 class TagTypeTerm(TypeTerm):
     # Special term starting with hash - it is used for unparseable tag names
@@ -399,3 +410,13 @@ class AbbreviationTypeTerm(CompoundTypeTerm):
     def _validate_tokens(self, tokens):
         comp_valid = super(AbbreviationTypeTerm, self)._validate_tokens(tokens)
         return comp_valid and any(len(t) <= 2 for t in tokens)
+
+    def _collect_self_word_forms(self):
+        # For abbreviation - special case exist when it is clear which sub-term represent Main Form -
+        # when one only sub-term is long and can represent normal term.
+        collected_forms = super(AbbreviationTypeTerm, self)._collect_self_word_forms()
+        if len(self.simple_sub_terms) == 1:
+            main_form = self.simple_sub_terms[0].get_main_form()
+            if main_form not in collected_forms:
+                collected_forms = [main_form] + collected_forms
+        return collected_forms
