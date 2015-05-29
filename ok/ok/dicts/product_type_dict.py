@@ -412,6 +412,9 @@ class ProductTypeDict(object):
         return types_suggested_relations
 
     def build_tag_types_from_products(self, products, type_tuples):
+        if self.VERBOSE:
+            print u"Building tag types from product's data"
+
         tag_type_relation_variants = defaultdict(set)
         """@type: dict of (ProductType, set[ProductType])"""
         sqn_types = defaultdict(set)
@@ -421,9 +424,11 @@ class ProductTypeDict(object):
                 sqn_types[sqn].add(t)
         for product in products:
             for tag in product.get('tags', set()):
-                tag_type = ProductType(TypeTerm.make(u'#' + tag.lower()))
+                tag_type = ProductType(u'#' + tag.lower())
                 tag_type_relation_variants[tag_type].update(sqn_types[product.sqn])
                 type_tuples[tag_type].append(product.sqn)
+        tags_created = set()
+        tags_relations_created = 0
         for tag_type, relation_to_variants in tag_type_relation_variants.iteritems():
             for t in relation_to_variants | set(tag_type_relation_variants.keys()):
                 # Check relations through products as well as between all tag types
@@ -435,13 +440,21 @@ class ProductTypeDict(object):
                 t_sqn_set = set()
                 [t_sqn_set.update(type_tuples[tt]) for tt in [t] + t.related_types(TYPE_TUPLE_RELATION_EQUALS, TYPE_TUPLE_RELATION_CONTAINS)]
                 tag_sqn_set = set(type_tuples[tag_type])
+                r = None
                 if tag_sqn_set == t_sqn_set:
-                    tag_type.equals_to(t)
+                    r = tag_type.equals_to(t)
                 elif tag_sqn_set.issubset(t_sqn_set):
-                    tag_type.subset_of(t)
+                    r = tag_type.subset_of(t)
                 elif tag_sqn_set.issuperset(t_sqn_set):
-                    tag_type.contains(t)
+                    r = tag_type.contains(t)
+                if r:
+                    tags_created.add(tag_type)
+                    tags_relations_created += 1
                 # TODO - implement 'almost' relation
+            if self.VERBOSE and len(tags_created) % 10 == 0: print u'.',
+        if self.VERBOSE:
+            print
+            print u"Tag types created %d with %d relations" % (len(tags_created), tags_relations_created)
 
     def build_from_products(self, products, strict_products=False):
         """
