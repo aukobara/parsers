@@ -200,6 +200,9 @@ class ProductType(tuple):
     def get_terms_ids(self):
         return tuple(super(ProductType, self).__iter__())
 
+    def get_main_form_term_ids(self):
+        return (TypeTerm.get_by_id(term_id).get_main_form().term_id for term_id in self.get_terms_ids())
+
     @staticmethod
     def calculate_same_same_hash(terms):
         """
