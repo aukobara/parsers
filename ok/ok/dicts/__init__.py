@@ -131,7 +131,7 @@ def main_options(opts=argv):
 
 __pymorph_analyzer = None
 """@type: pymorphy2.MorphAnalyzer"""
-def get_word_normal_form(word, strict=False):
+def get_word_normal_form(word, strict=True):
     """
     Return first (most relevant by pymorph) normal form of specified russian word.
     @param unicode word: w
@@ -153,5 +153,14 @@ def get_word_normal_form(word, strict=False):
     # Strict - ignore all except noun and adverbs
     p_variants = __pymorph_analyzer.parse(word)
     """@type: list[pymorphy2.analyzer.Parse]"""
-    w_norm = next((p.normal_form for p in p_variants if p.tag.POS in ('NOUN', 'ADJF', 'ADJS')), word)
+    p_selected = p_variants[0]
+    for p in p_variants:
+        if p.tag.POS in ('NOUN', 'ADJF', 'ADJS', 'PRTF', 'PRTS'):
+            p_selected = p
+            break
+    parse_norm = p_selected.inflect({'nomn', 'masc', 'sing'})
+    if parse_norm:
+        w_norm = parse_norm.word
+    else:
+        w_norm = p_selected.normal_form
     return w_norm if len(w_norm) > 3 else word
