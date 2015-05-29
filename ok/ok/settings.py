@@ -28,4 +28,4 @@ ITEM_PIPELINES = {
 
 LOG_FORMATTER = "ok.FixEncodingLogFormatter"
 
-DICT_BASELINE_DEFAULT_DIR = 'resources/data/ok/baseline150527'
+DICT_BASELINE_DEFAULT_DIR = 'resources/data/ok/baseline150529'
