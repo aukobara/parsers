@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from collections import namedtuple
 
-from ok.dicts.term import TypeTerm
+from ok.dicts.term import TypeTerm, term_dict
 
 TYPE_TUPLE_RELATION_IDENTICAL = u"identical"
 TYPE_TUPLE_RELATION_EQUALS = u"equals"
@@ -64,10 +64,10 @@ class ProductType(tuple):
 
     def __getitem__(self, y):
         term_id = super(ProductType, self).__getitem__(y)
-        return TypeTerm.get_by_id(term_id)
+        return term_dict.get_by_id(term_id)
 
     def __iter__(self):
-        return (TypeTerm.get_by_id(term_id) for term_id in super(ProductType, self).__iter__())
+        return (term_dict.get_by_id(term_id) for term_id in super(ProductType, self).__iter__())
 
     @staticmethod
     def reload():
@@ -85,8 +85,8 @@ class ProductType(tuple):
         """
         Add relation to both self and specified ProductType
         @param ProductType p_type2: another type
-        @param ProductType.Relation rel_from: from self to second
-        @param ProductType.Relation rel_from: from second to first
+        @param unicode rel_from: from self to second
+        @param unicode rel_from: from second to first
         @param bool is_soft: relation will not conflict ever - just for mark, not constraint.
                         It is always can be overwritten by hard relation. But soft relation will never overwrite hard
         @param unicode rel_attr_from: Relation may have own attribute (like weight). None, by default
@@ -191,6 +191,9 @@ class ProductType(tuple):
     def meaningful(self, meaningful):
         self._meaningful = meaningful
 
+    def as_string(self, delimiter=u' '):
+        return delimiter.join(term.as_string() for term in self)
+
     def __unicode__(self):
         return u' + '.join(self)
 
@@ -201,7 +204,7 @@ class ProductType(tuple):
         return tuple(super(ProductType, self).__iter__())
 
     def get_main_form_term_ids(self):
-        return (TypeTerm.get_by_id(term_id).get_main_form().term_id for term_id in self.get_terms_ids())
+        return (term_dict.get_by_id(term_id).get_main_form().term_id for term_id in self.get_terms_ids())
 
     @staticmethod
     def calculate_same_same_hash(terms):
@@ -214,7 +217,7 @@ class ProductType(tuple):
         """
         hash_terms = []
         for term_id in terms:
-            term = TypeTerm.get_by_id(term_id)
+            term = term_dict.get_by_id(term_id)
             """@type: TypeTerm"""
             if term is None:
                 raise Exception("No such term in dict with term_id: %d" % term_id)
@@ -233,7 +236,7 @@ class ProductType(tuple):
 
 class EqWrapper(ProductType):
     def __new__(cls, *args):
-        self = tuple.__new__(cls, args[0])
+        self = tuple.__new__(cls, [id.term_id if isinstance(id, TypeTerm) else id for id in args[0]])
         self.obj = args[0]
         self.match = None
         return self
