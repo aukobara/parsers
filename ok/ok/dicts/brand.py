@@ -5,7 +5,8 @@ import Levenshtein
 
 from transliterate import translit
 
-from ok.dicts import cleanup_token_str, isenglish, isrussian, add_string_combinations
+from ok.dicts import cleanup_token_str, add_string_combinations
+from ok.dicts.russian import isenglish, isrussian
 
 
 class Brand(object):
