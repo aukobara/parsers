@@ -367,12 +367,13 @@ def get_word_form_external(word, default=None, verbose=False):
                       (word, u'; '.join(u'%s: %s' % (_a.title, u', '.join(_a.noun_base)) for _a in articles))
             continue
 
-        min_len = min(map(len, art.noun_base))
-        matched_nouns = sorted([n for n in art.noun_base if len(n) == min_len])
-        if verbose and len(matched_nouns) > 1:
-            print u"WARN: word %s has ambiguity in external dict. Multiple noun bases match: %s. Used first one" % \
-                                (word, ', '.join(art.noun_base))
-        word_form = matched_nouns[0]
+        if art.noun_base:
+            min_len = min(map(len, art.noun_base))
+            matched_nouns = sorted([n for n in art.noun_base if len(n) == min_len])
+            if verbose and len(matched_nouns) > 1:
+                print u"WARN: word %s has ambiguity in external dict. Multiple noun bases match: %s. Used first one" % \
+                                    (word, ', '.join(art.noun_base))
+            word_form = matched_nouns[0]
 
     if not word_form and u'е' in word and u'ё' not in word:
         # Try to umlaut mutations :)
