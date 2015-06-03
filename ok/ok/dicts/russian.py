@@ -138,11 +138,53 @@ def dump_word_normal_form_stats(filename):
 FOLLOWING ARE FUNCTIONS/TASKS TO WORK WITH EXTERNAL DICT DATA
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-class DictArticle(namedtuple('_DictArticle', 'title noun_base')):
+class DictArticle(namedtuple('_DictArticle', 'title noun_base same pet')):
     def __dict__(self):
         return self._asdict()
 
 # Efremova preparations
+class _EffrDictParseContext(object):
+    def __init__(self, art):
+        self.art = art
+        """@type: unicode"""
+        self.noun_bases = []
+        """@type: list[unicode]"""
+        self.noun_bases_ambiguity = []
+        """@type: list[list[unicode]]"""
+        self.same = []
+        """@type: list[unicode]"""
+        self.same_ambiguity = []
+        """@type: list[list[unicode]]"""
+        self.pet = []
+        """@type: list[unicode]"""
+        self.pet_ambiguity = []
+        """@type: list[list[unicode]]"""
+
+    def __nonzero__(self):
+        return bool(self.art and (self.noun_bases or self.same or self.pet))
+
+    def make_dict_article(self):
+        """
+        Return main article with all ambiguity clones
+        @rtype: list[DictArticle]
+        """
+        result = [DictArticle(self.art, self.noun_bases, self.same, self.pet)]
+        if bool(self.noun_bases_ambiguity) + bool(self.same_ambiguity) + bool(self.pet_ambiguity) > 1:
+            raise Exception("Too much ambiguity: only one of noun base, same word and pet name may be ambigue - process manually")
+        if self.noun_bases_ambiguity:
+            # Ambiguity has been detected. Add all
+            for amb in self.noun_bases_ambiguity:
+                result.append(DictArticle(self.art, amb, [], []))
+        if self.same_ambiguity:
+            # Ambiguity has been detected. Add all
+            for amb in self.same_ambiguity:
+                result.append(DictArticle(self.art, [], amb, []))
+        if self.pet_ambiguity:
+            # Ambiguity has been detected. Add all
+            for amb in self.pet_ambiguity:
+                result.append(DictArticle(self.art, [], [], amb))
+        return result
+
 def effr_parse(filename, out_filename=None):
     from os.path import getsize, abspath
     effr_dict = defaultdict(list)
@@ -152,52 +194,43 @@ def effr_parse(filename, out_filename=None):
     print "Parsing Efremova dict from %s (size: %d)" % (original_dict_file, original_dict_file_size)
     with open(filename, 'rb') as f:
         # Articles are separated by empty lines
-        art = ''
-        noun_bases = []
-        noun_bases_ambiguity = []
         art_count = 0
-        ambiguity_count = 0
-        for line in f:
-            line = line.strip().decode('cp1251')
+        parse_context = None
+        """@type _EffrDictParseContext|None"""
+        total_ambiguity_count = 0
+        last_line = '\r\n'
+        while last_line:
+            last_line = f.readline()
+            line = last_line.strip().decode('cp1251')
             if line:
-                if not art:
-                    art = line.lower()
+                if parse_context is None:
+                    # Treat first line of block as article title
+                    parse_context = _EffrDictParseContext(line.lower())
                     if art_count % 3000 == 0: print '.',
                     art_count += 1
                     continue
-                m = re.search(u'Соотносящийся по знач. с сущ.:(.+?)(?: связанный с ним.*?)?$', line, re.U | re.I)
+                m = re.search(u'Соотносящийся по знач. с сущ.:(.+?)(?: (?:связанный|унаследованный).*)?$', line, re.U | re.I)
                 if m:
-                    prev_noun_bases = noun_bases
-                    prev_noun_bases_set = set(prev_noun_bases)
-                    noun_list_str = m.group(1)
-                    last_noun_bases = [noun_str.strip().lower() for noun_str in re.findall(u'\s+([^,(]+?)(?:(?:\s+\([^)]+\)),?|,)', noun_list_str, re.U)]
-                    last_noun_bases = OrderedDict.fromkeys([get_word_normal_form(_n, use_external_word_forms_dict=False) for _n in last_noun_bases]).keys()
-                    last_noun_bases_set = set(last_noun_bases)
-                    if prev_noun_bases_set and prev_noun_bases_set != last_noun_bases_set:
-                        # Second meaning of the same article has been found. Omonimia! Ambiguity!
-                        # First, before panic, try to resolve ambiguity
-                        if prev_noun_bases_set.intersection(last_noun_bases_set):
-                            # Both have common words. Merge
-                            noun_bases = prev_noun_bases + [n for n in last_noun_bases if n not in prev_noun_bases]
-                        else:
-                            noun_bases_ambiguity.append([n for n in last_noun_bases if n not in prev_noun_bases])
-                            noun_bases = prev_noun_bases
-                            ambiguity_count += 1
-                            print "WARN: Ambiguity in article %s.\r\n\tFirst: %s\r\n\tSecond: %s" % \
-                                  (art, ', '.join(prev_noun_bases_set), ', '.join(last_noun_bases))
-                    else:
-                        noun_bases = last_noun_bases
-            else:
+                    _parse_article_refs(m.group(1), parse_context, parse_context.noun_bases, parse_context.noun_bases_ambiguity)
+                    continue
+                m = re.search(u'То же, что:(.+?)\.?$', line, re.U | re.I)
+                if m:
+                    _parse_article_refs(m.group(1), parse_context, parse_context.same, parse_context.same_ambiguity)
+                    continue
+                m = re.search(u'(?:Уменьш.|Ласк.) к сущ.:(.+?)\.?$', line, re.U | re.I)
+                if m:
+                    _parse_article_refs(m.group(1), parse_context, parse_context.pet, parse_context.pet_ambiguity)
+                    continue
+            if not line:
                 # End of article. ready to next
-                if art and noun_bases:
-                    effr_dict[art].append(DictArticle(art, noun_bases))
-                    for amb_bases in noun_bases_ambiguity:
-                        effr_dict[art].append(DictArticle(art, amb_bases))
-                art = u''
-                noun_bases = []
-                noun_bases_ambiguity = []
+                if parse_context:
+                    effr_dict[parse_context.art].extend(parse_context.make_dict_article())
+                    total_ambiguity_count += len(parse_context.noun_bases_ambiguity) + \
+                                             len(parse_context.same_ambiguity) + \
+                                             len(parse_context.pet_ambiguity)
+                parse_context = None
         print
-        print "Parsed %d terms of %d articles. Found %d ambiguities" % (len(effr_dict), art_count, ambiguity_count)
+        print "Parsed %d terms of %d articles. Found %d ambiguities" % (len(effr_dict), art_count, total_ambiguity_count)
 
     if out_filename:
         print "Export parsed dict to %s" % abspath(out_filename)
@@ -209,10 +242,51 @@ def effr_parse(filename, out_filename=None):
             for art, items in sorted(effr_dict.iteritems(), key=lambda _i: _i[0]):
                 f.write(art.encode('utf-8'))
                 for item in items:
-                    f.write((u'~noun:%s' % (u'|'.join(sorted(item.noun_base)))).encode('utf-8'))
+                    if item.noun_base:
+                        f.write((u'~noun:%s' % (u'|'.join(sorted(item.noun_base)))).encode('utf-8'))
+                    if item.same:
+                        f.write((u'~same:%s' % (u'|'.join(sorted(item.same)))).encode('utf-8'))
+                    if item.pet:
+                        f.write((u'~pet:%s' % (u'|'.join(sorted(item.pet)))).encode('utf-8'))
                 f.write('\r\n'.encode('utf-8'))
 
     return effr_dict
+
+
+def _parse_article_refs(article_refs_list_str, parse_context, context_article_refs, context_article_refs_ambiguity):
+    """
+    @param unicode article_refs_list_str: list of article references
+    @param _EffrDictParseContext parse_context: context
+    @param context_article_refs list[unicode]: list of references to other articles (context field)
+    @param context_article_refs_ambiguity list[list[unicode]]: list of ambiguity clones (context field)
+    @return:
+    """
+    last_article_refs = _parse_article_references_list_string(article_refs_list_str)
+    if not context_article_refs:
+        context_article_refs.extend(last_article_refs)
+    else:
+        prev_article_refs_set = set(context_article_refs)
+        last_article_refs_set = set(last_article_refs)
+        if prev_article_refs_set != last_article_refs_set:
+            # Second meaning of the same article has been found. Omonimia! Ambiguity!
+            # First, before panic, try to resolve ambiguity
+            if prev_article_refs_set.intersection(last_article_refs_set):
+                # Both have common words. Merge
+                context_article_refs.extend( [n for n in last_article_refs if n not in context_article_refs] )
+            else:
+                context_article_refs_ambiguity.append([n for n in last_article_refs if n not in context_article_refs])
+                # Select first match as general
+                print "WARN: Ambiguity in article %s.\r\n\tFirst: %s\r\n\tSecond: %s" % \
+                      (parse_context.art, ', '.join(prev_article_refs_set), ', '.join(last_article_refs))
+
+
+def _parse_article_references_list_string(ref_list_str):
+    article_references = [ref_str.strip().lower() for ref_str in
+                       re.findall(u'\s+([^,(]+?)(?:(?:\s+\([^)]+\)),?|,|$)', ref_list_str, re.U)]
+    # Get normal forms only
+    article_references = OrderedDict.fromkeys(
+        [get_word_normal_form(_art_ref, use_external_word_forms_dict=False) for _art_ref in article_references]).keys()
+    return article_references
 
 __word_forms_dict = None
 
@@ -242,6 +316,11 @@ def _load_word_forms_dict(filename):
     from os.path import abspath
     print "Load word forms dict from: %s" % abspath(filename)
     word_forms_dict = defaultdict(list)
+
+    def 
+        if forms_variant_str.startswith(u'noun:'):
+            noun_base = [_s.strip().lower() for _s in forms_variant_str[len(u'noun:'):].split(u'|')]
+
     with open(filename, 'rb') as f:
         comment = ''
         for line in f:
@@ -256,8 +335,7 @@ def _load_word_forms_dict(filename):
             word, forms_str = (_s.strip().lower() for _s in line.split(u'~', 1))
             forms_str = forms_str.split(u'~')
             for forms_variant_str in forms_str:
-                if forms_variant_str.startswith(u'noun:'):
-                    noun_base = [_s.strip().lower() for _s in forms_variant_str[len(u'noun:'):].split(u'|')]
+
                     word_forms_dict[word].append(DictArticle(word, noun_base))
         print "Loaded %d word forms from file with comment: %s" % (len(word_forms_dict), comment)
 
@@ -300,3 +378,12 @@ def get_word_form_external(word, default=None, verbose=False):
             pos_e = word.find(u'е', pos_e + 1)
 
     return word_form or default
+
+if __name__ == '__main__':
+    import sys
+
+    if sys.argv and sys.argv[1] == 'efremova':
+        # Generate word forms from Efremova dictionary
+        effr_dict_filename = sys.argv[2]
+        word_forms_out_filename = sys.argv[3]
+        effr_parse(effr_dict_filename, word_forms_out_filename)
