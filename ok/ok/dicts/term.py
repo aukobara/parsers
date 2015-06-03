@@ -59,10 +59,16 @@ class TypeTermDict(object):
     def update_dawg(self):
         # Convert __terms dict to DAWG and clear. Search by prefixes can be used in DAWG only.
         # All new terms will be saved in __terms only and not searchable by prefixes until next update_dawg()
-        for term_str in self.__terms.keys()[:]:
-            # Ensure all word forms are initialized before moving to dawg. All terms in dawg must be immutable
-            wf = self.get_by_unicode(term_str).word_forms
-
+        count_wf = 0
+        key_set = set(self.__terms.keys())
+        seen_set = set()
+        while key_set > seen_set:
+            # New terms can appear during word forms generation
+            for term_str in key_set - seen_set:
+                # Ensure all word forms are initialized before moving to dawg. All terms in dawg must be immutable
+                count_wf += len(self.get_by_unicode(term_str).word_forms)
+                seen_set.add(term_str)
+            key_set = set(self.__terms.keys())
         new_dawg = dawg.BytesDAWG((unicode(k), bytes(v)) for k, v in
                                   itertools.chain(self.__terms.iteritems(), self.__terms_dawg.iteritems()))
         if len(new_dawg.keys()) != len(self.__terms.keys()) + len(self.__terms_dawg.keys()):
@@ -88,26 +94,34 @@ class TypeTermDict(object):
         term_id = self.find_id_by_unicode(term_str)
         return self.get_by_id(term_id) if term_id is not None else None
 
-    def find_by_unicode_prefix(self, prefix):
+    def find_by_unicode_prefix(self, prefix, return_self=True, not_compound=True):
         """
         Find terms with specified prefix. NOTE: dawg must be updated before with terms to find.
         If prefix is existing term it will be returned as well.
         @param unicode|TypeTerm prefix: prefix string
+        @param bool return_self: if False do not count term with name equal prefix, only longer terms are counted
+        @param bool not_compound: Do not count compound terms by default because their string representation is complicated
         @rtype: list[TypeTerm]
         """
         keys = self.__terms_dawg.keys(unicode(prefix))
-        return [self.get_by_unicode(key) for key in keys]
+        if not_compound:
+            keys = [k for k in keys if not CompoundTypeTerm.is_valid_term_for_type(k)]
+        return [term for key in keys if return_self or key != prefix
+                for term in [self.get_by_unicode(key)] if not not_compound or not isinstance(term, CompoundTypeTerm)]
 
-    def count_terms_with_prefix(self, prefix, count_self=True):
+    def count_terms_with_prefix(self, prefix, count_self=True, not_compound=True):
         """
         Count terms with specified prefix. NOTE: dawg must be updated before with terms to find.
         If prefix is existing term it will be counted as well except count_self=False is specified.
         @param unicode|TypeTerm prefix: prefix string
         @param bool count_self: if False do not count term with name equal prefix, only longer terms are counted
+        @param bool not_compound: Do not count compound terms by default because their string representation is complicated
         @rtype: int
         """
         key = unicode(prefix)
         prefixed_keys = self.__terms_dawg.keys(key)
+        if not_compound:
+            prefixed_keys = [k for k in prefixed_keys if not CompoundTypeTerm.is_valid_term_for_type(k)]
         return len(prefixed_keys) - (1 if not count_self and key in self.__terms_dawg else 0)
 
     def print_stats(self):
@@ -140,6 +154,9 @@ class TypeTerm(unicode):
         return self
 
     def __init__(self, from_str=''):
+        """
+        @param unicode from_str: term string
+        """
         super(TypeTerm, self).__init__(from_str)
         # Do not init already cached terms
         if self.is_new():
@@ -390,6 +407,9 @@ class CompoundTypeTerm(TypeTerm):
         return token_terms
 
     def __init__(self, from_str=''):
+        """
+        @param unicode from_str: term string
+        """
         # Check that is a new instance creation to avoid re-initialization for cached instances
         if self.is_new():
             self._spaced_form = None
@@ -442,6 +462,9 @@ class WithPropositionTypeTerm(CompoundTypeTerm):
     @type proposition: unicode
     """
     def __init__(self, from_str=''):
+        """
+        @param unicode from_str: term string
+        """
         if self.is_new():
             self.proposition = None
         super(WithPropositionTypeTerm, self).__init__(from_str)
@@ -532,7 +555,9 @@ class PrefixTypeTerm(TypeTerm):
     @staticmethod
     def is_valid_term_for_type(term_str):
         simple_type_valid = TypeTerm.is_valid_term_for_type(term_str)
-        return simple_type_valid and len(term_str) > 3 and term_dict.count_terms_with_prefix(term_str, count_self=False) >= 1
+        if not simple_type_valid or len(term_str) <= 3:
+            return False
+        return term_dict.count_terms_with_prefix(term_str, count_self=False) >= 1
 
     def _validate(self, prefixed_terms):
         """
@@ -542,6 +567,7 @@ class PrefixTypeTerm(TypeTerm):
         common_main_form_term_id = -1
         valid = True
         for term in sorted(prefixed_terms, key=len, reverse=True):
+            # TODO: word_forms of other terms prohibited during __init__ phase of term because it can cause recursion
             if self in term.word_forms:
                 # Term is already form of another term. Hence, cannot be treated as independent term and should be
                 # simple term instead
@@ -564,8 +590,7 @@ class PrefixTypeTerm(TypeTerm):
         """
         # Check that is a new instance creation to avoid re-initialization for cached instances
         if self.is_new():
-            prefixed_terms = [term for term in term_dict.find_by_unicode_prefix(self)
-                              if term != self and not isinstance(term, CompoundTypeTerm)]
+            prefixed_terms = [term for term in term_dict.find_by_unicode_prefix(self, return_self=False)]
             if not self._validate(prefixed_terms):
                 raise TypeTermException(u'This is not a %s: %s' % (type(self), unicode(self)))
             self._prefixed_terms = prefixed_terms

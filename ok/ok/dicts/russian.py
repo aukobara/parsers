@@ -31,9 +31,9 @@ WORD_NORMAL_FORM_KEEP_STATS_DEFAULT = True
 
 def _ensure_pymorphy():
     global __pymorph_analyzer
-    import pymorphy2
 
     if not __pymorph_analyzer:
+        import pymorphy2
         __pymorph_analyzer = pymorphy2.MorphAnalyzer()
 
     return __pymorph_analyzer
