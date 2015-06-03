@@ -96,9 +96,13 @@ def get_word_normal_form(word, strict=True, verbose=False, use_external_word_for
     p_selected = p_selected or p_variants[0]
     w_norm, parse_norm = inflect_normal_form(p_selected)
 
-    if use_external_word_forms_dict and parse_norm.tag.POS in {'ADJF', 'ADJS'}:
-        # Try to convert adjective to noun form
-        w_norm = get_word_form_external(w_norm, default=w_norm, verbose=verbose)
+    if use_external_word_forms_dict:
+        if parse_norm.tag.POS in {'ADJF', 'ADJS'}:
+            # Try to convert adjective to noun form
+            w_norm = adjective_to_noun_word_form(w_norm, default=w_norm, verbose=verbose)
+        if pymorph_analyzer.tag(w_norm)[0].POS in {'NOUN'}:
+            # Try to check 'same' and 'pet' forms of noun
+            w_norm = noun_from_same_or_pet_word_form(w_norm, default=w_norm, verbose=verbose)
 
     result = w_norm if len(w_norm) >= 3 else word
     if collect_stats:
@@ -346,8 +350,10 @@ def _load_word_forms_dict(filename):
 
     return word_forms_dict
 
-def get_word_form_external(word, default=None, verbose=False):
+def adjective_to_noun_word_form(word, default=None, verbose=False):
     """
+    Lookup at external dictionary and check if specified word is present in 'noun_base' form and then try to convert.
+    Ambiguities cases are checked and printed in verbose mode.
     @param unicode word: lookup word
     @param unicode default: return if not found
     @param bool verbose: print about ambiguity
@@ -359,15 +365,14 @@ def get_word_form_external(word, default=None, verbose=False):
     articles = word_forms_dict.get(word, [])
     word_form = None
     for art in articles:
-
-        if word_form:
-            # Already match one article but another is selected as well
-            if verbose:
-                print u"WARN: word %s has ambiguity in external dict. Multiple articles match: %s. Used first one" % \
-                      (word, u'; '.join(u'%s: %s' % (_a.title, u', '.join(_a.noun_base)) for _a in articles))
-            continue
-
         if art.noun_base:
+            if word_form:
+                # Already match one article but another is selected as well
+                if verbose:
+                    print u"WARN: word %s has ambiguity in external dict. Multiple articles match: %s. Used first one" % \
+                          (word, u'; '.join(u'%s: %s' % (_a.title, u', '.join(_a.noun_base)) for _a in articles))
+                continue
+
             min_len = min(map(len, art.noun_base))
             matched_nouns = sorted([n for n in art.noun_base if len(n) == min_len])
             if verbose and len(matched_nouns) > 1:
@@ -380,8 +385,59 @@ def get_word_form_external(word, default=None, verbose=False):
         pos_e = word.find(u'е')
         while not word_form and pos_e >= 0:
             word_with_ee = word[:pos_e] + u'ё' + word[pos_e + 1:]
-            word_form = get_word_form_external(word_with_ee)
+            word_form = adjective_to_noun_word_form(word_with_ee)
             pos_e = word.find(u'е', pos_e + 1)
+
+    return word_form or default
+
+def noun_from_same_or_pet_word_form(word, default=None, verbose=False, seen=None):
+    """
+    Seek NOUN in external dictionary in same and pet names articles. If found try to do this operation
+    until find terminal form (same and pet form can be chained in dict)
+    @param unicode word: lookup NOUN word
+    @param unicode default: return if not found
+    @param bool verbose: print about ambiguity
+    @rtype: unicode
+    """
+    # TODO: merge code with adjective_to_noun_word_form()
+    word_forms_dict = _ensure_word_forms_dict()
+
+    word = word.lower()
+    articles = word_forms_dict.get(word, [])
+    word_form = None
+    for art in articles:
+        if art.same or art.pet:
+
+            if word_form:
+                # Already match one article but another is selected as well
+                if verbose:
+                    print u"WARN: word %s has ambiguity in external dict. Multiple articles match: %s. Used first one" % \
+                          (word, u'; '.join(u'%s: %s' % (_a.title, u', '.join(_a.pet + _a.same)) for _a in articles))
+                continue
+
+            word_variants = art.same + art.pet
+            min_len = min(map(len, word_variants))
+            matched_variants = sorted([n for n in word_variants if len(n) == min_len])
+            if verbose and len(matched_variants) > 1:
+                print u"WARN: word %s has ambiguity in external dict. Multiple pet or same names match: %s. Used first one" % \
+                                    (word, ', '.join(word_variants))
+            word_form = matched_variants[0]
+
+    if not word_form and u'е' in word and u'ё' not in word:
+        # Try to umlaut mutations :)
+        pos_e = word.find(u'е')
+        while not word_form and pos_e >= 0:
+            word_with_ee = word[:pos_e] + u'ё' + word[pos_e + 1:]
+            word_form = adjective_to_noun_word_form(word_with_ee)
+            pos_e = word.find(u'е', pos_e + 1)
+
+    if word_form and word_form in word_forms_dict:
+        # Found word that is itself has variants. Try to do it recursevely
+        if not seen or word_form not in seen:
+            # Protection from eternal recursion
+            seen = seen or set()
+            seen.add(word_form)
+            word_form = noun_from_same_or_pet_word_form(word_form, default=word_form, verbose=verbose, seen=seen)
 
     return word_form or default
 
