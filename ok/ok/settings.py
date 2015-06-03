@@ -29,3 +29,18 @@ ITEM_PIPELINES = {
 LOG_FORMATTER = "ok.FixEncodingLogFormatter"
 
 DICT_BASELINE_DEFAULT_DIR = 'resources/data/ok/baseline150529'
+
+def ensure_baseline_dir():
+    from os.path import abspath, isdir, join, dirname
+    base_dir = abspath(DICT_BASELINE_DEFAULT_DIR)
+    if not isdir(base_dir):
+        # Try relative path from source folder
+        import ok
+        src_root = abspath(join(dirname(ok.__file__), '..'))
+        _base_dir = abspath(join(src_root, DICT_BASELINE_DEFAULT_DIR))
+        if isdir(_base_dir):
+            base_dir = _base_dir
+    if not isdir(base_dir):
+        raise Exception("Cannot find base dir specified in settings: %s" % base_dir)
+
+    return base_dir

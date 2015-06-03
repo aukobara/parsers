@@ -7,7 +7,8 @@ from collections import namedtuple
 import os
 import re
 from sys import argv
-from ok.settings import DICT_BASELINE_DEFAULT_DIR
+
+from ok.settings import ensure_baseline_dir
 
 
 def cleanup_token_str(s, ext_symbols=None):
@@ -20,24 +21,6 @@ def cleanup_token_str(s, ext_symbols=None):
     """
     ext = u'|'.join(ext_symbols) if ext_symbols else None
     return re.sub(u'(?:\s|"|,|\.|«|»|“|”|\(|\)|\?|\+|:' + (u'|' + ext if ext else u'') + ')+', u' ', s).strip()
-
-
-def isenglish(s):
-    try:
-        (s.encode("utf-8") if isinstance(s, unicode) else s).decode('ascii')
-        return True
-    except UnicodeDecodeError:
-        return False
-
-
-def isrussian(s):
-    if isenglish(s):
-        return False
-    try:
-        (s.encode("utf-8") if isinstance(s, unicode) else s).decode('cp1251')
-        return True
-    except UnicodeDecodeError:
-        return False
 
 
 def add_string_combinations(patterns, *repl):
@@ -65,7 +48,8 @@ def remove_nbsp(s):
 conf_type = namedtuple('OKConfig', 'toprint baseline_dir prodcsvname cat_csvname '
                        'brands_in_csvname brands_out_csvname '
                        'products_meta_in_csvname products_meta_out_csvname '
-                       'product_types_in_json product_types_out_json')
+                       'product_types_in_json product_types_out_json '
+                       'word_forms_dict')
 
 def main_options(opts=argv):
     """
@@ -84,6 +68,7 @@ def main_options(opts=argv):
     products_meta_out_csvname = None  # Don't save meta types by default
     product_types_in_json = None
     product_types_out_json = None  # Don't save product types by default
+    word_forms_dict = None
     while len(opts) > 1:
         opt = opts.pop(1)
         if opt == "-p" and len(opts) > 1:
@@ -102,6 +87,8 @@ def main_options(opts=argv):
             product_types_in_json = opts.pop(1)
         elif opt == "-out-product-types-json" and len(opts) > 1:
             product_types_out_json = opts.pop(1)
+        elif opt == "-word-forms-dict" and len(opts) > 1:
+            word_forms_dict = opts.pop(1)
         elif opt == "-base-dir" and len(opts) > 1:
             baseline_dir = opts.pop(1)
         elif not opt.startswith('-') and not prodcsvname:
@@ -110,12 +97,13 @@ def main_options(opts=argv):
             raise Exception((u"Unknown options: %s" % opt).encode("utf-8"))
     # Defaults
     toprint = toprint or "producttypes"
-    baseline_dir = baseline_dir or DICT_BASELINE_DEFAULT_DIR
+    baseline_dir = baseline_dir or ensure_baseline_dir()
     cat_csvname = cat_csvname or os.path.abspath(os.path.join(baseline_dir, 'cats.csv'))
     brands_in_csvname = brands_in_csvname or os.path.abspath(os.path.join(baseline_dir, 'brands.csv'))
     prodcsvname = prodcsvname or os.path.abspath(os.path.join(baseline_dir, 'products_raw.csv'))
     # products_meta_in_csvname = products_meta_in_csvname or os.path.abspath(os.path.join(baseline_dir, 'products_meta.csv'))
     product_types_in_json = product_types_in_json or os.path.abspath(os.path.join(baseline_dir, 'product_types.json'))
+    word_forms_dict = word_forms_dict or os.path.abspath(os.path.join(baseline_dir, 'word_forms_dict.txt'))
     return conf_type(
         toprint=toprint,
         baseline_dir=baseline_dir,
@@ -127,50 +115,9 @@ def main_options(opts=argv):
         products_meta_out_csvname=products_meta_out_csvname,
         product_types_in_json=product_types_in_json,
         product_types_out_json=product_types_out_json,
+        word_forms_dict=word_forms_dict,
     )
 
-__pymorph_analyzer = None
-"""@type: pymorphy2.MorphAnalyzer"""
-def get_word_normal_form(word, strict=True, verbose=False):
-    """
-    Return first (most relevant by pymorph) normal form of specified russian word.
-    @param unicode word: w
-    @param bool strict: if True - process nouns and adverbs only because participle and similar has verbs
-            as normal form which is useless for product parsing
-    @return:
-    """
-    global __pymorph_analyzer
-    import pymorphy2
-    if not __pymorph_analyzer:
-        __pymorph_analyzer = pymorphy2.MorphAnalyzer()
 
-    if not strict:
-        return __pymorph_analyzer.normal_forms(word)[0]
 
-    # Skip short words or multi-tokens (proposition forms?)
-    # if len(word) <= 3 or u' ' in word: return word
-    if len(word) <= 3: return word
 
-    # Strict - ignore all except noun and adverbs
-    p_variants = __pymorph_analyzer.parse(word)
-    """@type: list[pymorphy2.analyzer.Parse]"""
-    p_selected = None
-    warning_printed = False
-    for p in p_variants:
-        if p.tag.POS in ('NOUN', 'ADJF', 'ADJS', 'PRTF', 'PRTS'):
-            if not p_selected:
-                p_selected = p
-            elif verbose and p_selected.inflect({'nomn', 'masc', 'sing'}) != p.inflect({'nomn', 'masc', 'sing'}):
-                if not warning_printed:
-                    print "Morphological ambiguity has been detected for word: %s (selected: %s, %s (%f))" % \
-                          (word, p_selected.normal_form, p_selected.tag, p_selected.score),
-                warning_printed = True
-                print "\r\n%s => %s (%f)" % (p.normal_form, p.tag, p.score),
-    if warning_printed: print
-    p_selected = p_selected or p_variants[0]
-    parse_norm = p_selected.inflect({'nomn', 'masc', 'sing'})
-    if parse_norm:
-        w_norm = parse_norm.word
-    else:
-        w_norm = p_selected.normal_form
-    return w_norm if len(w_norm) > 3 else word
