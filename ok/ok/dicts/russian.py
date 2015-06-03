@@ -317,9 +317,11 @@ def _load_word_forms_dict(filename):
     print "Load word forms dict from: %s" % abspath(filename)
     word_forms_dict = defaultdict(list)
 
-    def 
-        if forms_variant_str.startswith(u'noun:'):
-            noun_base = [_s.strip().lower() for _s in forms_variant_str[len(u'noun:'):].split(u'|')]
+    def take_article_part(forms_variant_str, prefix):
+        result = []
+        if forms_variant_str.startswith(prefix):
+            result = [_s.strip().lower() for _s in forms_variant_str[len(prefix):].split(u'|')]
+        return result
 
     with open(filename, 'rb') as f:
         comment = ''
@@ -335,9 +337,12 @@ def _load_word_forms_dict(filename):
             word, forms_str = (_s.strip().lower() for _s in line.split(u'~', 1))
             forms_str = forms_str.split(u'~')
             for forms_variant_str in forms_str:
-
-                    word_forms_dict[word].append(DictArticle(word, noun_base))
-        print "Loaded %d word forms from file with comment: %s" % (len(word_forms_dict), comment)
+                nouns = take_article_part(forms_variant_str, u'noun:')
+                sames = take_article_part(forms_variant_str, u'same:')
+                pets = take_article_part(forms_variant_str, u'pet:')
+                if nouns or sames or pets:
+                    word_forms_dict[word].append(DictArticle(word, nouns, sames, pets))
+    print "Loaded %d word forms from file with comment: %s" % (len(word_forms_dict), comment)
 
     return word_forms_dict
 
