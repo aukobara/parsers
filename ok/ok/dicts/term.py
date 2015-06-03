@@ -1,44 +1,126 @@
 # -*- coding: utf-8 -*-
 from collections import defaultdict, namedtuple, OrderedDict
 import re
-from ok.dicts import get_word_normal_form, cleanup_token_str
+import dawg
+import itertools
+from ok.dicts import cleanup_token_str
+from ok.dicts.russian import get_word_normal_form
 
 TYPE_TERM_PROPOSITION_LIST = (u'в', u'с', u'со', u'из', u'для', u'и', u'на', u'без', u'к', u'не', u'де', u'по')
 TYPE_TERM_PROPOSITION_AND_WORD_LIST = (u'со',)
 
+
+class TypeTermException(Exception):
+    pass
+
+
+class TypeTermDict(object):
+    # Terms storage and dict. It should not be used directly and work through TypeTerm decorator methods.
+
+    def __init__(self):
+        self.__terms = defaultdict(set)
+        """@type: dict of (unicode, int)"""
+        self.__terms_dawg = dawg.BytesDAWG()
+        self.__terms_idx = [None] * 10000
+        """@type: list[unicode]"""
+        self.__next_idx = 1  # 0 is not used to avoid matching with None
+
+    def __term_to_idx(self, term):
+        # Naive non-thread safe realization
+        # If int - Tuple unfolding - referenced directly to indexes. Just return it
+        if isinstance(term, int):
+            idx = term
+        elif isinstance(term, TypeTerm):
+            idx = self.find_id_by_unicode(term)
+            if idx is None:
+                idx = self.__next_idx
+                self.__terms_idx[idx] = term
+                self.__terms[term] = idx
+                self.__next_idx += 1
+                if self.__next_idx == len(self.__terms_idx):
+                    new_idx = [None] * (int(len(self.__terms_idx) * 1.75))
+                    new_idx[:len(self.__terms_idx)] = self.__terms_idx[:]
+                    self.__terms_idx = new_idx
+        else:
+            raise Exception("Only TypeTerms or int are accepted but %s is given" % type(term))
+        return idx
+
+    def find_id_by_unicode(self, term_str):
+        dawg_id_list = self.__terms_dawg.get(term_str)
+        term_id = self.__terms.get(term_str) if not dawg_id_list else int(dawg_id_list[0])
+        return term_id
+
+    def clear(self):
+        self.__terms = defaultdict(set)
+        self.__terms_dawg = dawg.BytesDAWG()
+        self.__terms_idx = [None] * 10000
+        self.__next_idx = 1
+
+    def update_dawg(self):
+        # Convert __terms dict to DAWG and clear. Search by prefixes can be used in DAWG only.
+        # All new terms will be saved in __terms only and not searchable by prefixes until next update_dawg()
+        for term_str in self.__terms.keys()[:]:
+            # Ensure all word forms are initialized before moving to dawg. All terms in dawg must be immutable
+            wf = self.get_by_unicode(term_str).word_forms
+
+        new_dawg = dawg.BytesDAWG((unicode(k), bytes(v)) for k, v in
+                                  itertools.chain(self.__terms.iteritems(), self.__terms_dawg.iteritems()))
+        if len(new_dawg.keys()) != len(self.__terms.keys()) + len(self.__terms_dawg.keys()):
+            raise Exception("DAWG does not match to terms dict!")
+        self.__terms_dawg = new_dawg
+        self.__terms.clear()
+
+    def save_term(self, term):
+        return self.__term_to_idx(term)
+
+    def get_by_id(self, term_id):
+        """
+        @param int term_id: Term ID
+        @rtype: TypeTerm|None
+        """
+        return self.__terms_idx[term_id] if term_id < self.__next_idx else None
+
+    def get_by_unicode(self, term_str):
+        """
+        @param unicode|TypeTerm term_str: term string
+        @rtype: TypeTerm|None
+        """
+        term_id = self.find_id_by_unicode(term_str)
+        return self.get_by_id(term_id) if term_id is not None else None
+
+    def find_by_unicode_prefix(self, prefix):
+        """
+        Find terms with specified prefix. NOTE: dawg must be updated before with terms to find.
+        If prefix is existing term it will be returned as well.
+        @param unicode|TypeTerm prefix: prefix string
+        @rtype: list[TypeTerm]
+        """
+        keys = self.__terms_dawg.keys(unicode(prefix))
+        return [self.get_by_unicode(key) for key in keys]
+
+    def count_terms_with_prefix(self, prefix, count_self=True):
+        """
+        Count terms with specified prefix. NOTE: dawg must be updated before with terms to find.
+        If prefix is existing term it will be counted as well except count_self=False is specified.
+        @param unicode|TypeTerm prefix: prefix string
+        @param bool count_self: if False do not count term with name equal prefix, only longer terms are counted
+        @rtype: int
+        """
+        key = unicode(prefix)
+        prefixed_keys = self.__terms_dawg.keys(key)
+        return len(prefixed_keys) - (1 if not count_self and key in self.__terms_dawg else 0)
+
+    def print_stats(self):
+        print 'TypeTerm set stats:\r\n\tterms: %d\r\n\tterms(dawg): %d\r\n\tnext term index: %d' %\
+              (len(self.__terms), len(self.__terms_dawg.keys()), self.__next_idx)
+
+term_dict = TypeTermDict()
 
 class TypeTerm(unicode):
     # Multi-variant string. It has main representation but also additional variants which can be used for
     # combinations. Typical example is compound words separated by hyphen.
 
     not_a_term_character_pattern = re.compile(u'[^А-Яа-я0-9A-Za-zёЁ]+', re.U)
-
-    __terms = defaultdict(set)
-    """@type: dict of (unicode, int)"""
-    __terms_idx = [None] * 10000
-    """@type: list[unicode]"""
-    __next_idx = 1  # 0 is not used to avoid matching with None
-
-    @staticmethod
-    def __term_to_idx(term):
-        # Naive non-thread safe realization
-        # If int - Tuple unfolding - referenced directly to indexes. Just return it
-        if isinstance(term, int):
-            idx = term
-        elif isinstance(term, TypeTerm):
-            idx = TypeTerm.__terms.get(term)
-            if idx is None:
-                idx = TypeTerm.__next_idx
-                TypeTerm.__terms_idx[idx] = term
-                TypeTerm.__terms[term] = idx
-                TypeTerm.__next_idx += 1
-                if TypeTerm.__next_idx == len(TypeTerm.__terms_idx):
-                    new_idx = [None] * (int(len(TypeTerm.__terms_idx) * 1.75))
-                    new_idx[:len(TypeTerm.__terms_idx)] = TypeTerm.__terms_idx[:]
-                    TypeTerm.__terms_idx = new_idx
-        else:
-            raise Exception("Only TypeTerms or int are accepted but %s is given" % type(term))
-        return idx
 
     __slots__ = ('_term_id', '_variants', '_do_not_pair', '_always_pair', '_word_forms')
 
@@ -48,9 +130,9 @@ class TypeTerm(unicode):
         self = unicode.__new__(cls, *args)
         """@type: TypeTerm"""
         if not cls.is_valid_term_for_type(self):
-            raise Exception("Invalid term for type %s. Use another class or .make() method. Term: %s" % (cls, self))
+            raise TypeTermException(u"Invalid term for type %s. Use another class or .make() method. Term: %s" % (cls, unicode(self)))
 
-        exist_term = TypeTerm.get_by_unicode(self)
+        exist_term = term_dict.get_by_unicode(self)
         if exist_term is not None:
             self = exist_term
         else:
@@ -75,7 +157,7 @@ class TypeTerm(unicode):
             self._word_forms = None
 
             # Put term to cache and assign id
-            self._term_id = TypeTerm.__term_to_idx(self)
+            self._term_id = term_dict.save_term(self)
 
     def is_new(self):
         return self._term_id is None
@@ -106,40 +188,37 @@ class TypeTerm(unicode):
         return self._term_id
 
     @staticmethod
-    def get_by_id(term_id):
-        """
-        @param int term_id: Term ID
-        @rtype: TypeTerm|None
-        """
-        return TypeTerm.__terms_idx[term_id] if term_id < TypeTerm.__next_idx else None
-
-    @staticmethod
-    def get_by_unicode(term_str):
-        term_id = TypeTerm.__terms.get(term_str)
-        return TypeTerm.get_by_id(term_id) if term_id is not None else None
-
-    @staticmethod
     def make(term_str):
         """
         Factory method returns TypeTerm instance of correct type.
         Type is determined by term_str using .is_valid_term_for_type() method of each known type.
-        @param unicode term_str: string
+        @param unicode|TypeTerm term_str: string
         @rtype: TypeTerm
         """
         if isinstance(term_str, TypeTerm) and not term_str.is_new():
             return term_str
+        term = None
         if TagTypeTerm.is_valid_term_for_type(term_str):
             term = TagTypeTerm(term_str)
-        elif CompoundTypeTerm.is_valid_term_for_type(term_str):
+        elif PrefixTypeTerm.is_valid_term_for_type(term_str):
             try:
-                term = WithPropositionTypeTerm(term_str)
-            except:
+                term = PrefixTypeTerm(term_str)
+            except TypeTermException:
+                pass
+
+        if not term:
+            if CompoundTypeTerm.is_valid_term_for_type(term_str):
                 try:
-                    term = AbbreviationTypeTerm(term_str)
-                except:
-                    term = CompoundTypeTerm(term_str)
-        else:
+                    term = WithPropositionTypeTerm(term_str)
+                except TypeTermException:
+                    try:
+                        term = AbbreviationTypeTerm(term_str)
+                    except TypeTermException:
+                        term = CompoundTypeTerm(term_str)
+
+        if not term:
             term = TypeTerm(term_str)
+
         return term
 
     def get_main_form(self):
@@ -177,15 +256,23 @@ class TypeTerm(unicode):
 
     # TODO: Implement synonyms pre-processing for unfolding of abbreviations to normal forms
     # TODO: Actually this implementation is incorrect because synonyms are context dependent
+    __synonyms_index = None
     syn_set = namedtuple('SynonymsSet', 'main_form options')
-    synonyms = [
-                syn_set(get_word_normal_form(u'охлажденная'), {u'охл', u'охлажденная'}),
-                syn_set(get_word_normal_form(u'сельдь'), {u'сельдь', u'селедка'}),
-                syn_set(get_word_normal_form(u'оливковое'), {u'олив', u'оливковое'}),
-                syn_set(get_word_normal_form(u'на кости'), {u'н/к', u'на кости'}),
-                ]  # First ugly implementation. EXPERIMENTAL!
-    synonyms_index = {syn: syn_set_def for syn_set_def in synonyms for syn in syn_set_def.options}
-    """@type synonyms_index: dict of (unicode, SynonymsSet)"""
+
+    @staticmethod
+    def get_synonyms_index():
+        """
+        @rtype dict of (unicode, SynonymsSet)
+        """
+        if TypeTerm.__synonyms_index is None:
+            synonyms = [
+                        TypeTerm.syn_set(get_word_normal_form(u'охлажденная'), {u'охл', u'охлажденная'}),
+                        TypeTerm.syn_set(get_word_normal_form(u'сельдь'), {u'сельдь', u'селедка'}),
+                        TypeTerm.syn_set(get_word_normal_form(u'оливковое'), {u'олив', u'оливковое'}),
+                        TypeTerm.syn_set(get_word_normal_form(u'на кости'), {u'н/к', u'на кости'}),
+                        ]  # First ugly implementation. EXPERIMENTAL!
+            TypeTerm.__synonyms_index = {syn: syn_set_def for syn_set_def in synonyms for syn in syn_set_def.options}
+        return TypeTerm.__synonyms_index
 
     def _collect_self_word_forms(self):
         """
@@ -193,8 +280,8 @@ class TypeTerm(unicode):
         """
         syns = {self}
         main_form_syn = None
-        if self in TypeTerm.synonyms_index:
-            syn_set_def = TypeTerm.synonyms_index[self]
+        if self in self.get_synonyms_index():
+            syn_set_def = self.get_synonyms_index()[self]
             syns.update(syn_set_def.options)
             syns.update(map(get_word_normal_form, syn_set_def.options))
             main_form_syn = syn_set_def.main_form
@@ -212,11 +299,6 @@ class TypeTerm(unicode):
                 term = self.make(syn)
                 collected_forms.append(term)
         return collected_forms
-
-    @staticmethod
-    def print_stats():
-        print 'TypeTerm set stats:\r\n\tterms: %d\r\n\tnext term index: %d' %\
-              (len(TypeTerm.__terms), TypeTerm.__next_idx)
 
     @staticmethod
     def parse_term_string(terms_str):
@@ -271,6 +353,9 @@ class TypeTerm(unicode):
 
         return list(OrderedDict.fromkeys(terms))  # Filter duplicates
 
+    def as_string(self):
+        return unicode(self)
+
 
 class CompoundTypeTerm(TypeTerm):
     """
@@ -299,18 +384,19 @@ class CompoundTypeTerm(TypeTerm):
 
     def _make_token_terms(self, tokens):
         token_terms = [TypeTerm.make(token) for token in tokens]
-        spaced_form = u' '.join(token_terms)
-        if self != spaced_form and spaced_form not in token_terms:
-            token_terms.append(self.make(spaced_form))
+        self._spaced_form = u' '.join(token_terms)
+        if self != self._spaced_form and self._spaced_form not in token_terms:
+            token_terms.append(self.make(self._spaced_form))
         return token_terms
 
     def __init__(self, from_str=''):
         # Check that is a new instance creation to avoid re-initialization for cached instances
         if self.is_new():
+            self._spaced_form = None
             tokens = self._tokenize()
             tokens = self._filter_tokens(tokens)
             if not self._validate_tokens(tokens):
-                raise Exception(u'This is not a %s: %s' % (type(self), unicode(self)))
+                raise TypeTermException(u'This is not a %s: %s' % (type(self), unicode(self)))
             self._sub_terms = self._make_token_terms(tokens)
         super(CompoundTypeTerm, self).__init__(from_str)
 
@@ -333,6 +419,18 @@ class CompoundTypeTerm(TypeTerm):
         Usually it is sequence of original tokens
         """
         return [st for st in self.sub_terms if not isinstance(st, CompoundTypeTerm)]
+
+    """
+    def _collect_self_word_forms(self):
+        # If CompoundTypeTerm has spaced form different than itself it must go first as Main Form to match other
+        # compound terms with different delimiters
+        collected_forms = super(CompoundTypeTerm, self)._collect_self_word_forms()
+        if self._spaced_form != self:
+            main_form = TypeTerm.make(self._spaced_form).get_main_form()
+            if not collected_forms or main_form != collected_forms[0]:
+                collected_forms = [main_form] + collected_forms
+        return collected_forms
+    """
 
 
 class WithPropositionTypeTerm(CompoundTypeTerm):
@@ -386,7 +484,7 @@ class WithPropositionTypeTerm(CompoundTypeTerm):
         # For proposition it is clear which sub-term represent Main Form - it has only one real sub-term
         collected_forms = super(WithPropositionTypeTerm, self)._collect_self_word_forms()
         main_form = self.sub_terms[0].get_main_form()
-        if main_form not in collected_forms:
+        if not collected_forms or main_form != collected_forms[0]:
             collected_forms = [main_form] + collected_forms
         return collected_forms
 
@@ -397,6 +495,9 @@ class TagTypeTerm(TypeTerm):
     def is_valid_term_for_type(term_str):
         return TypeTerm.is_a_term(term_str) and term_str.startswith(u'#')
 
+    def as_string(self):
+        return unicode(self.replace(u'#', ''))
+
 
 class AbbreviationTypeTerm(CompoundTypeTerm):
     # Short form of compound term consists of abbreviation in one or multiple parts
@@ -405,11 +506,15 @@ class AbbreviationTypeTerm(CompoundTypeTerm):
     def _make_token_terms(self, tokens):
         sub_terms = super(AbbreviationTypeTerm, self)._make_token_terms(tokens)
         # Filter non simple terms or simple but long, i.e. meaningful
-        return [st for st in sub_terms if not TypeTerm.is_valid_term_for_type(st) or len(st) > 2]
+        result = []
+        for st in sub_terms:
+            if not TypeTerm.is_valid_term_for_type(st) or len(st) > 2:
+                result.append(st)
+        return result
 
     def _validate_tokens(self, tokens):
         comp_valid = super(AbbreviationTypeTerm, self)._validate_tokens(tokens)
-        return comp_valid and any(len(t) <= 2 for t in tokens)
+        return comp_valid and (any(len(t) <= 2 for t in tokens))
 
     def _collect_self_word_forms(self):
         # For abbreviation - special case exist when it is clear which sub-term represent Main Form -
@@ -417,6 +522,63 @@ class AbbreviationTypeTerm(CompoundTypeTerm):
         collected_forms = super(AbbreviationTypeTerm, self)._collect_self_word_forms()
         if len(self.simple_sub_terms) == 1:
             main_form = self.simple_sub_terms[0].get_main_form()
-            if main_form not in collected_forms:
+            if not collected_forms or main_form != collected_forms[0]:
                 collected_forms = [main_form] + collected_forms
         return collected_forms
+
+class PrefixTypeTerm(TypeTerm):
+    # Short word that has more longer unique form
+
+    @staticmethod
+    def is_valid_term_for_type(term_str):
+        simple_type_valid = TypeTerm.is_valid_term_for_type(term_str)
+        return simple_type_valid and len(term_str) > 3 and term_dict.count_terms_with_prefix(term_str, count_self=False) >= 1
+
+    def _validate(self, prefixed_terms):
+        """
+        @param list[TypeTerm] prefixed_terms: terms with prefix
+        @rtype: bool
+        """
+        common_main_form_term_id = -1
+        valid = True
+        for term in sorted(prefixed_terms, key=len, reverse=True):
+            if self in term.word_forms:
+                # Term is already form of another term. Hence, cannot be treated as independent term and should be
+                # simple term instead
+                valid = False
+                break
+
+            main_form_term_id = term.get_main_form().term_id
+            if common_main_form_term_id < 0:
+                common_main_form_term_id = main_form_term_id
+            elif common_main_form_term_id != main_form_term_id:
+                # Prefix can be detected for one term only with multiple forms
+                valid = False
+                break
+
+        return valid
+
+    def __init__(self, from_str=''):
+        """
+        @param unicode from_str: term string
+        """
+        # Check that is a new instance creation to avoid re-initialization for cached instances
+        if self.is_new():
+            prefixed_terms = [term for term in term_dict.find_by_unicode_prefix(self)
+                              if term != self and not isinstance(term, CompoundTypeTerm)]
+            if not self._validate(prefixed_terms):
+                raise TypeTermException(u'This is not a %s: %s' % (type(self), unicode(self)))
+            self._prefixed_terms = prefixed_terms
+        super(PrefixTypeTerm, self).__init__(from_str)
+
+    def _collect_self_word_forms(self):
+        collected_forms = super(PrefixTypeTerm, self)._collect_self_word_forms()
+        main_form_term = self._prefixed_terms[0].get_main_form()
+        collected_forms.extend(self._prefixed_terms)
+
+        if main_form_term and (not collected_forms or collected_forms[0] != main_form_term):
+            collected_forms = [main_form_term] + collected_forms
+
+        return collected_forms
+
+
