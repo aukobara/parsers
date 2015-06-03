@@ -11,8 +11,7 @@ import Levenshtein
 from ok.dicts.product import Product
 from ok.dicts.product_type import ProductType,\
     TYPE_TUPLE_RELATION_CONTAINS, TYPE_TUPLE_RELATION_EQUALS, TYPE_TUPLE_RELATION_SUBSET_OF
-from ok.dicts.term import TypeTerm, CompoundTypeTerm, WithPropositionTypeTerm
-
+from ok.dicts.term import TypeTerm, CompoundTypeTerm, WithPropositionTypeTerm, TagTypeTerm, term_dict
 
 TYPE_TUPLE_MIN_CAPACITY = 4  # Number of SQNs covered by word combination
 
@@ -114,6 +113,91 @@ class ProductTypeDict(object):
 
         return result
 
+    # TODO: make this cache more general and manageable. Merge this cache logic with update_relationship()
+    __main_form_cache = None
+    """@type __main_form_cache: dict of (set, set[ProductType])"""
+
+    @staticmethod
+    def _main_form_key(p_type):
+        return frozenset(p_type.get_main_form_term_ids())
+
+    __similarity_groups_cache = None
+    @staticmethod
+    def _similarity_hash_key(p_type):
+        chars = []
+        for term in p_type:
+            meaningful_word = term
+            if isinstance(term, WithPropositionTypeTerm):
+                meaningful_word = term.sub_terms[0]
+            elif isinstance(term, TagTypeTerm):
+                meaningful_word = term.replace(u'#', '')
+            chars.append(meaningful_word[0])
+        return frozenset(chars)
+
+    def _ensure_find_caches(self):
+        if self.__main_form_cache is None or self.__similarity_groups_cache is None:
+            all_types = self.get_type_tuples(meaningful_only=True)
+            self.__main_form_cache = defaultdict(set)
+            """@type dict of (set, set[ProductType])"""
+            self.__similarity_groups_cache = defaultdict(set)
+            for p_type in all_types:
+                self.__main_form_cache[self._main_form_key(p_type)].add(p_type)
+                self.__similarity_groups_cache[self._similarity_hash_key(p_type)].add(p_type)
+
+    def find_product_types(self, sqn, with_spellings=True):
+        product_types = self.collect_sqn_type_tuples(sqn, with_spellings=with_spellings)
+
+        self._ensure_find_caches()
+
+        result = set()
+        for p_type in product_types:
+            result.update(self.__main_form_cache.get(self._main_form_key(p_type), []))
+
+        return result
+
+    def find_product_type_relations(self, sqn, with_spellings=True):
+        self._ensure_find_caches()
+
+        tag_type = None
+        if TagTypeTerm.is_valid_term_for_type(sqn):
+            tag_type = ProductType(sqn.lower(), singleton=False)
+            product_types = {tag_type: sqn}
+        else:
+            product_types = self.collect_sqn_type_tuples(sqn, with_spellings=with_spellings)
+
+        if not tag_type:
+            # Try tag type as well. Now, naive version when try to match whole string as tag
+            # Probably better place for such thing is caller business logic
+            tag_key = self._main_form_key(ProductType(u'#' + sqn.lower(), singleton=False))
+            tag_types_set = self.__main_form_cache.get(tag_key, set())
+            tag_type = next(iter(tag_types_set), None)
+            if tag_type:
+                product_types[tag_type] = sqn
+
+        result = defaultdict(list)
+        """@type: dict of (ProductType, list[ProductType.Relation])"""
+        for t in product_types:
+            types_exist = self.__main_form_cache.get(self._main_form_key(t), [])
+            seen_related = set()
+            for t2 in types_exist:
+                r = t.get_relation(t2)
+                if not r:
+                    r = t.equals_to(t2, dont_change=True)
+                result[t].append(r)
+                result[t].extend(t2.relations())
+                seen_related.add(t2)
+                seen_related.update(_r.to_type for _r in t2.relations())
+            similarity_group = self.__similarity_groups_cache.get(self._similarity_hash_key(t), [])
+            for st in similarity_group:
+                if st not in seen_related:
+                    r = self.find_similar_relation(t, st, dont_change=True)
+                    if r:
+                        result[t].append(r)
+                        result[t].extend(st.relations())
+                        seen_related.add(st)
+                        seen_related.update(_r.to_type for _r in st.relations())
+        return result
+
     @staticmethod
     def collect_type_tuples(products, strict_products=False):
         """
@@ -152,66 +236,51 @@ class ProductTypeDict(object):
                 yield p_type, data
 
     @staticmethod
-    def find_relation(type1, set1, type2, set2, max_similarity, almost_min_size=1):
+    def compare_types(t1, t2, max_similarity=0):
         """
-        @param ProductType type1: type from
-        @param set|None set1: data from - if empty do not compare data sets but types only
-        @param ProductType type2: type to
-        @param set|None set2: data to - if empty do not compare data sets but types only
+        @param ProductType t1: type from
+        @param ProductType t2: type to
         @param float max_similarity: similarity level required
         @rtype: None|ProductType.Relation
         @return new instance of Relation. It is not applied to real types, though
         """
         relation = None
-        if type1 == type2 or list(type1) == list(type2):
-            relation = type1.identical(type2, dont_change=True)
-        elif not set1 or not set2:
-            # No SQNs are provided (ignore sqn mode?). Compare types by their tuples only
-            type1_token_set = set(type1)
-            type2_token_set = set(type2)
-            if type1_token_set == type2_token_set:
-                # Same type tokens in different order
-                relation = type1.equals_to(type2, dont_change=True)
-            elif type1_token_set.issubset(type2_token_set):
+        if t1 == t2 or list(t1) == list(t2):
+            relation = t1.identical(t2, dont_change=True)
+        else:
+            t1_terms_set = frozenset(t1.get_main_form_term_ids())
+            t2_terms_set = frozenset(t2.get_main_form_term_ids())
+            inter = t1_terms_set.intersection(t2_terms_set)
+            t1_is_more = len(t1_terms_set) > len(inter)
+            t2_is_more = len(t2_terms_set) > len(inter)
+            if t2_is_more:
+                if not t1_is_more:
+                    # Longest tuple is more detailed or precise type
+                    relation = t1.contains(t2, dont_change=True)
+            elif t1_is_more:
                 # Shortest tuple is more general type
-                relation = type1.contains(type2, dont_change=True)
-            elif type1_token_set.issuperset(type2_token_set):
-                # Longest tuple is more detailed or precise type
-                relation = type1.subset_of(type2, dont_change=True)
-        elif set1 and set2 and len(set1) == 1 and len(set2) == 1:
-            # Special optimization for building of dict from external product type sources loaded as singleton products
-            sqn1 = next(set1.__iter__())
-            sqn2 = next(set2.__iter__())
-            if sqn1 == sqn2:
-                relation = type1.equals_to(type2, dont_change=True)
-        elif set1 and set2:
-            if set1.issubset(set2):
-                if len(set1) < len(set2):
-                    relation = type1.subset_of(type2, dont_change=True)
-                else:
-                    relation = type1.equals_to(type2, dont_change=True)
-            elif set2.issubset(set1):
-                relation = type1.contains(type2, dont_change=True)
-            else:
-                s_inter = set1.intersection(set2)
+                relation = t1.subset_of(t2, dont_change=True)
+            elif t1 != t2:
+                # Same type terms in different order
+                relation = t1.equals_to(t2, dont_change=True)
 
-                def similarity(s):
-                    return (round(1.0 * len(s_inter) / len(s), 2), len(s_inter))
+            if max_similarity and not relation:
+                relation = ProductTypeDict.find_similar_relation(t1, t2, max_similarity, dont_change=True)
 
-                # if similarity(s1) >= 0.8:
-                if len(s_inter) >= almost_min_size:
-                    # AKA setratio()>0.8 in Levenshtein
-                    relation = type1.almost(type2, similarity(set1), similarity(set2), dont_change=True)
-                    # if similarity(s2) >= 0.8:
-                    # if len(s_inter) >= TYPE_TUPLE_MIN_CAPACITY:
-                    # relation = type1.almost(type2, similarity(s1), similarity(s2))
+        return relation
 
-        if len(type1) == len(type2) and not type1.get_relation(type2):
-            similarity = Levenshtein.setratio(type1, type2)
+    @staticmethod
+    def find_similar_relation(p_type1, p_type2, max_similarity=0.85, dont_change=False):
+        relation = None
+        similarity = 0
+        if not p_type1.get_relation(p_type2):
+            if len(p_type1) == len(p_type2):
+                similarity = Levenshtein.setratio(p_type1, p_type2)
+            if len(p_type1) > 1:
+                similarity = max(similarity, Levenshtein.ratio(p_type1.as_string(), p_type2.as_string()))
             if similarity >= max_similarity:
                 # Is it too smart??
-                relation = type1.similar(type2, round(similarity, 2), dont_change=True)
-
+                relation = p_type1.similar(p_type2, round(similarity, 2), dont_change=dont_change)
         return relation
 
     def update_type_tuples_relationship(self, type_tuples):
@@ -277,14 +346,8 @@ class ProductTypeDict(object):
             # TODO: optimize selection of group - actually first chars may have similar spellings as well (like е and ё)
             similarity_hash_key = frozenset({_term[0] if not isinstance(_term, WithPropositionTypeTerm) else _term.sub_terms[0][0] for _term in t})
             for sibling in same_length_group.get(similarity_hash_key, []):
-                if not t.get_relation(sibling):
-                    similarity = Levenshtein.setratio(t, sibling)
-                    if len(t) > 1:
-                        similarity = max(similarity, Levenshtein.ratio(unicode(t), unicode(sibling)))
-                    if similarity >= 0.85:
-                        # Is it too smart??
-                        t.similar(sibling, round(similarity, 2))
-                        relations_created += 1
+                r = self.find_similar_relation(t, sibling)
+                if r: relations_created += 1
             same_length_group[similarity_hash_key].append(t)
 
             seen_type_tuples[t.get_same_same_hash()].add(t)
@@ -327,7 +390,7 @@ class ProductTypeDict(object):
             for t in type_tuples:
                 if t in dict_types:
                     # Must always find identical relation
-                    rel = self.find_relation(t, None, t, None, max_similarity, almost_min_size=self.min_meaningful_type_capacity)
+                    rel = self.compare_types(t, t)
                     types_suggested_relations[t].append(rel)
                     if force_deep_scan:
                         del type_tuples_for_deep_scan[t]
@@ -338,14 +401,12 @@ class ProductTypeDict(object):
             # if self.VERBOSE: print "Identical type 's been found, skip deep scan"
 
         for t1, t2 in itertools.product(type_tuples_for_deep_scan.iteritems(), dict_types.iteritems()):
-            s1 = set(t1[1]) if not ignore_sqns else None
-            s2 = set(t2[1]) if not ignore_sqns else None
             type_input = t1[0]
             """@type: ProductType"""
             type_dict = t2[0]
             """@type: ProductType"""
 
-            rel = self.find_relation(type_input, s1, type_dict, s2, max_similarity, almost_min_size=self.min_meaningful_type_capacity)
+            rel = self.compare_types(type_input, type_dict, max_similarity)
 
             if rel:
                 types_suggested_relations[type_input].append(rel)
@@ -390,6 +451,8 @@ class ProductTypeDict(object):
                 tag_sqn_set = set(type_tuples[tag_type])
                 r = None
                 if tag_sqn_set == t_sqn_set:
+                    # TODO: Understand how to merge such situation. Now just break old relation and create new if exist
+                    tag_type.not_related(t)
                     r = tag_type.equals_to(t)
                 elif tag_sqn_set.issubset(t_sqn_set):
                     r = tag_type.subset_of(t)
@@ -492,6 +555,7 @@ class ProductTypeDict(object):
         type_tuples = defaultdict(list)
         pseudo_sqn = 1
         seen_rel = dict()
+        relations_loaded = 0
         for type_str, rel_str in types.iteritems():
             type_items = type_str.split(u' + ')
             # All types are loaded from external sources or knowledge base are considered meaningful regardless of
@@ -540,7 +604,7 @@ def dump_json():
     types.to_json('out/product_types_2.json')
 
 
-def load_from_json():
+def update_types_in_product_meta():
     from ok.dicts import main_options
     config = main_options(sys.argv)
     types = ProductTypeDict()
@@ -555,18 +619,21 @@ def load_from_json():
         meaningful_tuples = set(type_tuples)
         i_count = 0
         type_found_count = 0
+        multiple_types_found_count = 0
         for p in products:
-            p_all_types = types.collect_sqn_type_tuples(p.sqn)
+            p_all_types = types.find_product_types(p.sqn)
             type_variants = set(p_all_types)
-            p_all_types2 = types.collect_sqn_type_tuples(u'-'.join(p.sqn.split(u' ', 1)))
+            p_all_types2 = types.find_product_types(u'-'.join(p.sqn.split(u' ', 1)))
             type_variants.update(p_all_types2)
-            p_types = type_variants.intersection(meaningful_tuples)
+            # p_types = type_variants.intersection(meaningful_tuples)
+            p_types = type_variants
             p['types'] = p_types
             if p_types: type_found_count += 1
+            if any(len(p) > 1 for p in p_types): multiple_types_found_count += 1
             if i_count % 100 == 0: print '.',
             i_count += 1
         print
-        print 'Found types for %d products' % type_found_count
+        print 'Found types for %d products where %d have multi-term types' % (type_found_count, multiple_types_found_count)
         products_meta_out_csvname = config.products_meta_out_csvname
         if products_meta_out_csvname:
             Product.to_meta_csv(products_meta_out_csvname, products)
@@ -630,7 +697,7 @@ def from_hdiet_csv(prodcsvname):
     print("Total types after merge: %d/%d" % (len(type_tuples), len(types.get_type_tuples(meaningful_only=True))))
 
     ProductType.print_stats()
-    TypeTerm.print_stats()
+    term_dict.print_stats()
 
 def print_sqn_tails():
     from ok.dicts import main_options
@@ -663,12 +730,21 @@ def print_sqn_tails():
         if len(set(s)) < 3: continue
         print u'%s: %s' % (t, len(set(s)))
 
+
+def reload_product_type_dict():
+    import ok.dicts
+
+    config = ok.dicts.main_options([])
+    pd = ProductTypeDict()
+    pd.from_json(config.product_types_in_json)
+    return pd
+
 if __name__ == '__main__':
     import sys
     try:
         # print_sqn_tails()
         # dump_json()
-        # load_from_json()
+        # update_types_in_product_meta()
 
         from_hdiet_csv(sys.argv[1])
     except Exception as e:
