@@ -24,6 +24,10 @@ def isrussian(s):
 
 __pymorph_analyzer = None
 """@type: pymorphy2.MorphAnalyzer"""
+__normal_form_word_stats = defaultdict(dict)
+"""@type dict of (unicode, dict of (unicode, unicode))"""
+
+WORD_NORMAL_FORM_KEEP_STATS_DEFAULT = True
 
 def _ensure_pymorphy():
     global __pymorph_analyzer
@@ -35,7 +39,7 @@ def _ensure_pymorphy():
     return __pymorph_analyzer
 
 
-def get_word_normal_form(word, strict=True, verbose=False, use_external_word_forms_dict=True):
+def get_word_normal_form(word, strict=True, verbose=False, use_external_word_forms_dict=True, collect_stats=WORD_NORMAL_FORM_KEEP_STATS_DEFAULT):
     """
     Return first (most relevant by pymorph) normal form of specified russian word.
     @param unicode word: w
@@ -60,10 +64,21 @@ def get_word_normal_form(word, strict=True, verbose=False, use_external_word_for
     p_selected = None
     warning_printed = False
     for p in p_variants:
-        if p.tag.POS in ('NOUN', 'ADJF', 'ADJS', 'PRTF', 'PRTS'):
+        if p.tag.POS in ('NOUN', 'ADJF', 'ADJS', 'PRTF', 'PRTS') and not ({'Surn'} in p.tag or {'Name'} in p.tag):
+            # Ignore names
             if not p_selected:
                 p_selected = p
             else:
+                if {'NOUN'} not in p_selected.tag and {'NOUN'} in p.tag and p.score >= p_selected.score:
+                    # Prefer nouns to other POS with the same score
+                    p_selected = p
+                    continue
+
+                if {'Geox'} in p_selected.tag and {'Geox'} not in p.tag and p.score >= p_selected.score:
+                    # Prefer non-geographical terms if score is the same
+                    p_selected = p
+                    continue
+
                 if {'NOUN', 'Pltm'} in p.tag and p.score >= p_selected.score:
                     # Special "Pluralia tantum" processing - when meet word which can be in plural form only -
                     # prefer it if its score not less then selected
@@ -85,7 +100,10 @@ def get_word_normal_form(word, strict=True, verbose=False, use_external_word_for
         # Try to convert adjective to noun form
         w_norm = get_word_form_external(w_norm, default=w_norm, verbose=verbose)
 
-    return w_norm if len(w_norm) >= 3 else word
+    result = w_norm if len(w_norm) >= 3 else word
+    if collect_stats:
+        __normal_form_word_stats[result][word] = str(p_selected.tag) + (u'?' if not pymorph_analyzer.word_is_known(word) else u'')
+    return result
 
 
 def inflect_normal_form(parse_item):
@@ -106,6 +124,15 @@ def is_known_word(word):
     pymorph_analyzer = _ensure_pymorphy()
     is_known = pymorph_analyzer.word_is_known(word)
     return is_known
+
+def dump_word_normal_form_stats(filename):
+    import os.path
+    if __normal_form_word_stats:
+        print "Dump stats about %d words to %s" % (len(__normal_form_word_stats), os.path.abspath(filename))
+        with open(filename, 'wb') as f:
+            f.truncate()
+            f.writelines((u'%s: %d; %s\r\n' % (k, len(v), u'; '.join(u'%s=%s' % (w, tag) for w, tag in v.iteritems()))).encode('utf-8')
+                         for k, v in sorted(__normal_form_word_stats.iteritems(), key=lambda _v: _v[1], reverse=True))
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 FOLLOWING ARE FUNCTIONS/TASKS TO WORK WITH EXTERNAL DICT DATA
@@ -218,9 +245,11 @@ def _load_word_forms_dict(filename):
     with open(filename, 'rb') as f:
         comment = ''
         for line in f:
-            line = line.decode('utf-8')
+            line = line.decode('utf-8').strip()
+            if not line:
+                continue
             if not comment and line.startswith(u'#'):
-                comment += line[1:].strip()
+                comment += line[1:]
                 continue
             line = line.split(u'#', 1)[0]  # Remove inline comments
 
