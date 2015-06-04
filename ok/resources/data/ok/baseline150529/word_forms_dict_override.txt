@@ -1,15 +1,15 @@
-# Generated from "D:\space\magic\nlp\dicts\efremova_wo_prolog.txt" (size: 14817065) at 2015-06-02 16:14:28.642000
-весовой~noun:вес # ~noun:весы
-клубничный~noun:клубника # ~noun:клубничка
-обеденный~noun:обед # ~noun:обедня
-органический~noun:органика # ~noun:организм~noun:орган
-печёночный~noun:печень|печёнка # ~noun:печёночник
-сливочный~noun:сливки # noun:сливка~noun:слив
-тропический~noun:тропик # ~noun:троп
-энергетический~noun:энергетика|энергия # ~noun:энергетизм
-свиной~noun:свинина
-свинья~same:свинина
-варенье~same:варенье
+# This is a manual correction dictionary for Efremova and Ozhegov
+# Mostly it fixes ambiguties. Also it adds some colloquial words
+весовой~noun:вес # ambiguty: ~noun:весы
+клубничный~noun:клубника # ambiguty: ~noun:клубничка
+обеденный~noun:обед # ambiguty: ~noun:обедня
+органический~noun:органика # ambiguty: ~noun:организм~noun:орган
+печёночный~noun:печень|печёнка # ambiguty: ~noun:печёночник
+сливочный~noun:сливки # ambiguty: noun:слива
+тропический~noun:тропик # ambiguty: ~noun:троп
+энергетический~noun:энергетика|энергия # ambiguty: ~noun:энергетизм
+свиной~noun:свинина # more used term in grocery
+свинья~same:свинина # more used term in grocery
+варенье~same:варенье # more used term in grocery
 морква~same:морковь
-селёдка~same:сельдь
 семя~same:семя # Don't even try to look at efremova origin article :)

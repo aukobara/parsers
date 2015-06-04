@@ -39,7 +39,8 @@ def _ensure_pymorphy():
     return __pymorph_analyzer
 
 
-def get_word_normal_form(word, strict=True, verbose=False, use_external_word_forms_dict=True, collect_stats=WORD_NORMAL_FORM_KEEP_STATS_DEFAULT, return_known=True):
+def get_word_normal_form(word, strict=True, verbose=False, use_external_word_forms_dict=True,
+                         collect_stats=WORD_NORMAL_FORM_KEEP_STATS_DEFAULT, return_known=True):
     """
     Return first (most relevant by pymorph) normal form of specified russian word.
     @param unicode word: w
@@ -87,6 +88,11 @@ def get_word_normal_form(word, strict=True, verbose=False, use_external_word_for
                     p_selected = p
                     continue
 
+                if p_selected.normal_form != word and p.normal_form == word and p.score >= p_selected.score:
+                    # Prefer lexeme with normal_form the same as word if score is the same
+                    p_selected = p
+                    continue
+
                 if verbose and inflect_normal_form(p_selected)[0] != inflect_normal_form(p)[0]:
                     if not warning_printed:
                         print "Morphological ambiguity has been detected for word: %s (selected: %s, %s (%f))" % \
@@ -98,7 +104,7 @@ def get_word_normal_form(word, strict=True, verbose=False, use_external_word_for
     p_selected = p_selected or p_variants[0]
     w_norm, parse_norm = inflect_normal_form(p_selected)
     # Produced good or bad word form
-    is_w_norm_known = is_known_word(w_norm)
+    is_w_norm_known = is_known_word(w_norm, use_external_word_forms_dict=use_external_word_forms_dict)
 
     if use_external_word_forms_dict and is_w_norm_known:
         if parse_norm.tag.POS in {'ADJF', 'ADJS'}:
@@ -129,12 +135,16 @@ def inflect_normal_form(parse_item):
     return (result.word, result) if result != parse_item else (parse_item.normal_form, parse_item)
 
 
-def is_known_word(word):
+def is_known_word(word, use_external_word_forms_dict=True):
     pymorph_analyzer = _ensure_pymorphy()
-    is_known = pymorph_analyzer.word_is_known(word)
-    if not is_known:
-        word_forms_dict = _ensure_word_forms_dict()
-        is_known = word in word_forms_dict
+    word_forms_dict = _ensure_word_forms_dict() if use_external_word_forms_dict else {}
+    variants = [word] + collect_umlaut_variants(word)
+    for variant in variants:
+        if pymorph_analyzer.word_is_known(variant) or variant in word_forms_dict:
+            is_known = True
+            break
+    else:
+        is_known = False
     return is_known
 
 def dump_word_normal_form_stats(filename):
@@ -370,12 +380,12 @@ def _load_word_forms_dict(filename):
         all_words = set()
         for line in f:
             line = line.decode('utf-8').strip()
-            if not line:
-                continue
             if not comment and line.startswith(u'#'):
                 comment += line[1:]
                 continue
             line = line.split(u'#', 1)[0]  # Remove inline comments
+            if not line:
+                continue
 
             word, forms_str = (_s.strip().lower() for _s in line.split(u'~', 1))
             all_words.add(word)
@@ -396,7 +406,7 @@ def _load_word_forms_dict(filename):
 
     return word_forms_dict
 
-def adjective_to_noun_word_form(word, default=None, verbose=False):
+def adjective_to_noun_word_form(word, default=None, verbose=False, seen=None):
     """
     Lookup at external dictionary and check if specified word is present in 'noun_base' form and then try to convert.
     Ambiguities cases are checked and printed in verbose mode.
@@ -426,13 +436,7 @@ def adjective_to_noun_word_form(word, default=None, verbose=False):
                                     (word, ', '.join(art.noun_base))
             word_form = matched_nouns[0]
 
-    if not word_form and u'е' in word and u'ё' not in word:
-        # Try to umlaut mutations :)
-        pos_e = word.find(u'е')
-        while not word_form and pos_e >= 0:
-            word_with_ee = word[:pos_e] + u'ё' + word[pos_e + 1:]
-            word_form = adjective_to_noun_word_form(word_with_ee)
-            pos_e = word.find(u'е', pos_e + 1)
+    word_form = check_chained_word_forms(word, word_form, adjective_to_noun_word_form, verbose=verbose, seen=seen)
 
     return word_form or default
 
@@ -469,32 +473,54 @@ def noun_from_same_or_pet_word_form(word, default=None, verbose=False, seen=None
                                     (word, ', '.join(word_variants))
             word_form = matched_variants[0]
 
-    if not word_form and u'е' in word and u'ё' not in word:
-        # Try to umlaut mutations :)
-        pos_e = word.find(u'е')
-        while not word_form and pos_e >= 0:
-            word_with_ee = word[:pos_e] + u'ё' + word[pos_e + 1:]
-            word_form = adjective_to_noun_word_form(word_with_ee)
-            pos_e = word.find(u'е', pos_e + 1)
-
-    if word_form and word_form in word_forms_dict:
-        # Found word that is itself has variants. Try to do it recursevely
-        if not seen or word_form not in seen:
-            # Protection from eternal recursion
-            seen = seen or set()
-            seen.add(word_form)
-            word_form = noun_from_same_or_pet_word_form(word_form, default=word_form, verbose=verbose, seen=seen)
+    word_form = check_chained_word_forms(word, word_form, noun_from_same_or_pet_word_form, verbose=verbose, seen=seen)
 
     return word_form or default
 
-def ozhogov_parse(filename, out_filename=None):
-    # Parse 'same' forms only from Ozhogov dictionary
+
+def check_chained_word_forms(word, word_form, method, verbose=False, seen=None):
+    word_forms_dict = _ensure_word_forms_dict()
+
+    variants = [] if not word_form else [word_form]
+    if not word_form:
+        variants.extend(collect_umlaut_variants(word))
+
+    for variant in variants:
+        if variant in word_forms_dict:
+            # Found word that is itself has variants. Try to do it recursively
+            if not seen or variant not in seen:
+                # Protection from eternal recursion
+                seen = seen or {word}
+                seen.add(variant)
+                result = method(variant, verbose=verbose, seen=seen)
+                if result and result != variant:
+                    word_form = result
+                    break
+    return word_form
+
+
+def collect_umlaut_variants(word):
+    variants = []
+    if u'е' in word and u'ё' not in word:
+        # Try to umlaut mutations :)
+        # TODO: ugly implementation. Better use DAWG for dictionary
+        pos_e = word.find(u'е')
+        while pos_e >= 0:
+            word_with_ee = word[:pos_e] + u'ё' + word[pos_e + 1:]
+            variants.append(word_with_ee)
+            pos_e = word.find(u'е', pos_e + 1)
+    elif u'ё' in word:
+        variants.append(word.replace(u'ё', u'е'))
+    return variants
+
+def ozhegov_parse(filename, out_filename=None):
+    # Parse 'same' forms only from Ozhegov dictionary
     from os.path import getsize, abspath
-    ozhogov_dict = defaultdict(list)
+    ozhegov_dict = defaultdict(list)
     """@type: dict of (unicode, list[DictArticle])"""
     original_dict_file = abspath(filename)
     original_dict_file_size = getsize(original_dict_file)
-    print "Parsing Ozhogov dict from %s (size: %d)" % (original_dict_file, original_dict_file_size)
+    print "Parsing Ozhegov dict from %s (size: %d)" % (original_dict_file, original_dict_file_size)
     with open(filename, 'rb') as f:
         # All articles one-liners. Start from article title and fields separated by '|'
         # Ambiguities may be on duplicated lines for the same title
@@ -518,18 +544,22 @@ def ozhogov_parse(filename, out_filename=None):
 
                 art_count += 1
                 same = None
-                m = re.search(u'==\s+([а-яА-ЯёЁ]+)', fields[5], re.U)
+                m = re.search(u'^==((?:\s+[а-яА-ЯёЁ]+)+)', fields[5], re.U)
                 if m:
-                    same = m.group(1)
+                    m = re.findall(u'\s+([а-яА-ЯёЁ]+)', m.group(1), re.U)
+                    if len(m) > 1:
+                        # Ignore multi-word definitions.
+                        continue
+                    same = get_word_normal_form(m[0], use_external_word_forms_dict=False)
                 if art and same and art != same:
-                    previous_arts = ozhogov_dict[art]
+                    previous_arts = ozhegov_dict[art]
                     if any(same in pa.same for pa in previous_arts):
                         # Duplicate
                         continue
-                    ozhogov_dict[art].append(DictArticle(art, [], [same], []))
                     total_ambiguity_count += bool(previous_arts)
+                    ozhegov_dict[art].append(DictArticle(art, [], [same], []))
         print
-        print "Parsed %d terms of %d articles. Found %d ambiguities" % (len(ozhogov_dict), art_count, total_ambiguity_count)
+        print "Parsed %d terms of %d articles. Found %d ambiguities" % (len(ozhegov_dict), art_count, total_ambiguity_count)
 
     if out_filename:
         print "Export parsed dict to %s" % abspath(out_filename)
@@ -538,14 +568,14 @@ def ozhogov_parse(filename, out_filename=None):
         with open(out_filename, 'wb') as f:
             f.truncate()
             f.write('# Generated from "%s" (size: %d) at %s\r\n' % (original_dict_file, getsize(original_dict_file), now))
-            for art, items in sorted(ozhogov_dict.iteritems(), key=lambda _i: _i[0]):
+            for art, items in sorted(ozhegov_dict.iteritems(), key=lambda _i: _i[0]):
                 f.write(art.encode('utf-8'))
                 for item in items:
                     if item.same:
                         f.write((u'~same:%s' % (u'|'.join(sorted(item.same)))).encode('utf-8'))
                 f.write('\r\n'.encode('utf-8'))
 
-    return ozhogov_dict
+    return ozhegov_dict
 
 if __name__ == '__main__':
     import sys
@@ -556,8 +586,8 @@ if __name__ == '__main__':
         word_forms_out_filename = sys.argv[3]
         effr_parse(effr_dict_filename, word_forms_out_filename)
 
-    if sys.argv and sys.argv[1] == 'ozhogov':
-        # Generate word forms from Ozhogov dictionary
-        ozhogov_dict_filename = sys.argv[2]
+    if sys.argv and sys.argv[1] == 'ozhegov':
+        # Generate word forms from Ozhegov dictionary
+        ozhegov_dict_filename = sys.argv[2]
         word_forms_out_filename = sys.argv[3]
-        ozhogov_parse(ozhogov_dict_filename, word_forms_out_filename)
+        ozhegov_parse(ozhegov_dict_filename, word_forms_out_filename)
