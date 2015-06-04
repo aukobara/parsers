@@ -49,7 +49,7 @@ conf_type = namedtuple('OKConfig', 'toprint baseline_dir prodcsvname cat_csvname
                        'brands_in_csvname brands_out_csvname '
                        'products_meta_in_csvname products_meta_out_csvname '
                        'product_types_in_json product_types_out_json '
-                       'word_forms_dict')
+                       'word_forms_dict term_dict')
 
 def main_options(opts=argv):
     """
@@ -69,6 +69,7 @@ def main_options(opts=argv):
     product_types_in_json = None
     product_types_out_json = None  # Don't save product types by default
     word_forms_dict = None
+    term_dict = None
     while len(opts) > 1:
         opt = opts.pop(1)
         if opt == "-p" and len(opts) > 1:
@@ -89,6 +90,8 @@ def main_options(opts=argv):
             product_types_out_json = opts.pop(1)
         elif opt == "-word-forms-dict" and len(opts) > 1:
             word_forms_dict = opts.pop(1)
+        elif opt == "-term-dict" and len(opts) > 1:
+            term_dict = opts.pop(1)
         elif opt == "-base-dir" and len(opts) > 1:
             baseline_dir = opts.pop(1)
         elif not opt.startswith('-') and not prodcsvname:
@@ -104,6 +107,7 @@ def main_options(opts=argv):
     # products_meta_in_csvname = products_meta_in_csvname or os.path.abspath(os.path.join(baseline_dir, 'products_meta.csv'))
     product_types_in_json = product_types_in_json or os.path.abspath(os.path.join(baseline_dir, 'product_types.json'))
     word_forms_dict = word_forms_dict or os.path.abspath(os.path.join(baseline_dir, 'word_forms_dict.txt'))
+    term_dict = term_dict or os.path.abspath(os.path.join(baseline_dir, 'term_dict.dawg'))
     return conf_type(
         toprint=toprint,
         baseline_dir=baseline_dir,
@@ -116,6 +120,7 @@ def main_options(opts=argv):
         product_types_in_json=product_types_in_json,
         product_types_out_json=product_types_out_json,
         word_forms_dict=word_forms_dict,
+        term_dict=term_dict,
     )
 
 
