@@ -109,7 +109,8 @@ class TypeTermDict(object):
         If prefix is existing term it will be returned as well.
         @param unicode|TypeTerm prefix: prefix string
         @param bool return_self: if False do not count term with name equal prefix, only longer terms are counted
-        @param bool not_compound: Do not count compound terms by default because their string representation is complicated
+        @param bool not_compound: Do not count compound terms by default because their string representation is
+                        complicated
         @rtype: list[TypeTerm]
         """
         keys = self.__terms_dawg.keys(unicode(prefix))
@@ -124,7 +125,8 @@ class TypeTermDict(object):
         If prefix is existing term it will be counted as well except count_self=False is specified.
         @param unicode|TypeTerm prefix: prefix string
         @param bool count_self: if False do not count term with name equal prefix, only longer terms are counted
-        @param bool not_compound: Do not count compound terms by default because their string representation is complicated
+        @param bool not_compound: Do not count compound terms by default because their string representation is
+                        complicated
         @rtype: int
         """
         key = unicode(prefix)
@@ -137,7 +139,35 @@ class TypeTermDict(object):
         print 'TypeTerm set stats:\r\n\tterms: %d\r\n\tterms(dawg): %d\r\n\tnext term index: %d' %\
               (len(self.__terms), len(self.__terms_dawg.keys()), self.__next_idx)
 
-term_dict = TypeTermDict()
+    def to_file(self, filename, verbose=False):
+        if verbose:
+            print "Save current term_dict dawg to file: %s" % filename
+            if self.__terms:
+                print "WARN: Non-dawg dict is NOT empty and will not be saved! Update DAWG first!"
+        if self.__terms_dawg:
+            self.__terms_dawg.save(filename)
+        if verbose:
+            print "Dumped %d terms to %s" % (len(self.__terms_dawg.keys()), filename)
+
+    def from_file(self, filename, verbose=False):
+        if verbose:
+            print "Load term_dict dawg from file: %s" % filename
+            if self.__terms:
+                print "WARN: Non-dawg dict is NOT empty and will be lost!"
+        self.clear()
+        new_dawg = dawg.BytesDAWG()
+        new_dawg.load(filename)
+        term_id = 0
+        for term_str, term_id in sorted(new_dawg.iteritems(), key=lambda _t: int(_t[1])):
+            term_id = int(term_id)
+            term = TypeTerm.make(term_str)
+            assert term.term_id == term_id
+        assert self.__next_idx == term_id + 1, "Internal index does not match to dawg data!"
+        self.update_dawg()
+        assert list(new_dawg.keys()) == list(self.__terms_dawg.keys())
+        if verbose:
+            print "Loaded %d terms from %s" % (len(self.__terms_dawg.keys()), filename)
+
 
 class TypeTerm(unicode):
     # Multi-variant string. It has main representation but also additional variants which can be used for
@@ -147,15 +177,18 @@ class TypeTerm(unicode):
 
     __slots__ = ('_term_id', '_variants', '_do_not_pair', '_always_pair', '_word_forms')
 
+    term_dict = TypeTermDict()
+
     def __new__(cls, *args):
         if args and isinstance(args[0], TypeTerm) and getattr(args[0], '_term_id', None) is not None:
             return args[0]
         self = unicode.__new__(cls, *args)
         """@type: TypeTerm"""
         if not cls.is_valid_term_for_type(self):
-            raise TypeTermException(u"Invalid term for type %s. Use another class or .make() method. Term: %s" % (cls, unicode(self)))
+            raise TypeTermException(u"Invalid term for type %s. Use another class or .make() method. Term: %s" %
+                                    (cls, unicode(self)))
 
-        exist_term = term_dict.get_by_unicode(self)
+        exist_term = cls.term_dict.get_by_unicode(self)
         if exist_term is not None:
             self = exist_term
         else:
@@ -183,7 +216,7 @@ class TypeTerm(unicode):
             self._word_forms = None
 
             # Put term to cache and assign id
-            self._term_id = term_dict.save_term(self)
+            self._term_id = self.term_dict.save_term(self)
 
     def is_new(self):
         return self._term_id is None
@@ -205,13 +238,21 @@ class TypeTerm(unicode):
         # When term can be both proposition and regular word
         return word in TYPE_TERM_PROPOSITION_AND_WORD_LIST
 
-    @staticmethod
-    def is_valid_term_for_type(term_str):
-        return TypeTerm.is_a_term(term_str) and not TypeTerm.is_compound_term(term_str)
+    @classmethod
+    def is_valid_term_for_type(cls, term_str):
+        return cls.is_a_term(term_str) and not cls.is_compound_term(term_str)
 
     @property
     def term_id(self):
         return self._term_id
+
+    @classmethod
+    def get_by_id(cls, term_id):
+        """
+        @param int term_id: Term ID
+        @rtype: TypeTerm|None
+        """
+        return cls.term_dict.get_by_id(term_id)
 
     @staticmethod
     def make(term_str):
@@ -292,11 +333,10 @@ class TypeTerm(unicode):
         """
         if TypeTerm.__synonyms_index is None:
             synonyms = [
-                        TypeTerm.syn_set(get_word_normal_form(u'охлажденная'), {u'охл', u'охлажденная'}),
-                        TypeTerm.syn_set(get_word_normal_form(u'сельдь'), {u'сельдь', u'селедка'}),
-                        TypeTerm.syn_set(get_word_normal_form(u'оливковое'), {u'олив', u'оливковое'}),
-                        TypeTerm.syn_set(get_word_normal_form(u'на кости'), {u'н/к', u'на кости'}),
-                        ]  # First ugly implementation. EXPERIMENTAL!
+                TypeTerm.syn_set(get_word_normal_form(u'охлажденная'), {u'охл', u'охлажденная'}),
+                TypeTerm.syn_set(get_word_normal_form(u'оливковое'), {u'олив', u'оливковое'}),
+                TypeTerm.syn_set(get_word_normal_form(u'на кости'), {u'н/к', u'на кости'}),
+                ]  # First ugly implementation. EXPERIMENTAL!
             TypeTerm.__synonyms_index = {syn: syn_set_def for syn_set_def in synonyms for syn in syn_set_def.options}
         return TypeTerm.__synonyms_index
 
@@ -393,9 +433,9 @@ class CompoundTypeTerm(TypeTerm):
     @type _sub_terms: list[TypeTerm]
     """
 
-    @staticmethod
-    def is_valid_term_for_type(term_str):
-        return TypeTerm.is_a_term(term_str) and TypeTerm.is_compound_term(term_str)
+    @classmethod
+    def is_valid_term_for_type(cls, term_str):
+        return cls.is_a_term(term_str) and cls.is_compound_term(term_str)
 
     def _tokenize(self, max_split=0):
         tokens = re.split(TypeTerm.not_a_term_character_pattern, self, maxsplit=max_split)
@@ -523,9 +563,9 @@ class WithPropositionTypeTerm(CompoundTypeTerm):
 
 class TagTypeTerm(TypeTerm):
     # Special term starting with hash - it is used for unparseable tag names
-    @staticmethod
-    def is_valid_term_for_type(term_str):
-        return TypeTerm.is_a_term(term_str) and term_str.startswith(u'#')
+    @classmethod
+    def is_valid_term_for_type(cls, term_str):
+        return cls.is_a_term(term_str) and term_str.startswith(u'#')
 
     def as_string(self):
         return unicode(self.replace(u'#', ''))
@@ -558,15 +598,16 @@ class AbbreviationTypeTerm(CompoundTypeTerm):
                 collected_forms = [main_form] + collected_forms
         return collected_forms
 
+
 class PrefixTypeTerm(TypeTerm):
     # Short word that has more longer unique form
 
-    @staticmethod
-    def is_valid_term_for_type(term_str):
-        simple_type_valid = TypeTerm.is_valid_term_for_type(term_str)
+    @classmethod
+    def is_valid_term_for_type(cls, term_str):
+        simple_type_valid = super(PrefixTypeTerm, cls).is_valid_term_for_type(term_str)
         if not simple_type_valid or len(term_str) <= 3:
             return False
-        return term_dict.count_terms_with_prefix(term_str, count_self=False) >= 1
+        return cls.term_dict.count_terms_with_prefix(term_str, count_self=False) >= 1
 
     def _validate(self, prefixed_terms):
         """
@@ -599,7 +640,7 @@ class PrefixTypeTerm(TypeTerm):
         """
         # Check that is a new instance creation to avoid re-initialization for cached instances
         if self.is_new():
-            prefixed_terms = [term for term in term_dict.find_by_unicode_prefix(self, return_self=False)]
+            prefixed_terms = [term for term in self.term_dict.find_by_unicode_prefix(self, return_self=False)]
             if not self._validate(prefixed_terms):
                 raise TypeTermException(u'This is not a %s: %s' % (type(self), unicode(self)))
             self._prefixed_terms = prefixed_terms
@@ -618,12 +659,15 @@ class PrefixTypeTerm(TypeTerm):
 
 def print_prefix_word_candidates():
     wc = 0
+    term_dict = TypeTerm.term_dict
     for i in xrange(1, term_dict.get_max_id() + 1):
         term = term_dict.get_by_id(i)
-        if len(term) < 2: continue
+        if len(term) < 2:
+            continue
         full_terms = filter(is_known_word, term_dict.find_by_unicode_prefix(term, return_self=False))
         if full_terms and not any(term in _t.word_forms or term.get_main_form() in _t.word_forms for _t in full_terms):
-            if len(full_terms) == 1 or any(_t.get_main_form() != full_terms[0].get_main_form() for _t in full_terms[1:]):
+            if len(full_terms) == 1 or \
+                    any(_t.get_main_form() != full_terms[0].get_main_form() for _t in full_terms[1:]):
                 wc += 1
                 print u'%s%s => %s' % (term, (u'?' if not is_known_word(term) else ''),
                                        ', '.join(u'%s (%s)' % (_t, _t.get_main_form())
@@ -631,3 +675,47 @@ def print_prefix_word_candidates():
     print "Total %d candidates" % wc
 
 
+def dump_term_dict_from_product_types(filename):
+    print "Export term dict generated from product type dict"
+    term_dict = TypeTermDict()
+    TypeTerm.term_dict = term_dict
+    print "Load product type dict..."
+    from ok.dicts.product_type_dict import reload_product_type_dict
+    reload_product_type_dict()
+    # TypeTerm.make(u'тестовый терм')
+    term_dict.print_stats()
+    print "Update dawg..."
+    term_dict.update_dawg()
+    term_dict.to_file(filename, verbose=True)
+    return term_dict
+
+
+def load_term_dict(filename=None):
+    if not filename:
+        import ok.dicts
+        config = ok.dicts.main_options([])
+        filename = config.term_dict
+    term_dict = TypeTermDict()
+    TypeTerm.term_dict = term_dict
+    term_dict.from_file(filename, verbose=True)
+    return term_dict
+
+
+def test_dawg_persistence():
+    filename = 'out/_term_dict_test.dawg'
+    test_term_dict_saved = dump_term_dict_from_product_types(filename)
+    test_term_dict_loaded = load_term_dict(filename)
+    max_id = test_term_dict_loaded.get_max_id()
+    assert test_term_dict_saved.get_max_id() == max_id and max_id > 0, "Saved and loaded dawgs are different size!"
+    for i in xrange(1, max_id + 1):
+        term_saved = test_term_dict_saved.get_by_id(i)
+        term_loaded = test_term_dict_loaded.get_by_id(i)
+        assert isinstance(term_saved, TypeTerm) and isinstance(term_loaded, TypeTerm), \
+            "Terms have bad type"
+        assert term_saved == term_loaded and type(term_saved) == type(term_loaded), \
+            "Saved and Loaded terms are different!"
+
+
+if __name__ == '__main__':
+    import ok.dicts.term
+    ok.dicts.term.test_dawg_persistence()
