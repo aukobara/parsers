@@ -4,7 +4,7 @@ import re
 import dawg
 import itertools
 from ok.dicts import cleanup_token_str
-from ok.dicts.russian import get_word_normal_form
+from ok.dicts.russian import get_word_normal_form, is_known_word
 
 TYPE_TERM_PROPOSITION_LIST = (u'в', u'с', u'со', u'из', u'для', u'и', u'на', u'без', u'к', u'не', u'де', u'по')
 TYPE_TERM_PROPOSITION_AND_WORD_LIST = (u'со',)
@@ -38,6 +38,7 @@ class TypeTermDict(object):
                 self.__terms[term] = idx
                 self.__next_idx += 1
                 if self.__next_idx == len(self.__terms_idx):
+                    # Extend index storage
                     new_idx = [None] * (int(len(self.__terms_idx) * 1.75))
                     new_idx[:len(self.__terms_idx)] = self.__terms_idx[:]
                     self.__terms_idx = new_idx
@@ -70,11 +71,16 @@ class TypeTermDict(object):
                 seen_set.add(term_str)
             key_set = set(self.__terms.keys())
         new_dawg = dawg.BytesDAWG((unicode(k), bytes(v)) for k, v in
-                                  itertools.chain(self.__terms.iteritems(), self.__terms_dawg.iteritems()))
-        if len(new_dawg.keys()) != len(self.__terms.keys()) + len(self.__terms_dawg.keys()):
-            raise Exception("DAWG does not match to terms dict!")
+                                  itertools.chain(self.__terms_dawg.iteritems(), self.__terms.iteritems()))
+        assert len(new_dawg.keys()) == len(self.__terms.keys()) + len(self.__terms_dawg.keys()), \
+            "DAWG does not match to terms dict!"
         self.__terms_dawg = new_dawg
         self.__terms.clear()
+
+        # TODO: invalidate PrefixTypeTerms, i.e. check they are still valid PrefixTypeTerm.
+        # To pass full check they have to be recreated and converted to simple type if required
+        assert not any(isinstance(self.get_by_unicode(key), PrefixTypeTerm) for key in self.__terms_dawg.keys()), \
+            "TODO: INVALIDATE Prefix Types before merge them to DAWG"
 
     def save_term(self, term):
         return self.__term_to_idx(term)
@@ -85,6 +91,9 @@ class TypeTermDict(object):
         @rtype: TypeTerm|None
         """
         return self.__terms_idx[term_id] if term_id < self.__next_idx else None
+
+    def get_max_id(self):
+        return self.__next_idx - 1
 
     def get_by_unicode(self, term_str):
         """
@@ -605,5 +614,20 @@ class PrefixTypeTerm(TypeTerm):
             collected_forms = [main_form_term] + collected_forms
 
         return collected_forms
+
+
+def print_prefix_word_candidates():
+    wc = 0
+    for i in xrange(1, term_dict.get_max_id() + 1):
+        term = term_dict.get_by_id(i)
+        if len(term) < 2: continue
+        full_terms = filter(is_known_word, term_dict.find_by_unicode_prefix(term, return_self=False))
+        if full_terms and not any(term in _t.word_forms or term.get_main_form() in _t.word_forms for _t in full_terms):
+            if len(full_terms) == 1 or any(_t.get_main_form() != full_terms[0].get_main_form() for _t in full_terms[1:]):
+                wc += 1
+                print u'%s%s => %s' % (term, (u'?' if not is_known_word(term) else ''),
+                                       ', '.join(u'%s (%s)' % (_t, _t.get_main_form())
+                                                 for _t in full_terms if term not in _t.word_forms))
+    print "Total %d candidates" % wc
 
 
