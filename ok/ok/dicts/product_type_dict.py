@@ -736,6 +736,7 @@ def reload_product_type_dict():
 
     config = ok.dicts.main_options([])
     pd = ProductTypeDict()
+    pd.VERBOSE = True
     pd.from_json(config.product_types_in_json)
     return pd
 
