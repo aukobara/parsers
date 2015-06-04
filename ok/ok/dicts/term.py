@@ -6,7 +6,7 @@ import itertools
 from ok.dicts import cleanup_token_str
 from ok.dicts.russian import get_word_normal_form, is_known_word
 
-TYPE_TERM_PROPOSITION_LIST = (u'в', u'с', u'со', u'из', u'для', u'и', u'на', u'без', u'к', u'не', u'де', u'по')
+TYPE_TERM_PROPOSITION_LIST = (u'в', u'с', u'со', u'из', u'для', u'и', u'на', u'без', u'к', u'не', u'де', u'по', u'под')
 TYPE_TERM_PROPOSITION_AND_WORD_LIST = (u'со',)
 
 
