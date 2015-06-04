@@ -11,7 +11,7 @@ import Levenshtein
 from ok.dicts.product import Product
 from ok.dicts.product_type import ProductType,\
     TYPE_TUPLE_RELATION_CONTAINS, TYPE_TUPLE_RELATION_EQUALS, TYPE_TUPLE_RELATION_SUBSET_OF
-from ok.dicts.term import TypeTerm, CompoundTypeTerm, WithPropositionTypeTerm, TagTypeTerm, term_dict
+from ok.dicts.term import TypeTerm, CompoundTypeTerm, WithPropositionTypeTerm, TagTypeTerm
 
 TYPE_TUPLE_MIN_CAPACITY = 4  # Number of SQNs covered by word combination
 
@@ -697,7 +697,6 @@ def from_hdiet_csv(prodcsvname):
     print("Total types after merge: %d/%d" % (len(type_tuples), len(types.get_type_tuples(meaningful_only=True))))
 
     ProductType.print_stats()
-    term_dict.print_stats()
 
 def print_sqn_tails():
     from ok.dicts import main_options

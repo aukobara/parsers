@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from collections import namedtuple
 
-from ok.dicts.term import TypeTerm, term_dict
+from ok.dicts.term import TypeTerm
 
 TYPE_TUPLE_RELATION_IDENTICAL = u"identical"
 TYPE_TUPLE_RELATION_EQUALS = u"equals"
@@ -64,10 +64,10 @@ class ProductType(tuple):
 
     def __getitem__(self, y):
         term_id = super(ProductType, self).__getitem__(y)
-        return term_dict.get_by_id(term_id)
+        return TypeTerm.get_by_id(term_id)
 
     def __iter__(self):
-        return (term_dict.get_by_id(term_id) for term_id in super(ProductType, self).__iter__())
+        return (TypeTerm.get_by_id(term_id) for term_id in super(ProductType, self).__iter__())
 
     @staticmethod
     def reload():
@@ -204,7 +204,7 @@ class ProductType(tuple):
         return tuple(super(ProductType, self).__iter__())
 
     def get_main_form_term_ids(self):
-        return (term_dict.get_by_id(term_id).get_main_form().term_id for term_id in self.get_terms_ids())
+        return (TypeTerm.get_by_id(term_id).get_main_form().term_id for term_id in self.get_terms_ids())
 
     @staticmethod
     def calculate_same_same_hash(terms):
@@ -217,7 +217,7 @@ class ProductType(tuple):
         """
         hash_terms = []
         for term_id in terms:
-            term = term_dict.get_by_id(term_id)
+            term = TypeTerm.get_by_id(term_id)
             """@type: TypeTerm"""
             if term is None:
                 raise Exception("No such term in dict with term_id: %d" % term_id)
