@@ -39,7 +39,7 @@ def _ensure_pymorphy():
     return __pymorph_analyzer
 
 
-def get_word_normal_form(word, strict=True, verbose=False, use_external_word_forms_dict=True, collect_stats=WORD_NORMAL_FORM_KEEP_STATS_DEFAULT):
+def get_word_normal_form(word, strict=True, verbose=False, use_external_word_forms_dict=True, collect_stats=WORD_NORMAL_FORM_KEEP_STATS_DEFAULT, return_known=True):
     """
     Return first (most relevant by pymorph) normal form of specified russian word.
     @param unicode word: w
@@ -47,6 +47,8 @@ def get_word_normal_form(word, strict=True, verbose=False, use_external_word_for
             as normal form which is useless for product parsing
     @param bool use_external_word_forms_dict: if False work with pymorphy only.
             It can be useful during data generation when external dicts are not ready or in invalid state
+    @param bool return_known: if True (default) return only good known words. No word-creation. If failed to find good
+            known form - return word itself. If False, unknown weird words may be returned.
     @return:
     """
     pymorph_analyzer = _ensure_pymorphy()
@@ -95,8 +97,10 @@ def get_word_normal_form(word, strict=True, verbose=False, use_external_word_for
     # If no one pass the filter just use one with max score
     p_selected = p_selected or p_variants[0]
     w_norm, parse_norm = inflect_normal_form(p_selected)
+    # Produced good or bad word form
+    is_w_norm_known = is_known_word(w_norm)
 
-    if use_external_word_forms_dict:
+    if use_external_word_forms_dict and is_w_norm_known:
         if parse_norm.tag.POS in {'ADJF', 'ADJS'}:
             # Try to convert adjective to noun form
             w_norm = adjective_to_noun_word_form(w_norm, default=w_norm, verbose=verbose)
@@ -104,7 +108,8 @@ def get_word_normal_form(word, strict=True, verbose=False, use_external_word_for
             # Try to check 'same' and 'pet' forms of noun
             w_norm = noun_from_same_or_pet_word_form(w_norm, default=w_norm, verbose=verbose)
 
-    result = w_norm if len(w_norm) >= 3 else word
+    # Return only long enough words and good known words (if specified, by default)
+    result = w_norm if len(w_norm) >= 3 and (not return_known or is_w_norm_known) else word
     if collect_stats:
         __normal_form_word_stats[result][word] = str(p_selected.tag) + (u'?' if not pymorph_analyzer.word_is_known(word) else u'')
     return result
@@ -127,6 +132,9 @@ def inflect_normal_form(parse_item):
 def is_known_word(word):
     pymorph_analyzer = _ensure_pymorphy()
     is_known = pymorph_analyzer.word_is_known(word)
+    if not is_known:
+        word_forms_dict = _ensure_word_forms_dict()
+        is_known = word in word_forms_dict
     return is_known
 
 def dump_word_normal_form_stats(filename):
@@ -145,6 +153,9 @@ FOLLOWING ARE FUNCTIONS/TASKS TO WORK WITH EXTERNAL DICT DATA
 class DictArticle(namedtuple('_DictArticle', 'title noun_base same pet')):
     def __dict__(self):
         return self._asdict()
+
+    def is_empty(self):
+        return not (self.noun_base or self.same or self.pet)
 
 # Efremova preparations
 class _EffrDictParseContext(object):
@@ -302,19 +313,46 @@ def _ensure_word_forms_dict():
     global __word_forms_dict
 
     if __word_forms_dict is None:
+        word_forms_dict = defaultdict(list)
+
         config = main_options([])
         filename = config.word_forms_dict
-        word_forms_dict = _load_word_forms_dict(filename)
 
+        """
+        Load word_form_dicts from multiple files. Sequence (in following order) is checked.
+        If file exist override (merge) with previous data.
+        <filename>_0.<fileext>
+        <filename>_1.<fileext>
+        ...
+        <filename>_9.<fileext>
+        <filename>.<fileext>
+        <filename>_override.<fileext>
+        Numbered dicts are optional generated dicts from multiple sources.
+        One without number suffix is main generated dict
+        _override dict contains manual corrections
+        """
         file_base, file_ext = splitext(filename)
-        override_filename = file_base + '_override' + file_ext
-        if isfile(override_filename):
-            override_word_forms_dict = _load_word_forms_dict(override_filename)
-            word_forms_dict.update(override_word_forms_dict)
+        file_variants = []
+        for i in xrange(10):
+            file_variants.append('%s_%d%s' % (file_base, i, file_ext))
+        file_variants.append(filename)
+        file_variants.append('%s_override%s' % (file_base, file_ext))
+
+        for filename_i in file_variants:
+            if isfile(filename_i):
+                override_word_forms_dict = _load_word_forms_dict(filename_i)
+                for art, items in override_word_forms_dict.iteritems():
+                    if art in word_forms_dict:
+                        if any(not _it.is_empty() for _it in word_forms_dict[art]) and \
+                                all(_it.is_empty() for _it in items):
+                            # Do not rewrite existing meaningful data by empty articles
+                            continue
+                    word_forms_dict[art] = items
 
         __word_forms_dict = word_forms_dict
 
     return __word_forms_dict
+
 
 def _load_word_forms_dict(filename):
     from os.path import abspath
@@ -329,6 +367,7 @@ def _load_word_forms_dict(filename):
 
     with open(filename, 'rb') as f:
         comment = ''
+        all_words = set()
         for line in f:
             line = line.decode('utf-8').strip()
             if not line:
@@ -339,6 +378,7 @@ def _load_word_forms_dict(filename):
             line = line.split(u'#', 1)[0]  # Remove inline comments
 
             word, forms_str = (_s.strip().lower() for _s in line.split(u'~', 1))
+            all_words.add(word)
             forms_str = forms_str.split(u'~')
             for forms_variant_str in forms_str:
                 nouns = take_article_part(forms_variant_str, u'noun:')
@@ -346,7 +386,13 @@ def _load_word_forms_dict(filename):
                 pets = take_article_part(forms_variant_str, u'pet:')
                 if nouns or sames or pets:
                     word_forms_dict[word].append(DictArticle(word, nouns, sames, pets))
-    print "Loaded %d word forms from file with comment: %s" % (len(word_forms_dict), comment)
+                    all_words.update(nouns + sames + pets)
+        # Put all remaining known referenced words as empty articles to know they are real
+        undefined_known_words = all_words.difference(word_forms_dict)
+        for word in undefined_known_words:
+            word_forms_dict[word].append(DictArticle(word, [], [], []))
+    print "Loaded %d word forms (of %d total known words) from file with comment: %s" % \
+          (len(word_forms_dict) - len(undefined_known_words), len(word_forms_dict), comment)
 
     return word_forms_dict
 
@@ -441,6 +487,66 @@ def noun_from_same_or_pet_word_form(word, default=None, verbose=False, seen=None
 
     return word_form or default
 
+def ozhogov_parse(filename, out_filename=None):
+    # Parse 'same' forms only from Ozhogov dictionary
+    from os.path import getsize, abspath
+    ozhogov_dict = defaultdict(list)
+    """@type: dict of (unicode, list[DictArticle])"""
+    original_dict_file = abspath(filename)
+    original_dict_file_size = getsize(original_dict_file)
+    print "Parsing Ozhogov dict from %s (size: %d)" % (original_dict_file, original_dict_file_size)
+    with open(filename, 'rb') as f:
+        # All articles one-liners. Start from article title and fields separated by '|'
+        # Ambiguities may be on duplicated lines for the same title
+        art_count = 0
+        total_ambiguity_count = 0
+        for line in f:
+            line = line.strip().decode('cp1251').lower()
+            if line:
+                # "сочник|||||== сочень <...mess...>||" - need a title in zero field and '== <ref>' in 5th field.
+                # After <ref> token might be a mess, parse first token only
+                fields = line.split(u'|')
+                if len(fields) < 6:
+                    continue
+                art = fields[0].strip()
+
+                pymorph = _ensure_pymorphy()
+                if pymorph.word_is_known(art):
+                    if {'NOUN'} not in pymorph.tag(art)[0]:
+                        # Use NOUNs only
+                        continue
+
+                art_count += 1
+                same = None
+                m = re.search(u'==\s+([а-яА-ЯёЁ]+)', fields[5], re.U)
+                if m:
+                    same = m.group(1)
+                if art and same and art != same:
+                    previous_arts = ozhogov_dict[art]
+                    if any(same in pa.same for pa in previous_arts):
+                        # Duplicate
+                        continue
+                    ozhogov_dict[art].append(DictArticle(art, [], [same], []))
+                    total_ambiguity_count += bool(previous_arts)
+        print
+        print "Parsed %d terms of %d articles. Found %d ambiguities" % (len(ozhogov_dict), art_count, total_ambiguity_count)
+
+    if out_filename:
+        print "Export parsed dict to %s" % abspath(out_filename)
+        from datetime import datetime
+        now = datetime.now()
+        with open(out_filename, 'wb') as f:
+            f.truncate()
+            f.write('# Generated from "%s" (size: %d) at %s\r\n' % (original_dict_file, getsize(original_dict_file), now))
+            for art, items in sorted(ozhogov_dict.iteritems(), key=lambda _i: _i[0]):
+                f.write(art.encode('utf-8'))
+                for item in items:
+                    if item.same:
+                        f.write((u'~same:%s' % (u'|'.join(sorted(item.same)))).encode('utf-8'))
+                f.write('\r\n'.encode('utf-8'))
+
+    return ozhogov_dict
+
 if __name__ == '__main__':
     import sys
 
@@ -449,3 +555,9 @@ if __name__ == '__main__':
         effr_dict_filename = sys.argv[2]
         word_forms_out_filename = sys.argv[3]
         effr_parse(effr_dict_filename, word_forms_out_filename)
+
+    if sys.argv and sys.argv[1] == 'ozhogov':
+        # Generate word forms from Ozhogov dictionary
+        ozhogov_dict_filename = sys.argv[2]
+        word_forms_out_filename = sys.argv[3]
+        ozhogov_parse(ozhogov_dict_filename, word_forms_out_filename)
