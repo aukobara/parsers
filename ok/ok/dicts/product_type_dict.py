@@ -74,7 +74,7 @@ class ProductTypeDict(object):
             if isinstance(term, CompoundTypeTerm):
                 term_list.update(term.sub_terms)
             if with_spellings:
-                term_list.update([wf for t in term_list for wf in t.word_forms(context=context)])
+                term_list.update([wf for t in term_list for wf in t.word_forms(context=context, fail_on_context=False)])
 
             return term_list
 

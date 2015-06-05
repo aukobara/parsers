@@ -332,7 +332,7 @@ class TypeTerm(unicode):
     def do_not_pair(self, *dnp):
         self._do_not_pair.update(dnp)
 
-    def word_forms(self, context=None):
+    def word_forms(self, context=None, fail_on_context=False):
         """
         Collect and return all known word forms including itself. Main form will be always first (i.e. if term itself
         is not a main form it can be not the first in the list). Word forms are cached once and never changes
@@ -740,8 +740,14 @@ class ContextDependentTypeTerm(TypeTerm):
                                                    (self, u' + '.join(context if context else [u'<empty>'])))
         return TypeTerm.make(main_form)
 
-    def word_forms(self, context=None):
-        return self.get_main_form(context).word_forms(context) + [self]
+    def word_forms(self, context=None, fail_on_context=True):
+        collected_forms = []
+        try:
+            collected_forms = self.get_main_form(context).word_forms(context) + [self]
+        except ContextRequiredTypeTermException:
+            if fail_on_context:
+                raise
+        return collected_forms
 
     def all_context_word_forms(self):
         collected_word_forms = {self}
