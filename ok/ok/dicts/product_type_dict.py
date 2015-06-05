@@ -7,11 +7,13 @@ import json
 import re
 
 import Levenshtein
+from jsmin import jsmin
 
 from ok.dicts.product import Product
 from ok.dicts.product_type import ProductType,\
     TYPE_TUPLE_RELATION_CONTAINS, TYPE_TUPLE_RELATION_EQUALS, TYPE_TUPLE_RELATION_SUBSET_OF
-from ok.dicts.term import TypeTerm, CompoundTypeTerm, WithPropositionTypeTerm, TagTypeTerm
+from ok.dicts.term import TypeTerm, CompoundTypeTerm, WithPropositionTypeTerm, TagTypeTerm, TypeTermException, \
+    ContextRequiredTypeTermException, ContextDependentTypeTerm
 
 TYPE_TUPLE_MIN_CAPACITY = 4  # Number of SQNs covered by word combination
 
@@ -64,19 +66,33 @@ class ProductTypeDict(object):
         result = dict()
 
         terms = TypeTerm.parse_term_string(sqn)
+        context = terms[:]
         first_word = terms.pop(0)
 
-        def get_term_with_sub_terms(term):
+        def get_term_with_sub_terms(term, context):
             term_list = {term}
             if isinstance(term, CompoundTypeTerm):
                 term_list.update(term.sub_terms)
             if with_spellings:
-                term_list.update([wf for t in term_list for wf in t.word_forms])
+                term_list.update([wf for t in term_list for wf in t.word_forms(context=context)])
 
             return term_list
 
+        def make_product_type(pt_terms):
+            pt_type = None
+            try:
+                # Validate product type terms are can produce normal final type
+                ProductType.calculate_same_same_hash(pt_terms)
+                pt_type = ProductType(*pt_terms)
+            except TypeTermException:
+                # Something wrong with terms (context are not full?). Skip combination
+                pass
+            return pt_type
+
         def add_result(pt_terms):
-            result[ProductType(*pt_terms)] = sqn
+            pt_type = make_product_type(pt_terms)
+            if pt_type:
+                result[pt_type] = sqn
             # Also add type with expanded compound terms
             if any(isinstance(pt, CompoundTypeTerm) for pt in pt_terms):
                 exp_terms = []
@@ -87,29 +103,32 @@ class ProductTypeDict(object):
                         exp_terms.append(pt)
                 if len(exp_terms) > len(pt_terms):
                     # Found type with more terms
-                    result[ProductType(*exp_terms)] = sqn
+                    pt_type = make_product_type(exp_terms)
+                    if pt_type:
+                        result[pt_type] = sqn
 
-        def add_combinations(_terms, n):
+        def add_combinations(_terms, n, _context):
             vf = [[]]
-            vf[0] = get_term_with_sub_terms(first_word)
+            vf[0] = get_term_with_sub_terms(first_word, _context)
             for wvf in itertools.product(*vf):
                 for _w in itertools.combinations(_terms, n):
                     v = [[]] * len(_w)
                     for i, _wi in enumerate(_w):
-                        v[i] = get_term_with_sub_terms(_w[i])
+                        v[i] = get_term_with_sub_terms(_w[i], _context)
                     for wv in itertools.product(*v):
                         pt_terms = wvf + wv
-                        if any(not w_pair[0].is_compatible_with(w_pair[1]) or not w_pair[1].is_compatible_with(w_pair[0])
+                        if any(not w_pair[0].is_compatible_with(w_pair[1], context=_context) or
+                                       not w_pair[1].is_compatible_with(w_pair[0], context=_context)
                                 for w_pair in itertools.permutations(pt_terms, 2) if w_pair[0] and w_pair[1]):
                             # Do not join words that cannot be paired (like word and the same word with proposition)
                             continue
                         add_result(pt_terms)
 
-        add_combinations(terms, 0)
+        add_combinations(terms, 0, context)
         if len(terms) > 0:
-            add_combinations(terms, 1)
+            add_combinations(terms, 1, context)
         if len(terms) > 1:
-            add_combinations(terms, 2)
+            add_combinations(terms, 2, context)
 
         return result
 
@@ -119,9 +138,14 @@ class ProductTypeDict(object):
 
     @staticmethod
     def _main_form_key(p_type):
-        return frozenset(p_type.get_main_form_term_ids())
+        """
+        @param ProductType|list[int] p_type: product type or list of type term ids
+        """
+        term_ids = p_type.get_main_form_term_ids() if isinstance(p_type, ProductType) else p_type
+        return frozenset(term_ids)
 
     __similarity_groups_cache = None
+
     @staticmethod
     def _similarity_hash_key(p_type):
         chars = []
@@ -141,9 +165,20 @@ class ProductTypeDict(object):
             """@type dict of (set, set[ProductType])"""
             self.__similarity_groups_cache = defaultdict(set)
             for p_type in all_types:
-                self.__main_form_cache[self._main_form_key(p_type)].add(p_type)
+                try:
+                    self.__main_form_cache[self._main_form_key(p_type)].add(p_type)
+                except ContextRequiredTypeTermException:
+                    # Bad non-final type detected. What to do?
+                    # TODO: ignore? or cache with all variants?
+                    terms_matrix = [term.all_context_main_forms() if isinstance(term, ContextDependentTypeTerm)
+                                    else [term.get_main_form()] for term in p_type]
+                    for term_variants in itertools.product(*terms_matrix):
+                        term_ids = [term.term_id for term in term_variants]
+                        self.__main_form_cache[self._main_form_key(term_ids)].add(p_type)
+
                 self.__similarity_groups_cache[self._similarity_hash_key(p_type)].add(p_type)
 
+    # Not supported for a while. Deprecated
     def find_product_types(self, sqn, with_spellings=True):
         product_types = self.collect_sqn_type_tuples(sqn, with_spellings=with_spellings)
 
@@ -177,7 +212,12 @@ class ProductTypeDict(object):
         result = defaultdict(list)
         """@type: dict of (ProductType, list[ProductType.Relation])"""
         for t in product_types:
-            types_exist = self.__main_form_cache.get(self._main_form_key(t), [])
+            t_key = self._main_form_key(t)
+            types_exist = self.__main_form_cache.get(t_key, set())
+            for t_sibling in product_types:
+                # Check relations between parsed types as well even if they are not in types dict
+                if t_sibling != t and t_sibling not in types_exist and self._main_form_key(t_sibling) == t_key:
+                    types_exist.add(t_sibling)
             seen_related = set()
             for t2 in types_exist:
                 r = t.get_relation(t2)
@@ -359,6 +399,7 @@ class ProductTypeDict(object):
         if self.VERBOSE: print "Created %d relations" % relations_created
         pass
 
+    # DEPRECATED
     def find_type_tuples_relationship(self, type_tuples, baseline_dict=None, ignore_sqns=False, force_deep_scan=False, max_similarity=0.8):
         """
         Calculate all non-repeatable combinations of type tuples with capacity not less than MIN_TUPLE_CAPACITY
@@ -549,7 +590,7 @@ class ProductTypeDict(object):
         they are filled as lists of indexes with len from dump
         """
         with open(json_filename, 'rb') as f:
-            s = f.read().decode("utf-8")
+            s = jsmin(f.read().decode("utf-8"))
         types = json.loads(s)
         ProductType.reload()
         type_tuples = defaultdict(list)
@@ -730,10 +771,11 @@ def print_sqn_tails():
         print u'%s: %s' % (t, len(set(s)))
 
 
-def reload_product_type_dict():
+def reload_product_type_dict(config=None):
     import ok.dicts
 
-    config = ok.dicts.main_options([])
+    if not config:
+        config = ok.dicts.main_options([])
     pd = ProductTypeDict()
     pd.VERBOSE = True
     pd.from_json(config.product_types_in_json)

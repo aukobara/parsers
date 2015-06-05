@@ -3,6 +3,7 @@ from collections import defaultdict, namedtuple, OrderedDict
 import re
 import dawg
 import itertools
+
 from ok.dicts import cleanup_token_str
 from ok.dicts.russian import get_word_normal_form, is_known_word
 
@@ -11,6 +12,9 @@ TYPE_TERM_PROPOSITION_AND_WORD_LIST = (u'со',)
 
 
 class TypeTermException(Exception):
+    pass
+
+class ContextRequiredTypeTermException(TypeTermException):
     pass
 
 
@@ -67,7 +71,11 @@ class TypeTermDict(object):
             # New terms can appear during word forms generation
             for term_str in key_set - seen_set:
                 # Ensure all word forms are initialized before moving to dawg. All terms in dawg must be immutable
-                count_wf += len(self.get_by_unicode(term_str).word_forms)
+                term = self.get_by_unicode(term_str)
+                if isinstance(term, ContextDependentTypeTerm):
+                    count_wf += len(term.all_context_word_forms())
+                else:
+                    count_wf += len(term.word_forms())
                 seen_set.add(term_str)
             key_set = set(self.__terms.keys())
         new_dawg = dawg.BytesDAWG((unicode(k), bytes(v)) for k, v in
@@ -265,7 +273,9 @@ class TypeTerm(unicode):
         if isinstance(term_str, TypeTerm) and not term_str.is_new():
             return term_str
         term = None
-        if TagTypeTerm.is_valid_term_for_type(term_str):
+        if ContextDependentTypeTerm.is_valid_term_for_type(term_str):
+            term = ContextDependentTypeTerm(term_str)
+        elif TagTypeTerm.is_valid_term_for_type(term_str):
             term = TagTypeTerm(term_str)
         elif PrefixTypeTerm.is_valid_term_for_type(term_str):
             try:
@@ -288,15 +298,28 @@ class TypeTerm(unicode):
 
         return term
 
-    def get_main_form(self):
-        return self.word_forms[0]
+    def get_main_form(self, context=None):
+        """
+        Return term with main ('normalized') form of this term. Main form is required for matching and indexing terms.
+        Two terms with the same main form are considered as equal or replaceable (e.g. synonyms, different part of
+        speech, words with proposition etc). Actually, they may be are not replaceable in natural language but in terms
+        of terms matching they represent the same entity.
+        However, some terms may require context to understand their meaning. These are e.g. omonimia terms and shortened
+        words.
+        @param list[TypeTerm]|tuple[TypeTerm]|None context: list of other terms are met in the same context as this
+        @rtype: TypeTerm
+        @return: term with Main Form of this. It may be the same term if it is own main form.
+        @raise ContextRequiredTypeTermException: if context is required to recognize Main Form and specified context is
+                empty or not enough
+        """
+        return self.word_forms()[0]
         # return min(self.word_forms, key=TypeTerm.term_id.fget)
 
-    def is_compatible_with(self, another_term):
+    def is_compatible_with(self, another_term, context=None):
         if another_term in self._always_pair:
             return True
         # Default logic - do not pair with self, own variants, and own synonyms, except it was declared as always_pair
-        if another_term == self or another_term in self.word_forms:
+        if another_term == self or another_term in self.word_forms(context):
             return False
         # Even if pass default logic - do not pair anyway if declared as do_not_pair
         if another_term in self._do_not_pair:
@@ -309,8 +332,7 @@ class TypeTerm(unicode):
     def do_not_pair(self, *dnp):
         self._do_not_pair.update(dnp)
 
-    @property
-    def word_forms(self):
+    def word_forms(self, context=None):
         """
         Collect and return all known word forms including itself. Main form will be always first (i.e. if term itself
         is not a main form it can be not the first in the list). Word forms are cached once and never changes
@@ -473,11 +495,11 @@ class CompoundTypeTerm(TypeTerm):
     def sub_terms(self):
         return self._sub_terms[:]
 
-    def is_compatible_with(self, another_term):
-        if not super(CompoundTypeTerm, self).is_compatible_with(another_term):
+    def is_compatible_with(self, another_term, context=None):
+        if not super(CompoundTypeTerm, self).is_compatible_with(another_term, context=context):
             # Check override rules
             return False
-        if any(not sub_term.is_compatible_with(another_term) for sub_term in self._sub_terms):
+        if any(not sub_term.is_compatible_with(another_term, context=context) for sub_term in self._sub_terms):
             return False
         return True
 
@@ -543,7 +565,7 @@ class WithPropositionTypeTerm(CompoundTypeTerm):
                     token_terms.append(WithPropositionTypeTerm(u'%s %s' % (self.proposition, sub_term)))
         return token_terms
 
-    def is_compatible_with(self, another_term):
+    def is_compatible_with(self, another_term, context=None):
         if not super(WithPropositionTypeTerm, self).is_compatible_with(another_term):
             return False
         if isinstance(another_term, WithPropositionTypeTerm):
@@ -618,7 +640,7 @@ class PrefixTypeTerm(TypeTerm):
         valid = True
         for term in sorted(prefixed_terms, key=len, reverse=True):
             # TODO: word_forms of other terms prohibited during __init__ phase of term because it can cause recursion
-            if self in term.word_forms:
+            if self in term.word_forms():
                 # Term is already form of another term. Hence, cannot be treated as independent term and should be
                 # simple term instead
                 valid = False
@@ -657,6 +679,80 @@ class PrefixTypeTerm(TypeTerm):
         return collected_forms
 
 
+class ContextDependentTypeTerm(TypeTerm):
+
+    DEFAULT_CONTEXT = u'__default__'
+    ctx_definition = namedtuple('_ctx_definition', 'ctx_terms main_form')
+    # If any term in context of ctx_terms use main_form
+    ctx_dependent_terms = {u'мар': [ctx_definition([u'йогурт'], u'маракуйя')]}
+
+    @classmethod
+    def is_valid_term_for_type(cls, term_str):
+        simple_valid = super(ContextDependentTypeTerm, cls).is_valid_term_for_type(term_str)
+        return simple_valid and term_str in cls.ctx_dependent_terms
+
+    def __init__(self, from_str=''):
+        """@param unicode from_str: term string"""
+        if self.is_new():
+            self.ctx_map = {}
+            """@type: dict of (TypeTerm, TypeTerm)"""
+            for ctx_def in self.ctx_dependent_terms[self]:
+                for ctx_term_str in ctx_def.ctx_terms:
+                    ctx_term = TypeTerm.make(ctx_term_str)
+                    main_form_term = TypeTerm.make(ctx_def.main_form)
+                    if isinstance(ctx_term, ContextDependentTypeTerm) or \
+                            isinstance(main_form_term, ContextDependentTypeTerm):
+                        raise TypeTermException(
+                            "ContextDependent term's [%s] context cannot be defined using another "
+                            "ContextDependent term: %s" %
+                            (self, ctx_term))
+                    self.ctx_map[ctx_term.get_main_form(context=None)] = main_form_term
+        super(ContextDependentTypeTerm, self).__init__(from_str)
+
+    def get_main_form(self, context=None):
+        """
+        @param list[TypeTerm]|None context: list of other terms are met in the same context as this
+        @rtype: TypeTerm
+        """
+        main_form = None
+        """@type: TypeTerm|None"""
+        if context:
+            ctx_term_match = None
+            for ctx_term in context:
+                if ctx_term == self:
+                    continue
+                if main_form is None:
+                    main_form = self.ctx_map.get(ctx_term.get_main_form(context))
+                    ctx_term_match = ctx_term
+                else:
+                    another_variant = self.ctx_map.get(ctx_term.get_main_form(context))
+                    if another_variant and another_variant != main_form:
+                        raise ContextRequiredTypeTermException(
+                            'Context is too ambiguous: many variants for one term detected: '
+                            '%s: 1) %s => %s; 2) %s => %s' %
+                            (self, ctx_term_match, main_form, ctx_term, another_variant))
+        if not main_form:
+            # Check if term accept default context
+            main_form = self.ctx_map.get(self.DEFAULT_CONTEXT)
+        if not main_form:
+            raise ContextRequiredTypeTermException(u'Cannot find definition for context dependent term "%s". '
+                                                   u'Context: %s' %
+                                                   (self, u' + '.join(context if context else [u'<empty>'])))
+        return TypeTerm.make(main_form)
+
+    def word_forms(self, context=None):
+        return self.get_main_form(context).word_forms(context) + [self]
+
+    def all_context_word_forms(self):
+        collected_word_forms = {self}
+        [collected_word_forms.update(main_form.word_forms(context=None)) for main_form in self.ctx_map.values()]
+        return list(collected_word_forms)
+
+    def all_context_main_forms(self):
+        collected_main_forms = set()
+        [collected_main_forms.add(main_form.get_main_form(context=None)) for main_form in self.ctx_map.values()]
+        return list(collected_main_forms)
+
 def print_prefix_word_candidates():
     wc = 0
     term_dict = TypeTerm.term_dict
@@ -664,14 +760,14 @@ def print_prefix_word_candidates():
         term = term_dict.get_by_id(i)
         if len(term) < 2:
             continue
-        full_terms = filter(is_known_word, term_dict.find_by_unicode_prefix(term, return_self=False))
-        if full_terms and not any(term in _t.word_forms or term.get_main_form() in _t.word_forms for _t in full_terms):
+        full_terms = term_dict.find_by_unicode_prefix(term, return_self=False)
+        if full_terms and not any(term in _t.word_forms() or term.get_main_form() in _t.word_forms() for _t in full_terms):
             if len(full_terms) == 1 or \
                     any(_t.get_main_form() != full_terms[0].get_main_form() for _t in full_terms[1:]):
                 wc += 1
                 print u'%s%s => %s' % (term, (u'?' if not is_known_word(term) else ''),
                                        ', '.join(u'%s (%s)' % (_t, _t.get_main_form())
-                                                 for _t in full_terms if term not in _t.word_forms))
+                                                 for _t in full_terms if term not in _t.word_forms()))
     print "Total %d candidates" % wc
 
 
@@ -682,7 +778,6 @@ def dump_term_dict_from_product_types(filename):
     print "Load product type dict..."
     from ok.dicts.product_type_dict import reload_product_type_dict
     reload_product_type_dict()
-    # TypeTerm.make(u'тестовый терм')
     term_dict.print_stats()
     print "Update dawg..."
     term_dict.update_dawg()
@@ -699,23 +794,3 @@ def load_term_dict(filename=None):
     TypeTerm.term_dict = term_dict
     term_dict.from_file(filename, verbose=True)
     return term_dict
-
-
-def test_dawg_persistence():
-    filename = 'out/_term_dict_test.dawg'
-    test_term_dict_saved = dump_term_dict_from_product_types(filename)
-    test_term_dict_loaded = load_term_dict(filename)
-    max_id = test_term_dict_loaded.get_max_id()
-    assert test_term_dict_saved.get_max_id() == max_id and max_id > 0, "Saved and loaded dawgs are different size!"
-    for i in xrange(1, max_id + 1):
-        term_saved = test_term_dict_saved.get_by_id(i)
-        term_loaded = test_term_dict_loaded.get_by_id(i)
-        assert isinstance(term_saved, TypeTerm) and isinstance(term_loaded, TypeTerm), \
-            "Terms have bad type"
-        assert term_saved == term_loaded and type(term_saved) == type(term_loaded), \
-            "Saved and Loaded terms are different!"
-
-
-if __name__ == '__main__':
-    import ok.dicts.term
-    ok.dicts.term.test_dawg_persistence()

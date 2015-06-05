@@ -204,7 +204,7 @@ class ProductType(tuple):
         return tuple(super(ProductType, self).__iter__())
 
     def get_main_form_term_ids(self):
-        return (TypeTerm.get_by_id(term_id).get_main_form().term_id for term_id in self.get_terms_ids())
+        return [TypeTerm.get_by_id(term_id).get_main_form(context=self).term_id for term_id in self.get_terms_ids()]
 
     @staticmethod
     def calculate_same_same_hash(terms):
@@ -212,16 +212,18 @@ class ProductType(tuple):
         Return hash sustainable to terms order and word forms.
         If term has word forms take minimum term number of all forms.
         This will group all types produced from same-same words combinations.
-        @param tuple of (int) terms: term set
+        @param tuple[int|unicode|TypeTerm] terms: term set
         @return: int hashcode that equals for all unordered term sets with same word forms
+        @rtype: int
         """
-        hash_terms = []
-        for term_id in terms:
-            term = TypeTerm.get_by_id(term_id)
+        type_terms = []
+        for term_item in terms:
+            term = TypeTerm.get_by_id(term_item) if isinstance(term_item, int) else TypeTerm.make(term_item)
             """@type: TypeTerm"""
             if term is None:
-                raise Exception("No such term in dict with term_id: %d" % term_id)
-            hash_terms.append(term.get_main_form().term_id)
+                raise Exception("No such term in dict with term_id: %d" % term_item)
+            type_terms.append(term)
+        hash_terms = [term.get_main_form(context=type_terms).term_id for term in type_terms]
         return frozenset(hash_terms).__hash__()
 
     def get_same_same_hash(self):
