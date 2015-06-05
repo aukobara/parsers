@@ -13,3 +13,4 @@
 варенье~same:варенье # more used term in grocery
 морква~same:морковь
 семя~same:семя # Don't even try to look at efremova origin article :)
+йогуртный~noun:йогурт # missed in dicts
