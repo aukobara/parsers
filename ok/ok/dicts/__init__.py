@@ -101,13 +101,13 @@ def main_options(opts=argv):
     # Defaults
     toprint = toprint or "producttypes"
     baseline_dir = baseline_dir or ensure_baseline_dir()
-    cat_csvname = cat_csvname or os.path.abspath(os.path.join(baseline_dir, 'cats.csv'))
-    brands_in_csvname = brands_in_csvname or os.path.abspath(os.path.join(baseline_dir, 'brands.csv'))
-    prodcsvname = prodcsvname or os.path.abspath(os.path.join(baseline_dir, 'products_raw.csv'))
+    cat_csvname = build_path(baseline_dir, cat_csvname, 'cats.csv')
+    brands_in_csvname = build_path(baseline_dir, brands_in_csvname, 'brands.csv')
+    prodcsvname = build_path(baseline_dir, prodcsvname, 'products_raw.csv')
     # products_meta_in_csvname = products_meta_in_csvname or os.path.abspath(os.path.join(baseline_dir, 'products_meta.csv'))
-    product_types_in_json = product_types_in_json or os.path.abspath(os.path.join(baseline_dir, 'product_types.json'))
-    word_forms_dict = word_forms_dict or os.path.abspath(os.path.join(baseline_dir, 'word_forms_dict.txt'))
-    term_dict = term_dict or os.path.abspath(os.path.join(baseline_dir, 'term_dict.dawg'))
+    product_types_in_json = build_path(baseline_dir, product_types_in_json, 'product_types.json')
+    word_forms_dict = build_path(baseline_dir, word_forms_dict, 'word_forms_dict.txt')
+    term_dict = build_path(baseline_dir, term_dict, 'term_dict.dawg')
     return conf_type(
         toprint=toprint,
         baseline_dir=baseline_dir,
@@ -122,6 +122,19 @@ def main_options(opts=argv):
         word_forms_dict=word_forms_dict,
         term_dict=term_dict,
     )
+
+
+def build_path(baseline_dir, input_path, default_filename):
+    import os.path
+    if input_path:
+        if os.path.isabs(input_path):
+            return input_path
+        input_in_base = os.path.abspath(os.path.join(baseline_dir, input_path))
+        if os.path.isfile(input_in_base):
+            return input_in_base
+        return input_path
+    input_path = os.path.abspath(os.path.join(baseline_dir, default_filename))
+    return input_path
 
 
 
