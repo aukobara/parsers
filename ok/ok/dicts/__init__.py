@@ -45,19 +45,22 @@ def remove_nbsp(s):
     return None if s is None else s.replace(u'\u00a0', u' ') if isinstance(s, unicode) else s.replace('\xc2\xa0', ' ')
 
 
-conf_type = namedtuple('OKConfig', 'toprint baseline_dir prodcsvname cat_csvname '
+conf_type = namedtuple('OKConfig', 'action toprint baseline_dir prodcsvname cat_csvname '
                        'brands_in_csvname brands_out_csvname '
                        'products_meta_in_csvname products_meta_out_csvname '
                        'product_types_in_json product_types_out_json '
                        'word_forms_dict term_dict')
 
-def main_options(opts=argv):
+def main_options(opts=argv, **kwargs):
     """
-    @param list[str] opts: command line tokens starts with script name
+    @param list[str|unicode] opts: command line tokens starts with script name
+    @param dict of (unicode, unicode) kwargs: default param values. File name params will be processed like they passed
+                as normal arguments anyway (i.e. relative paths validated etc)
     @return: config
     @rtype: conf_type
     """
     opts = opts[:]
+    action = None
     baseline_dir = None
     prodcsvname = None
     toprint = None
@@ -94,21 +97,28 @@ def main_options(opts=argv):
             term_dict = opts.pop(1)
         elif opt == "-base-dir" and len(opts) > 1:
             baseline_dir = opts.pop(1)
-        elif not opt.startswith('-') and not prodcsvname:
-            prodcsvname = opt
+        elif opt == "-in-products-raw" and len(opts) > 1:
+            prodcsvname = opts.pop(1)
+        elif not opt.startswith('-') and not action:
+            action = opt
         else:
             raise Exception((u"Unknown options: %s" % opt).encode("utf-8"))
     # Defaults
-    toprint = toprint or "producttypes"
-    baseline_dir = baseline_dir or ensure_baseline_dir()
-    cat_csvname = build_path(baseline_dir, cat_csvname, 'cats.csv')
-    brands_in_csvname = build_path(baseline_dir, brands_in_csvname, 'brands.csv')
-    prodcsvname = build_path(baseline_dir, prodcsvname, 'products_raw.csv')
-    # products_meta_in_csvname = products_meta_in_csvname or os.path.abspath(os.path.join(baseline_dir, 'products_meta.csv'))
-    product_types_in_json = build_path(baseline_dir, product_types_in_json, 'product_types.json')
-    word_forms_dict = build_path(baseline_dir, word_forms_dict, 'word_forms_dict.txt')
-    term_dict = build_path(baseline_dir, term_dict, 'term_dict.dawg')
+    toprint = toprint or kwargs.get("toprint", "producttypes")
+    baseline_dir = baseline_dir or kwargs.get("baseline_dir", ensure_baseline_dir())
+
+    def build_path_default(param, default_file, _locals=locals()):
+        return build_path(baseline_dir, _locals[param], kwargs.get(param, default_file))
+
+    cat_csvname = build_path_default("cat_csvname", 'cats.csv')
+    brands_in_csvname = build_path_default("brands_in_csvname", 'brands.csv')
+    prodcsvname = build_path_default("prodcsvname", 'products_raw.csv')
+    products_meta_in_csvname = build_path_default("products_meta_in_csvname", 'products_meta.csv')
+    product_types_in_json = build_path_default("product_types_in_json", 'product_types.json')
+    word_forms_dict = build_path_default("word_forms_dict", 'word_forms_dict.txt')
+    term_dict = build_path_default("term_dict", 'term_dict.dawg')
     return conf_type(
+        action=action,
         toprint=toprint,
         baseline_dir=baseline_dir,
         prodcsvname=prodcsvname,
@@ -127,15 +137,39 @@ def main_options(opts=argv):
 def build_path(baseline_dir, input_path, default_filename):
     import os.path
     if input_path:
+        if input_path.startswith('-'):
+            raise Exception('File path cannot start with hyphen. It seems confused with option: %s' % input_path)
         if os.path.isabs(input_path):
             return input_path
         input_in_base = os.path.abspath(os.path.join(baseline_dir, input_path))
         if os.path.isfile(input_in_base):
             return input_in_base
         return input_path
-    input_path = os.path.abspath(os.path.join(baseline_dir, default_filename))
+    input_path = default_filename and os.path.abspath(os.path.join(baseline_dir, default_filename))
     return input_path
 
+
+def to_str(something, encoding='utf-8'):
+    """@rtype: unicode"""
+    # This is to unify conversions from any type to unicode compatible with python 2.7 and 3.3+
+    if something is None:
+        return None
+    if type(something) == unicode:
+        return something
+    if isinstance(something, unicode):
+        return something[:]
+    if hasattr(something, '__unicode__'):
+        return something.__unicode__()
+    s = something.decode(encoding) if isinstance(something, str) else str(something)
+    try:
+        s = s.decode('unicode-escape')
+    except UnicodeEncodeError:
+        pass
+    try:
+        s = s.encode('latin-1').decode('utf-8')
+    except UnicodeEncodeError:
+        pass
+    return s
 
 
 
