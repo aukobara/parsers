@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function, unicode_literals
 from collections import namedtuple
+from ok.dicts import to_str
 
 from ok.dicts.term import TypeTerm
 
@@ -9,7 +11,9 @@ TYPE_TUPLE_RELATION_SIMILAR = u"similar"
 TYPE_TUPLE_RELATION_ALMOST = u"almost"
 TYPE_TUPLE_RELATION_CONTAINS = u"contains"
 TYPE_TUPLE_RELATION_SUBSET_OF = u"subset_of"
-
+TYPE_TUPLE_RELATION_SUPPORTED_TYPES = [TYPE_TUPLE_RELATION_IDENTICAL, TYPE_TUPLE_RELATION_EQUALS,
+                                       TYPE_TUPLE_RELATION_SIMILAR, TYPE_TUPLE_RELATION_ALMOST,
+                                       TYPE_TUPLE_RELATION_CONTAINS, TYPE_TUPLE_RELATION_SUBSET_OF]
 
 class ProductType(tuple):
     class Relation(namedtuple('Relation', 'from_type to_type rel_type is_soft rel_attr')):
@@ -21,7 +25,7 @@ class ProductType(tuple):
 
         def __unicode__(self):
             return u'%s%s%s %s' % (
-                self.rel_type, u'[%s]' % unicode(self.rel_attr) if self.rel_attr else '', u'~' if self.is_soft else '',
+                self.rel_type, u'[%s]' % to_str(self.rel_attr) if self.rel_attr else '', u'~' if self.is_soft else '',
                 self.to_type)
 
         def __str__(self):
@@ -31,36 +35,47 @@ class ProductType(tuple):
         def back_relation(self):
             return self._back_relation
 
-    __slot__ = ('_relations, __relations_cache', '_meaningful', '__same_same_hash_cache')
+    __slot__ = ('_relations, __relations_cache', '_meaningful', '__same_same_hash_cache', '_singleton')
 
     # ProductType instances acts as singleton. All instances are kept here
     __v = set()
     """@type: set[ProductType]"""
 
     def __new__(cls, *args, **kwargs):
-        """
-        @rtype: ProductType
-        """
         self = tuple.__new__(cls, (TypeTerm.make(term).term_id for term in args))
         """@type: ProductType"""
-        self._relations = dict()
-        self.__relations_cache = None
-        """ @type: dict of (ProductType, ProductType.Relation) """
-        self.__same_same_hash_cache = None
+        self._singleton = False
 
-        self._meaningful = kwargs.get('meaningful', False)
-        singleton = kwargs.get('singleton', True)
-        for k in kwargs:
-            if k not in ('singleton', 'meaningful'):
-                raise Exception('Unknown ProductType option: %s' % k)
-        if singleton:
+        if kwargs.get('singleton', True):
             wrapper = EqWrapper(self)
             if wrapper in cls.__v:
                 self = wrapper.match
-            else:
-                cls.__v.add(self)
+                assert self._singleton
 
         return self
+
+    def __init__(self, *args, **kwargs):
+        if not self.singleton:
+            self._relations = dict()
+            self.__relations_cache = None
+            """ @type: dict of (ProductType, ProductType.Relation) """
+            self.__same_same_hash_cache = None
+
+            self._meaningful = kwargs.get('meaningful', False)
+            singleton = kwargs.get('singleton', True)
+            for k in kwargs:
+                if k not in ('singleton', 'meaningful'):
+                    raise Exception('Unknown ProductType option: %s' % k)
+
+            tuple.__init__(args)
+
+            self._singleton = singleton
+            if self._singleton:
+                self.__v.add(self)
+
+    @property
+    def singleton(self):
+        return self._singleton
 
     def __getitem__(self, y):
         term_id = super(ProductType, self).__getitem__(y)
@@ -68,6 +83,11 @@ class ProductType(tuple):
 
     def __iter__(self):
         return (TypeTerm.get_by_id(term_id) for term_id in super(ProductType, self).__iter__())
+
+    @staticmethod
+    def all_cached_singletons():
+        """@rtype: list[ProductType]"""
+        return sorted(ProductType.__v, key=to_str)
 
     @staticmethod
     def reload():
@@ -78,7 +98,7 @@ class ProductType(tuple):
 
     @staticmethod
     def print_stats():
-        print 'ProductType set stats:\r\n\tsingleton cache: %d' % len(ProductType.__v)
+        print('ProductType set stats:\r\n\tsingleton cache: %d' % len(ProductType.all_cached_singletons()))
 
     def make_relation(self, p_type2, rel_from, rel_to, is_soft=False, rel_attr_from=None, rel_attr_to=None,
                       dont_change=False, one_way=False):
@@ -96,10 +116,13 @@ class ProductType(tuple):
         @param bool one_way: if True do not create back relation
         @return:
         """
+        assert type(dont_change) == bool and type(one_way) == bool and type(is_soft) == bool
+        assert rel_from in TYPE_TUPLE_RELATION_SUPPORTED_TYPES and rel_to in TYPE_TUPLE_RELATION_SUPPORTED_TYPES
+
         relation = self._relations.get(p_type2)
         if relation and relation.rel_type != rel_from and not(relation.is_soft or is_soft):
             e = Exception(u"ProductType%s has conflicting relations already with %s" % (self, p_type2))
-            print unicode(e)
+            print(to_str(e))
             raise e
         if not relation or (relation.is_soft and not is_soft):
             relation = self.Relation(self, p_type2, rel_from, is_soft=is_soft, rel_attr=rel_attr_from)
@@ -150,9 +173,10 @@ class ProductType(tuple):
         return self.make_relation(p_type2, TYPE_TUPLE_RELATION_SUBSET_OF, TYPE_TUPLE_RELATION_CONTAINS, dont_change=dont_change)
 
     def not_related(self, p_type2):
-        relation = self._relations.get(p_type2)
+        relation = self.get_relation(p_type2)
         if relation:
             del self._relations[p_type2]
+            self.__relations_cache = None
             p_type2.not_related(self)
 
     def get_relation(self, r_type2):
@@ -163,12 +187,21 @@ class ProductType(tuple):
         @param list[unicode] rel_type: Relation type list. If empty - all return
         @rtype: list[ProductType.Relation]
         """
-        if not self.__relations_cache or rel_type not in self.__relations_cache:
+        if self.__relations_cache is None or rel_type not in self.__relations_cache:
             self.__relations_cache = self.__relations_cache or dict()
             self.__relations_cache[rel_type] = sorted([rel for rel in self._relations.values()
                                                       if not rel_type or rel.rel_type in rel_type],
-                                                      key=lambda _r: u'%s %s' % (_r.rel_type, _r.to_type))
+                                                      key=self.relation_sort_key)
         return self.__relations_cache[rel_type]
+
+    @staticmethod
+    def relation_sort_key(relation):
+        attr_key = ''
+        if relation.rel_type in (TYPE_TUPLE_RELATION_SIMILAR, TYPE_TUPLE_RELATION_ALMOST):
+            rel_attr = 1 - float(relation.rel_attr or '0')
+            attr_key = '%0.2f' % rel_attr
+        key = u'%s|%s|%s' % (relation.rel_type, attr_key, to_str(relation.to_type))
+        return key
 
     def related_types(self, *rel_type):
         """
@@ -199,6 +232,9 @@ class ProductType(tuple):
 
     def __str__(self):
         return self.__unicode__().encode("utf-8")
+
+    def __repr__(self):
+        return b' + '.join(repr(term) for term in iter(self))
 
     def get_terms_ids(self):
         return tuple(super(ProductType, self).__iter__())
@@ -241,6 +277,7 @@ class EqWrapper(ProductType):
         self = tuple.__new__(cls, [id.term_id if isinstance(id, TypeTerm) else id for id in args[0]])
         self.obj = args[0]
         self.match = None
+        self._singleton = True
         return self
 
     def __eq__(self, other):
