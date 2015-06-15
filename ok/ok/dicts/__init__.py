@@ -45,7 +45,7 @@ def remove_nbsp(s):
     return None if s is None else s.replace(u'\u00a0', u' ') if isinstance(s, unicode) else s.replace('\xc2\xa0', ' ')
 
 
-conf_type = namedtuple('OKConfig', 'action toprint baseline_dir prodcsvname cat_csvname '
+conf_type = namedtuple('OKConfig', 'action toprint baseline_dir default_base_dir prodcsvname cat_csvname '
                        'brands_in_csvname brands_out_csvname '
                        'products_meta_in_csvname products_meta_out_csvname '
                        'product_types_in_json product_types_out_json '
@@ -105,7 +105,8 @@ def main_options(opts=argv, **kwargs):
             raise Exception((u"Unknown options: %s" % opt).encode("utf-8"))
     # Defaults
     toprint = toprint or kwargs.get("toprint", "producttypes")
-    baseline_dir = baseline_dir or kwargs.get("baseline_dir", ensure_baseline_dir())
+    default_base_dir = ensure_baseline_dir()
+    baseline_dir = baseline_dir or kwargs.get("baseline_dir", default_base_dir)
 
     def build_path_default(param, default_file, _locals=locals()):
         return build_path(baseline_dir, _locals[param], kwargs.get(param, default_file))
@@ -121,6 +122,7 @@ def main_options(opts=argv, **kwargs):
         action=action,
         toprint=toprint,
         baseline_dir=baseline_dir,
+        default_base_dir=default_base_dir,
         prodcsvname=prodcsvname,
         cat_csvname=cat_csvname,
         brands_in_csvname=brands_in_csvname,
