@@ -14,3 +14,6 @@
 морква~same:морковь
 семя~same:семя # Don't even try to look at efremova origin article :)
 йогуртный~noun:йогурт # missed in dicts
+каша~same:каша # Ozhegov zzhhet
+сахар~same:сахар # was: рафинад
+пресс~same:пресс # was: пресс-папье
