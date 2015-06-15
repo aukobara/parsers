@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function, unicode_literals
+
 from collections import defaultdict, namedtuple, OrderedDict
 import re
 from ok.dicts import main_options
 
+RE_RUSSIAN_CHAR_SET = 'А-Яа-я0-9A-Za-zёЁ'
 
 def isenglish(s):
     try:
@@ -22,12 +25,16 @@ def isrussian(s):
         return False
 
 
+def is_simple_russian_word(s):
+    return re.match('^[%s]{2,}(-[%s]{2,})?$' % (RE_RUSSIAN_CHAR_SET, RE_RUSSIAN_CHAR_SET), s)
+
 __pymorph_analyzer = None
 """@type: pymorphy2.MorphAnalyzer"""
 __normal_form_word_stats = defaultdict(dict)
 """@type dict of (unicode, dict of (unicode, unicode))"""
 
 WORD_NORMAL_FORM_KEEP_STATS_DEFAULT = True
+
 
 def _ensure_pymorphy():
     global __pymorph_analyzer
@@ -66,8 +73,9 @@ def get_word_normal_form(word, strict=True, verbose=False, use_external_word_for
     """@type: list[pymorphy2.analyzer.Parse]"""
     p_selected = None
     warning_printed = False
+    parse_was_ambiguous = False
     for p in p_variants:
-        if p.tag.POS in ('NOUN', 'ADJF', 'ADJS', 'PRTF', 'PRTS') and not ({'Surn'} in p.tag or {'Name'} in p.tag):
+        if p.tag.POS in ('NOUN', 'ADJF', 'ADJS', 'PRTF', 'PRTS') and {'Surn'} not in p.tag:
             # Ignore names
             if not p_selected:
                 p_selected = p
@@ -75,31 +83,35 @@ def get_word_normal_form(word, strict=True, verbose=False, use_external_word_for
                 if {'NOUN'} not in p_selected.tag and {'NOUN'} in p.tag and p.score >= p_selected.score:
                     # Prefer nouns to other POS with the same score
                     p_selected = p
+                    parse_was_ambiguous = True
                     continue
 
                 if {'Geox'} in p_selected.tag and {'Geox'} not in p.tag and p.score >= p_selected.score:
                     # Prefer non-geographical terms if score is the same
                     p_selected = p
+                    parse_was_ambiguous = True
                     continue
 
                 if {'NOUN', 'Pltm'} in p.tag and p.score >= p_selected.score:
                     # Special "Pluralia tantum" processing - when meet word which can be in plural form only -
                     # prefer it if its score not less then selected
                     p_selected = p
+                    parse_was_ambiguous = True
                     continue
 
                 if p_selected.normal_form != word and p.normal_form == word and p.score >= p_selected.score:
                     # Prefer lexeme with normal_form the same as word if score is the same
                     p_selected = p
+                    parse_was_ambiguous = True
                     continue
 
                 if verbose and inflect_normal_form(p_selected)[0] != inflect_normal_form(p)[0]:
                     if not warning_printed:
-                        print "Morphological ambiguity has been detected for word: %s (selected: %s, %s (%f))" % \
-                              (word, p_selected.normal_form, p_selected.tag, p_selected.score),
+                        print("Morphological ambiguity has been detected for word: %s (selected: %s, %s (%f))" %
+                              (word, p_selected.normal_form, p_selected.tag, p_selected.score), end='')
                     warning_printed = True
-                    print "\r\n%s => %s (%f)" % (p.normal_form, p.tag, p.score),
-    if warning_printed: print
+                    print("\r\n%s => %s (%f)" % (p.normal_form, p.tag, p.score), end='')
+    if warning_printed: print()
     # If no one pass the filter just use one with max score
     p_selected = p_selected or p_variants[0]
     w_norm, parse_norm = inflect_normal_form(p_selected)
@@ -107,7 +119,7 @@ def get_word_normal_form(word, strict=True, verbose=False, use_external_word_for
     is_w_norm_known = is_known_word(w_norm, use_external_word_forms_dict=use_external_word_forms_dict)
 
     if use_external_word_forms_dict and is_w_norm_known:
-        if parse_norm.tag.POS in {'ADJF', 'ADJS'}:
+        if parse_norm.tag.POS in {'ADJF', 'ADJS', 'PRTF', 'PRTS'}:
             # Try to convert adjective to noun form
             w_norm = adjective_to_noun_word_form(w_norm, default=w_norm, verbose=verbose)
         if pymorph_analyzer.tag(w_norm)[0].POS in {'NOUN'}:
@@ -117,7 +129,19 @@ def get_word_normal_form(word, strict=True, verbose=False, use_external_word_for
     # Return only long enough words and good known words (if specified, by default)
     result = w_norm if len(w_norm) >= 3 and (not return_known or is_w_norm_known) else word
     if collect_stats:
-        __normal_form_word_stats[result][word] = str(p_selected.tag) + (u'?' if not pymorph_analyzer.word_is_known(word) else u'')
+        __normal_form_word_stats[result][word] = str(p_selected.tag) + \
+                                                 (u'?' if not pymorph_analyzer.word_is_known(word) else u'')
+
+    if word != result and parse_was_ambiguous:
+        # Try to retry to check if another word may be produced due to ambiguity
+        new_result = get_word_normal_form(result, strict=strict, verbose=verbose,
+                                          use_external_word_forms_dict=use_external_word_forms_dict,
+                                          collect_stats=collect_stats, return_known=return_known)
+        if new_result != result:
+            if verbose:
+                print("Hmmm. After retry we have got another result! word: %s, 1st result: %s, 2nd result: %s" %
+                      (word, result, new_result))
+            result = new_result
     return result
 
 
@@ -147,18 +171,21 @@ def is_known_word(word, use_external_word_forms_dict=True):
         is_known = False
     return is_known
 
+
 def dump_word_normal_form_stats(filename):
     import os.path
     if __normal_form_word_stats:
-        print "Dump stats about %d words to %s" % (len(__normal_form_word_stats), os.path.abspath(filename))
+        print("Dump stats about %d words to %s" % (len(__normal_form_word_stats), os.path.abspath(filename)))
         with open(filename, 'wb') as f:
             f.truncate()
-            f.writelines((u'%s: %d; %s\r\n' % (k, len(v), u'; '.join(u'%s=%s' % (w, tag) for w, tag in v.iteritems()))).encode('utf-8')
-                         for k, v in sorted(__normal_form_word_stats.iteritems(), key=lambda _v: _v[1], reverse=True))
+            f.writelines((u'%s: %d; %s\r\n' %
+                          (k, len(v), u'; '.join(u'%s=%s' % (w, tag) for w, tag in v.viewitems()))).encode('utf-8')
+                         for k, v in sorted(__normal_form_word_stats.viewitems(), key=lambda _v: _v[1], reverse=True))
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 FOLLOWING ARE FUNCTIONS/TASKS TO WORK WITH EXTERNAL DICT DATA
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
 
 class DictArticle(namedtuple('_DictArticle', 'title noun_base same pet')):
     def __dict__(self):
@@ -216,7 +243,7 @@ def effr_parse(filename, out_filename=None):
     """@type: dict of (unicode, list[DictArticle])"""
     original_dict_file = abspath(filename)
     original_dict_file_size = getsize(original_dict_file)
-    print "Parsing Efremova dict from %s (size: %d)" % (original_dict_file, original_dict_file_size)
+    print("Parsing Efremova dict from %s (size: %d)" % (original_dict_file, original_dict_file_size))
     with open(filename, 'rb') as f:
         # Articles are separated by empty lines
         art_count = 0
@@ -231,7 +258,7 @@ def effr_parse(filename, out_filename=None):
                 if parse_context is None:
                     # Treat first line of block as article title
                     parse_context = _EffrDictParseContext(line.lower())
-                    if art_count % 3000 == 0: print '.',
+                    if art_count % 3000 == 0: print('.', end='')
                     art_count += 1
                     continue
                 m = re.search(u'Соотносящийся по знач. с сущ.:(.+?)(?: (?:связанный|унаследованный).*)?$', line, re.U | re.I)
@@ -254,17 +281,18 @@ def effr_parse(filename, out_filename=None):
                                              len(parse_context.same_ambiguity) + \
                                              len(parse_context.pet_ambiguity)
                 parse_context = None
-        print
-        print "Parsed %d terms of %d articles. Found %d ambiguities" % (len(effr_dict), art_count, total_ambiguity_count)
+        print()
+        print("Parsed %d terms of %d articles. Found %d ambiguities" %
+              (len(effr_dict), art_count, total_ambiguity_count))
 
     if out_filename:
-        print "Export parsed dict to %s" % abspath(out_filename)
+        print("Export parsed dict to %s" % abspath(out_filename))
         from datetime import datetime
         now = datetime.now()
         with open(out_filename, 'wb') as f:
             f.truncate()
-            f.write('# Generated from "%s" (size: %d) at %s\r\n' % (original_dict_file, getsize(original_dict_file), now))
-            for art, items in sorted(effr_dict.iteritems(), key=lambda _i: _i[0]):
+            f.write(b'# Generated from "%s" (size: %d) at %s\r\n' % (original_dict_file, getsize(original_dict_file), now))
+            for art, items in sorted(effr_dict.viewitems(), key=lambda _i: _i[0]):
                 f.write(art.encode('utf-8'))
                 for item in items:
                     if item.noun_base:
@@ -301,14 +329,16 @@ def _parse_article_refs(article_refs_list_str, parse_context, context_article_re
             else:
                 context_article_refs_ambiguity.append([n for n in last_article_refs if n not in context_article_refs])
                 # Select first match as general
-                print "WARN: Ambiguity in article %s.\r\n\tFirst: %s\r\n\tSecond: %s" % \
-                      (parse_context.art, ', '.join(prev_article_refs_set), ', '.join(last_article_refs))
+                print("WARN: Ambiguity in article %s.\r\n\tFirst: %s\r\n\tSecond: %s" %
+                      (parse_context.art, ', '.join(prev_article_refs_set), ', '.join(last_article_refs)))
 
 
 def _parse_article_references_list_string(ref_list_str):
     article_references = [ref_str.strip().lower() for ref_str in
                        re.findall(u'\s+([^,(]+?)(?:(?:\s+\([^)]+\)),?|,|$)', ref_list_str, re.U)]
-    # Get normal forms only
+    # Use simple russian terms only + simple words with hyphen
+    article_references = [ref_str for ref_str in article_references if is_simple_russian_word(ref_str)]
+    # Get unique normal forms only
     article_references = OrderedDict.fromkeys(
         [get_word_normal_form(_art_ref, use_external_word_forms_dict=False) for _art_ref in article_references]).keys()
     return article_references
@@ -343,7 +373,7 @@ def _ensure_word_forms_dict():
         """
         file_base, file_ext = splitext(filename)
         file_variants = []
-        for i in xrange(10):
+        for i in range(10):
             file_variants.append('%s_%d%s' % (file_base, i, file_ext))
         file_variants.append(filename)
         file_variants.append('%s_override%s' % (file_base, file_ext))
@@ -351,7 +381,7 @@ def _ensure_word_forms_dict():
         for filename_i in file_variants:
             if isfile(filename_i):
                 override_word_forms_dict = _load_word_forms_dict(filename_i)
-                for art, items in override_word_forms_dict.iteritems():
+                for art, items in override_word_forms_dict.viewitems():
                     if art in word_forms_dict:
                         if any(not _it.is_empty() for _it in word_forms_dict[art]) and \
                                 all(_it.is_empty() for _it in items):
@@ -366,7 +396,8 @@ def _ensure_word_forms_dict():
 
 def _load_word_forms_dict(filename):
     from os.path import abspath
-    print "Load word forms dict from: %s" % abspath(filename)
+
+    print("Load word forms dict from: %s" % abspath(filename))
     word_forms_dict = defaultdict(list)
 
     def take_article_part(forms_variant_str, prefix):
@@ -401,8 +432,8 @@ def _load_word_forms_dict(filename):
         undefined_known_words = all_words.difference(word_forms_dict)
         for word in undefined_known_words:
             word_forms_dict[word].append(DictArticle(word, [], [], []))
-    print "Loaded %d word forms (of %d total known words) from file with comment: %s" % \
-          (len(word_forms_dict) - len(undefined_known_words), len(word_forms_dict), comment)
+    print("Loaded %d word forms (of %d total known words) from file with comment: %s" %
+           (len(word_forms_dict) - len(undefined_known_words), len(word_forms_dict), comment))
 
     return word_forms_dict
 
@@ -425,15 +456,16 @@ def adjective_to_noun_word_form(word, default=None, verbose=False, seen=None):
             if word_form:
                 # Already match one article but another is selected as well
                 if verbose:
-                    print u"WARN: word %s has ambiguity in external dict. Multiple articles match: %s. Used first one" % \
-                          (word, u'; '.join(u'%s: %s' % (_a.title, u', '.join(_a.noun_base)) for _a in articles))
+                    print(
+                    u"WARN: word %s has ambiguity in external dict. Multiple articles match: %s. Used first one" %
+                    (word, u'; '.join(u'%s: %s' % (_a.title, u', '.join(_a.noun_base)) for _a in articles)))
                 continue
 
             min_len = min(map(len, art.noun_base))
             matched_nouns = sorted([n for n in art.noun_base if len(n) == min_len])
             if verbose and len(matched_nouns) > 1:
-                print u"WARN: word %s has ambiguity in external dict. Multiple noun bases match: %s. Used first one" % \
-                                    (word, ', '.join(art.noun_base))
+                print(u"WARN: word %s has ambiguity in external dict. Multiple noun bases match: %s. Used first one" %
+                       (word, ', '.join(art.noun_base)))
             word_form = matched_nouns[0]
 
     word_form = check_chained_word_forms(word, word_form, adjective_to_noun_word_form, verbose=verbose, seen=seen)
@@ -461,16 +493,18 @@ def noun_from_same_or_pet_word_form(word, default=None, verbose=False, seen=None
             if word_form:
                 # Already match one article but another is selected as well
                 if verbose:
-                    print u"WARN: word %s has ambiguity in external dict. Multiple articles match: %s. Used first one" % \
-                          (word, u'; '.join(u'%s: %s' % (_a.title, u', '.join(_a.pet + _a.same)) for _a in articles))
+                    print(
+                    u"WARN: word %s has ambiguity in external dict. Multiple articles match: %s. Used first one" %
+                    (word, u'; '.join(u'%s: %s' % (_a.title, u', '.join(_a.pet + _a.same)) for _a in articles)))
                 continue
 
             word_variants = art.same + art.pet
             min_len = min(map(len, word_variants))
             matched_variants = sorted([n for n in word_variants if len(n) == min_len])
             if verbose and len(matched_variants) > 1:
-                print u"WARN: word %s has ambiguity in external dict. Multiple pet or same names match: %s. Used first one" % \
-                                    (word, ', '.join(word_variants))
+                print(
+                u"WARN: word %s has ambiguity in external dict. Multiple pet or same names match: %s. Used first one" %
+                (word, ', '.join(word_variants)))
             word_form = matched_variants[0]
 
     word_form = check_chained_word_forms(word, word_form, noun_from_same_or_pet_word_form, verbose=verbose, seen=seen)
@@ -520,7 +554,7 @@ def ozhegov_parse(filename, out_filename=None):
     """@type: dict of (unicode, list[DictArticle])"""
     original_dict_file = abspath(filename)
     original_dict_file_size = getsize(original_dict_file)
-    print "Parsing Ozhegov dict from %s (size: %d)" % (original_dict_file, original_dict_file_size)
+    print("Parsing Ozhegov dict from %s (size: %d)" % (original_dict_file, original_dict_file_size))
     with open(filename, 'rb') as f:
         # All articles one-liners. Start from article title and fields separated by '|'
         # Ambiguities may be on duplicated lines for the same title
@@ -558,17 +592,19 @@ def ozhegov_parse(filename, out_filename=None):
                         continue
                     total_ambiguity_count += bool(previous_arts)
                     ozhegov_dict[art].append(DictArticle(art, [], [same], []))
-        print
-        print "Parsed %d terms of %d articles. Found %d ambiguities" % (len(ozhegov_dict), art_count, total_ambiguity_count)
+        print()
+        print("Parsed %d terms of %d articles. Found %d ambiguities" %
+              (len(ozhegov_dict), art_count, total_ambiguity_count))
 
     if out_filename:
-        print "Export parsed dict to %s" % abspath(out_filename)
+        print("Export parsed dict to %s" % abspath(out_filename))
         from datetime import datetime
         now = datetime.now()
         with open(out_filename, 'wb') as f:
             f.truncate()
-            f.write('# Generated from "%s" (size: %d) at %s\r\n' % (original_dict_file, getsize(original_dict_file), now))
-            for art, items in sorted(ozhegov_dict.iteritems(), key=lambda _i: _i[0]):
+            f.write(b'# Generated from "%s" (size: %d) at %s\r\n' %
+                    (original_dict_file, getsize(original_dict_file), now))
+            for art, items in sorted(ozhegov_dict.viewitems(), key=lambda _i: _i[0]):
                 f.write(art.encode('utf-8'))
                 for item in items:
                     if item.same:
