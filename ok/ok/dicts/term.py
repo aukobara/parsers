@@ -849,6 +849,7 @@ class ContextDependentTypeTerm(TypeTerm):
         'леч': [ctx_def(['вода'], 'лечебная')],
         'пос': [ctx_def(['сельдь'], 'посол')],
         'сп': [ctx_def(['сельдь'], 'спец')],
+        'корн': [ctx_def(['салат'], 'корн')],
 
         # Default only - abbreviations and synonyms
         'стер': [ctx_def([DEFAULT_CONTEXT], 'стерилизованный')],
