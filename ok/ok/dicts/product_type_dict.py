@@ -5,18 +5,19 @@ from ast import literal_eval
 from collections import OrderedDict, defaultdict
 import csv
 import itertools
-import json
 import re
 
 import Levenshtein
+import gc
 from jsmin import jsmin
+import ujson
 from ok.dicts import to_str
 
 from ok.dicts.product import Product
 from ok.dicts.product_type import ProductType,\
     TYPE_TUPLE_RELATION_CONTAINS, TYPE_TUPLE_RELATION_EQUALS, TYPE_TUPLE_RELATION_SUBSET_OF, EqWrapper
 from ok.dicts.term import TypeTerm, CompoundTypeTerm, WithPropositionTypeTerm, TagTypeTerm, TypeTermException, \
-    ContextRequiredTypeTermException, ContextDependentTypeTerm
+    ContextRequiredTypeTermException, ContextDependentTypeTerm, load_term_dict, TermContext
 
 TYPE_TUPLE_MIN_CAPACITY = 4  # Number of SQNs covered by word combination
 
@@ -56,7 +57,7 @@ class ProductTypeDict(object):
             self._meaningful_type_tuples = None
 
     @staticmethod
-    def collect_sqn_type_tuples(sqn, with_spellings=True):
+    def collect_sqn_type_tuples(sqn, with_spellings=True, context=None):
         """
         Return dict with tuples for combinations of tokens in each parsed sqn. Source sqn will be as value.
         Join propositions to next word to treat them as single token
@@ -69,16 +70,22 @@ class ProductTypeDict(object):
         result = dict()
 
         terms = TypeTerm.parse_term_string(sqn)
-        context = terms[:]
+        # NOTE: Parsed terms must go first in context as far as they have more priority in resolving of ambiguity
+        context = TermContext.ensure_context(terms + (context or []))
         first_word = terms.pop(0)
 
-        def get_term_with_sub_terms(term, context):
-            term_list = {term}
-            if isinstance(term, CompoundTypeTerm):
-                term_list.update(term.sub_terms)
-            if with_spellings:
-                term_list.update([wf for t in term_list for wf in t.word_forms(context=context, fail_on_context=False)])
+        terms_cache = dict()
 
+        def get_term_with_sub_terms(term, _context):
+            if term in terms_cache:
+                term_list = terms_cache[term]
+            else:
+                term_list = {term}
+                if isinstance(term, CompoundTypeTerm):
+                    term_list.update(term.sub_terms)
+                if with_spellings:
+                    term_list.update([wf for t in term_list for wf in t.word_forms(context=_context, fail_on_context=False) or []])
+                terms_cache[term] = term_list
             return term_list
 
         def make_product_type(pt_terms):
@@ -86,7 +93,7 @@ class ProductTypeDict(object):
             try:
                 # Validate product type terms are can produce normal final type
                 ProductType.calculate_same_same_hash(pt_terms)
-                pt_type = ProductType(*pt_terms)
+                pt_type = ProductType.make_from_terms(pt_terms)
             except TypeTermException:
                 # Something wrong with terms (context are not full?). Skip combination
                 pass
@@ -110,6 +117,16 @@ class ProductTypeDict(object):
                     if pt_type:
                         result[pt_type] = sqn
 
+        compatibility_cache = defaultdict(dict)
+
+        def are_terms_compatible(term1, term2, _context):
+            if term1 in compatibility_cache and term2 in compatibility_cache[term1]:
+                compatible = compatibility_cache[term1][term2]
+            else:
+                compatible = term1.is_compatible_with(term2, context=_context)
+                compatibility_cache[term1][term2] = compatible
+            return compatible
+
         def add_combinations(_terms, n, _context):
             vf = [[]]
             vf[0] = get_term_with_sub_terms(first_word, _context)
@@ -120,8 +137,8 @@ class ProductTypeDict(object):
                         v[i] = get_term_with_sub_terms(_w[i], _context)
                     for wv in itertools.product(*v):
                         pt_terms = wvf + wv
-                        if any(not w_pair[0].is_compatible_with(w_pair[1], context=_context) or
-                                       not w_pair[1].is_compatible_with(w_pair[0], context=_context)
+                        if any(not are_terms_compatible(w_pair[0], w_pair[1], _context) or
+                                       not are_terms_compatible(w_pair[1], w_pair[0], _context)
                                 for w_pair in itertools.permutations(pt_terms, 2) if w_pair[0] and w_pair[1]):
                             # Do not join words that cannot be paired (like word and the same word with proposition)
                             continue
@@ -173,17 +190,29 @@ class ProductTypeDict(object):
                 except ContextRequiredTypeTermException:
                     # Bad non-final type detected. What to do?
                     # TODO: ignore? or cache with all variants?
-                    terms_matrix = [term.all_context_main_forms() if isinstance(term, ContextDependentTypeTerm)
-                                    else [term.get_main_form()] for term in p_type]
+                    terms_matrix = []
+                    try:
+                        for term in p_type:
+                            if isinstance(term, ContextDependentTypeTerm):
+                                terms_matrix.append(term.all_context_main_forms())
+                            else:
+                                terms_matrix.append([term.get_main_form(p_type)])
+                    except ContextRequiredTypeTermException:
+                        # If this raises exception again, than so to be. Very bad type. Ignore
+                        continue
+
                     for term_variants in itertools.product(*terms_matrix):
                         term_ids = [term.term_id for term in term_variants]
                         self.__main_form_cache[self._main_form_key(term_ids)].add(p_type)
+                except Exception as e:
+                    print("Failed to cache type: '%s'" % to_str(p_type))
+                    raise
 
                 self.__similarity_groups_cache[self._similarity_hash_key(p_type)].add(p_type)
 
     # Not supported for a while. Deprecated
-    def find_product_types(self, sqn, with_spellings=True):
-        product_types = self.collect_sqn_type_tuples(sqn, with_spellings=with_spellings)
+    def find_product_types(self, sqn, with_spellings=True, context=None):
+        product_types = self.collect_sqn_type_tuples(sqn, with_spellings=with_spellings, context=context)
 
         self._ensure_find_caches()
 
@@ -193,7 +222,7 @@ class ProductTypeDict(object):
 
         return result
 
-    def find_product_type_relations(self, sqn, with_spellings=True):
+    def find_product_type_relations(self, sqn, with_spellings=True, context=None):
         self._ensure_find_caches()
 
         tag_type = None
@@ -201,7 +230,7 @@ class ProductTypeDict(object):
             tag_type = ProductType(sqn.lower(), singleton=False)
             product_types = {tag_type: sqn}
         else:
-            product_types = self.collect_sqn_type_tuples(sqn, with_spellings=with_spellings)
+            product_types = self.collect_sqn_type_tuples(sqn, with_spellings=with_spellings, context=context)
 
         if not tag_type:
             # Try tag type as well. Now, naive version when try to match whole string as tag
@@ -256,7 +285,8 @@ class ProductTypeDict(object):
         if ProductTypeDict.VERBOSE:
             print(u'Collecting type tuples from products')
         for product in products:
-            product_tuples = ProductTypeDict.collect_sqn_type_tuples(product.sqn, with_spellings=not strict_products)
+            context = ProductTypeDict.get_product_tag_context(product)
+            product_tuples = ProductTypeDict.collect_sqn_type_tuples(product.sqn, with_spellings=not strict_products, context=context)
 
             for type_tuple, sqn in product_tuples.viewitems():
                 result[type_tuple].append(sqn)
@@ -352,7 +382,11 @@ class ProductTypeDict(object):
             main_form_terms_set = set(t.get_main_form_term_ids())
             for i in range(len(t)):
                 for variant in itertools.combinations(terms, i+1):
-                    v_hash_key = ProductType.calculate_same_same_hash(variant)
+                    try:
+                        v_hash_key = ProductType.calculate_same_same_hash(variant)
+                    except ContextRequiredTypeTermException:
+                        # Cannot finalize this term set. Ignore
+                        continue
                     # Contains & Equals - transitive
                     if v_hash_key in seen_type_tuples:
                         found_types = seen_type_tuples[v_hash_key]
@@ -615,13 +649,15 @@ class ProductTypeDict(object):
                                                                          TYPE_TUPLE_RELATION_CONTAINS)
                                      for sqn in type_tuples[tt]))
             types[to_str(k)] = ['%d/%d' % (sqns_in_self_num, sqns_under_num)] + [to_str(rel) for rel in k.relations()]
+            # types['+'.join(map(unicode, k.get_terms_ids()))] = ['%d/%d' % (sqns_in_self_num, sqns_under_num)] + \
+            #        ['%s%s%s' % ('+'.join(map(unicode, rel.to_type.get_terms_ids())), rel.rel_type[0],
+            #                        '%0.2f' % rel.rel_attr if rel.rel_attr else '') for rel in k.relations()]
 
         with open(json_filename, 'wb') as f:
             f.truncate()
-            f.write(json.dumps(types,
-                               ensure_ascii=False,
-                               check_circular=True,
-                               indent=4).encode("utf-8"))
+            f.write(ujson.dumps(types, ensure_ascii=False))
+                               # check_circular=True).encode("utf-8"))
+                               # indent=4).encode("utf-8"))
 
         """
         pd_hdiet = ProductTypeDict()
@@ -637,7 +673,7 @@ class ProductTypeDict(object):
         if self.VERBOSE:
             print("Dumped json of %d type tuples to %s" % (len(types), json_filename))
 
-    def from_json(self, json_filename, dont_change=False):
+    def from_json(self, json_filename, dont_change=False, pure_json=False):
         """
         Restore type structures from JSON file (see format in to_json)
         SQNs cannot be restored from type dump and should be updated separately if required. For API compatibility
@@ -645,12 +681,25 @@ class ProductTypeDict(object):
         @param bool dont_change: if True do not change existing product type data. All types and relations created in
                     dict will be "virtual", i.e. not visible outside of this instance of ProductTypeDict.
                     This is required when load additional dicts for comparison, filtering etc. e.g. old versions of dict
+        @param bool pure_json: if True skip file pre-processing and cleanup - it can save some seconds on large
+                    auto-generated files when it is known they have no js garbage like comments and so on
         """
+        gc.disable()
+
         with open(json_filename, 'rb') as f:
-            s = jsmin(f.read().decode("utf-8"))
-        types = json.loads(s)
+            s = f.read()
+
+        if not pure_json:
+            # Please do not pass unicode to jsmin under py2.
+            # Otherwise, it cannot use cStringIO and it bursts performance
+            s = jsmin(s)
+        elif self.VERBOSE:
+            print('Assumed file %s is pure json - skip pre-processing' % json_filename)
+
+        types = ujson.loads(s.decode("utf-8"))
         if not dont_change:
             ProductType.reload()
+
         type_tuples = defaultdict(list)
         pseudo_sqn = 1
         seen_rel = defaultdict(dict)
@@ -700,17 +749,23 @@ class ProductTypeDict(object):
         self._type_tuples.update(type_tuples)
         self._meaningful_type_tuples = None
 
+        gc.enable()
         if self.VERBOSE:
             print("Loaded %d type tuples from json %s" % (len(self._type_tuples), json_filename))
 
         return self
 
+    @staticmethod
+    def get_product_tag_context(product, context=None):
+        context = context[:] if context else []
+        context.extend(tag.strip().lower() for tag in product.get('tags', set()) if tag.strip())
+        return context
 
 def dump_json():
     from ok.dicts import main_options
     types = ProductTypeDict()
     ProductTypeDict.VERBOSE = True
-    # types.min_meaningful_type_capacity = 2
+    types.min_meaningful_type_capacity = 2
     config = main_options(sys.argv)
     if config.products_meta_in_csvname:
         products = Product.from_meta_csv(config.products_meta_in_csvname)
@@ -721,32 +776,46 @@ def dump_json():
 
 
 def update_types_in_product_meta(config):
+    import time
     print("Updating types in meta products from %s" % config.products_meta_in_csvname)
     print("=" * 80)
+
+    load_term_dict()
 
     types = ProductTypeDict()
     types.VERBOSE = True
     print("Loading product types dict from %s" % config.product_types_in_json)
-    types.from_json(config.product_types_in_json)
+    types.from_json(config.product_types_in_json, pure_json=is_types_file_pure_json(config))
     types.to_json('out/product_types_1.json')
     print("Loaded %d product types" % len(types.get_type_tuples()))
 
     products = list(Product.from_meta_csv(config.products_meta_in_csvname))
     print('Loaded %d products from file: %s' % (len(products), config.products_meta_in_csvname))
     i_count = 0
+    i_total = len(products)
     type_found_count = 0
     multiple_types_found_count = 0
     for p in products:
-        p_all_types = types.find_product_types(p.sqn)
+        print("NOW product: %s" % p.sqn, end='')
+        start = time.time()
+        context = types.get_product_tag_context(p)
+        p_all_types = types.find_product_types(p.sqn, context=context)
         type_variants = set(p_all_types)
-        p_all_types2 = types.find_product_types(u'-'.join(p.sqn.split(u' ', 1)))
-        type_variants.update(p_all_types2)
+        first_check = time.time()
+        comp_first_words_sqn = u'-'.join(p.sqn.split(u' ', 1))
+        comp_first_word = comp_first_words_sqn.split(u' ', 1)[0]
+        if comp_first_word.count('-') == 1:
+            # Do not produce over-compound
+            p_all_types2 = types.find_product_types(comp_first_words_sqn, context=context)
+            type_variants.update(p_all_types2)
+        end = time.time()
         p_types = type_variants
         p['types'] = p_types
         if p_types: type_found_count += 1
         if any(len(pt) > 1 for pt in p_types): multiple_types_found_count += 1
-        if i_count % 100 == 0: print('.', end='')
+        print(' %0.3fs (%0.3fs/%0.3fs)' % (end-start, first_check-start, end-first_check))
         i_count += 1
+        if i_count % 100 == 0: print('%s %d%% (%d of %d)' % ('.' * (i_count//100), 100*i_count//i_total, i_count, i_total))
     print()
     print("=" * 80)
     print('Found types for %d products where %d have multi-term types' % (type_found_count, multiple_types_found_count))
@@ -787,7 +856,7 @@ def from_hdiet_csv(config):
                 sub_cat = None
                 if item.get("details"):
                     details_raw = remove_nbsp(item["details"])
-                    details = json.loads(details_raw)
+                    details = ujson.loads(details_raw)
                     """ @type details: dict of (unicode, unicode) """
 
                     top_cat = details.get('top_cat')
@@ -807,7 +876,7 @@ def from_hdiet_csv(config):
         types.to_json('out/product_types_hdiet.json')
     else:
         print("Loading pre-processed hdiet product types from %s" % config.product_types_in_json)
-        types.from_json(config.product_types_in_json)
+        types.from_json(config.product_types_in_json, pure_json=is_types_file_pure_json(config))
 
     print("=" * 80)
     print("Loading general products from meta %s" % config.products_meta_in_csvname)
@@ -865,8 +934,16 @@ def reload_product_type_dict(config=None):
         config = ok.dicts.main_options([])
     pd = ProductTypeDict()
     pd.VERBOSE = True
-    pd.from_json(config.product_types_in_json)
+    pd.from_json(config.product_types_in_json, pure_json=is_types_file_pure_json(config))
     return pd
+
+
+def is_types_file_pure_json(config):
+    import os.path
+    # TODO: Actually, better to verify file itself by file prolog or something like that
+    return config.baseline_dir == config.default_base_dir \
+           and os.path.dirname(config.product_types_in_json) == config.default_base_dir
+
 
 if __name__ == '__main__':
     import sys

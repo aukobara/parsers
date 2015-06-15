@@ -6,6 +6,9 @@ from ok.dicts.product_type import ProductType
 
 
 # noinspection PyUnresolvedReferences
+from ok.dicts.term import TypeTerm
+
+
 @pytest.fixture(autouse=True)
 def clear_singleton_cache():
     ProductType.reload()
@@ -31,6 +34,15 @@ def test_singleton_cache():
     t4 = ProductType('тест_', singleton=False)
     assert t4 != t3
     assert ProductType.all_cached_singletons() == [t]
+
+
+def test_singleton_cache_make_from_terms():
+    term = TypeTerm.make('тест')
+    t = ProductType.make_from_terms([term])
+    assert ProductType.all_cached_singletons() == [t]
+
+    t1 = ProductType.make_from_terms([term])
+    assert t1 is t and ProductType.all_cached_singletons() == [t]
 
 
 def test_relations_sort():

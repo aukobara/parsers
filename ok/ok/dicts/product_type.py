@@ -3,7 +3,7 @@ from __future__ import print_function, unicode_literals
 from collections import namedtuple
 from ok.dicts import to_str
 
-from ok.dicts.term import TypeTerm
+from ok.dicts.term import TypeTerm, TermContext
 
 TYPE_TUPLE_RELATION_IDENTICAL = u"identical"
 TYPE_TUPLE_RELATION_EQUALS = u"equals"
@@ -46,7 +46,7 @@ class ProductType(tuple):
         """@type: ProductType"""
         self._singleton = False
 
-        if kwargs.get('singleton', True):
+        if not kwargs.get('_skip_cache_lookup', False) and kwargs.get('singleton', True):
             wrapper = EqWrapper(self)
             if wrapper in cls.__v:
                 self = wrapper.match
@@ -63,11 +63,11 @@ class ProductType(tuple):
 
             self._meaningful = kwargs.get('meaningful', False)
             singleton = kwargs.get('singleton', True)
-            for k in kwargs:
-                if k not in ('singleton', 'meaningful'):
-                    raise Exception('Unknown ProductType option: %s' % k)
+            assert all(k in ('singleton', 'meaningful', '_skip_cache_lookup') for k in kwargs), \
+                'Unknown ProductType option: %s' % ', '.join(kwargs.keys())
 
-            tuple.__init__(args)
+            # tuple.__init__(self, args)
+            self.term_context = TermContext(self)
 
             self._singleton = singleton
             if self._singleton:
@@ -77,12 +77,26 @@ class ProductType(tuple):
     def singleton(self):
         return self._singleton
 
+    @classmethod
+    def make_from_terms(cls, terms):
+        """@param list[TypeTerm] terms: list of TypeTerms"""
+        wrapper = EqWrapper(terms)
+        if wrapper in cls.__v:
+            found = wrapper.match
+            assert found._singleton
+        else:
+            found = ProductType(*terms, _skip_cache_lookup=True)
+        return found
+
     def __getitem__(self, y):
         term_id = super(ProductType, self).__getitem__(y)
         return TypeTerm.get_by_id(term_id)
 
     def __iter__(self):
         return (TypeTerm.get_by_id(term_id) for term_id in super(ProductType, self).__iter__())
+
+    def __getslice__(self, i, j):
+        return [TypeTerm.get_by_id(term_id) for term_id in super(ProductType, self).__getslice__(i, j)]
 
     @staticmethod
     def all_cached_singletons():
@@ -240,7 +254,8 @@ class ProductType(tuple):
         return tuple(super(ProductType, self).__iter__())
 
     def get_main_form_term_ids(self):
-        return [TypeTerm.get_by_id(term_id).get_main_form(context=self).term_id for term_id in self.get_terms_ids()]
+        return [TypeTerm.get_by_id(term_id).get_main_form(context=self.term_context).term_id
+                for term_id in self.get_terms_ids()]
 
     @staticmethod
     def calculate_same_same_hash(terms):
@@ -259,7 +274,8 @@ class ProductType(tuple):
             if term is None:
                 raise Exception("No such term in dict with term_id: %d" % term_item)
             type_terms.append(term)
-        hash_terms = [term.get_main_form(context=type_terms).term_id for term in type_terms]
+        term_context = TermContext.ensure_context(type_terms)
+        hash_terms = [term.get_main_form(context=term_context).term_id for term in type_terms]
         return frozenset(hash_terms).__hash__()
 
     def get_same_same_hash(self):
@@ -268,14 +284,14 @@ class ProductType(tuple):
         @return: int
         """
         if self.__same_same_hash_cache is None:
-            self.__same_same_hash_cache  = self.calculate_same_same_hash(self.get_terms_ids())
+            self.__same_same_hash_cache = self.calculate_same_same_hash(self.get_terms_ids())
         return self.__same_same_hash_cache
 
 
 class EqWrapper(ProductType):
     def __new__(cls, *args):
         self = tuple.__new__(cls, [id.term_id if isinstance(id, TypeTerm) else id for id in args[0]])
-        self.obj = args[0]
+        self.obj = args[0] if isinstance(args[0], ProductType) else self.get_terms_ids()
         self.match = None
         self._singleton = True
         return self

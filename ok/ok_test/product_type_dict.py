@@ -5,7 +5,7 @@ import pytest
 from ok.dicts import build_path, to_str, main_options
 from ok.dicts.product import Product
 from ok.dicts.product_type import ProductType, TYPE_TUPLE_RELATION_CONTAINS, TYPE_TUPLE_RELATION_EQUALS, \
-    TYPE_TUPLE_RELATION_SUBSET_OF
+    TYPE_TUPLE_RELATION_SUBSET_OF, TYPE_TUPLE_RELATION_ALMOST
 from ok.dicts.product_type_dict import ProductTypeDict
 from ok.settings import ensure_baseline_dir
 
@@ -60,7 +60,7 @@ def test_build_tag_types_from_products_merge(types_dict):
     assert pt2 in pt_tag.related_types(TYPE_TUPLE_RELATION_CONTAINS)
 
 
-def test_build_tag_types_from_products_merge_transient(types_dict):
+def test_build_tag_types_from_products_merge_propagation(types_dict):
     """@param ProductTypeDict types_dict: pdt"""
     type_tuples = defaultdict(list)
 
@@ -92,8 +92,10 @@ def test_build_tag_types_from_products_merge_transient(types_dict):
     assert pt_tag2 in type_tuples
     assert set(type_tuples[pt_tag1]) == {p1.sqn, p2.sqn}
     assert set(type_tuples[pt_tag2]) == {p1.sqn, p3.sqn}
-    # Tags are now have different product sets - no relation
-    assert not pt_tag1.get_relation(pt_tag2)
+    # After 'almost' relation was introduced - Tags are in soft 'almost' relation because
+    # share one sqn of two they have each. Thus, relation attribute is 50%
+    assert pt_tag1.get_relation(pt_tag2).rel_type == TYPE_TUPLE_RELATION_ALMOST
+    assert pt_tag1.get_relation(pt_tag2).rel_attr == 0.5
     # All product types now are contained in their tag types but not equal to any other type
     assert len(pt1.relations()) == 2 and pt1.get_relation(pt_tag1).rel_type == TYPE_TUPLE_RELATION_SUBSET_OF
     assert len(pt1.relations()) == 2 and pt1.get_relation(pt_tag2).rel_type == TYPE_TUPLE_RELATION_SUBSET_OF
