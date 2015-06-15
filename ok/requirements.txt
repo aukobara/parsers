@@ -36,15 +36,12 @@ python-levenshtein==0.12.0
 pytz==2015.4
 pywin32==219
 queuelib==1.2.2
-scikit-image==0.11.3
-scipy==0.15.1
 Scrapy==0.24.5
 service-identity==14.0.0
 six==1.9.0
-snowballstemmer==1.2.0
 transliterate==1.7.3
 Twisted==15.1.0
-Unidecode==0.4.17
+ujson==1.33
 w3lib==1.11.0
 Werkzeug==0.10.4
 zope.interface==4.1.2
