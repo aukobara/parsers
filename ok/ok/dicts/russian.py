@@ -47,7 +47,7 @@ def _ensure_pymorphy():
 
 
 def get_word_normal_form(word, strict=True, verbose=False, use_external_word_forms_dict=True,
-                         collect_stats=WORD_NORMAL_FORM_KEEP_STATS_DEFAULT, return_known=True):
+                         collect_stats=WORD_NORMAL_FORM_KEEP_STATS_DEFAULT, return_known=True, seen=None):
     """
     Return first (most relevant by pymorph) normal form of specified russian word.
     @param unicode word: w
@@ -57,6 +57,7 @@ def get_word_normal_form(word, strict=True, verbose=False, use_external_word_for
             It can be useful during data generation when external dicts are not ready or in invalid state
     @param bool return_known: if True (default) return only good known words. No word-creation. If failed to find good
             known form - return word itself. If False, unknown weird words may be returned.
+    @param set[unicode]|None seen: recursion history
     @return:
     """
     pymorph_analyzer = _ensure_pymorphy()
@@ -119,12 +120,35 @@ def get_word_normal_form(word, strict=True, verbose=False, use_external_word_for
     is_w_norm_known = is_known_word(w_norm, use_external_word_forms_dict=use_external_word_forms_dict)
 
     if use_external_word_forms_dict and is_w_norm_known:
-        if parse_norm.tag.POS in {'ADJF', 'ADJS', 'PRTF', 'PRTS'}:
+        w_form = w_norm
+        w_form_tag = parse_norm.tag
+
+        if w_form_tag.POS in {'ADJF', 'ADJS', 'PRTF', 'PRTS'}:
             # Try to convert adjective to noun form
-            w_norm = adjective_to_noun_word_form(w_norm, default=w_norm, verbose=verbose)
-        if pymorph_analyzer.tag(w_norm)[0].POS in {'NOUN'}:
+            w_form = adjective_to_noun_word_form(w_form, default=w_form, verbose=verbose)
+            if w_form != w_norm:
+                if verbose:
+                    print("Transformed adjective using ext dictionary: %s => %s" % (w_norm, w_form))
+                w_form_tag = pymorph_analyzer.tag(w_form)[0]
+
+        if w_form_tag.POS in {'NOUN'}:
             # Try to check 'same' and 'pet' forms of noun
-            w_norm = noun_from_same_or_pet_word_form(w_norm, default=w_norm, verbose=verbose)
+            # Results of previous adjective transformation can come here
+            w_form_2 = noun_from_same_or_pet_word_form(w_form, verbose=verbose)
+            if verbose and w_form_2:
+                print("Transformed noun using ext dictionary: %s => %s" % (w_form, w_form_2))
+            if not w_form_2 and word != w_norm:
+                # Try original word as well if it has not been tried already
+                w_form_2 = noun_from_same_or_pet_word_form(word, verbose=verbose)
+                if w_form_2 and w_form_2 != w_norm:
+                    # word itself has transformation articles in ext dicts and this transformation is not the same
+                    # as after morph. Consider this as ambiguity
+                    parse_was_ambiguous = True
+                    if verbose and w_form_2:
+                        print("Transformed original word using ext dictionary: %s => %s" % (word, w_form_2))
+            w_form = w_form_2 or w_form
+
+        w_norm = w_form or w_norm
 
     # Return only long enough words and good known words (if specified, by default)
     result = w_norm if len(w_norm) >= 3 and (not return_known or is_w_norm_known) else word
@@ -132,11 +156,13 @@ def get_word_normal_form(word, strict=True, verbose=False, use_external_word_for
         __normal_form_word_stats[result][word] = str(p_selected.tag) + \
                                                  (u'?' if not pymorph_analyzer.word_is_known(word) else u'')
 
-    if word != result and parse_was_ambiguous:
+    if word != result and parse_was_ambiguous and (not seen or result not in seen):
         # Try to retry to check if another word may be produced due to ambiguity
+        seen = seen or set()
+        seen.add(word)
         new_result = get_word_normal_form(result, strict=strict, verbose=verbose,
                                           use_external_word_forms_dict=use_external_word_forms_dict,
-                                          collect_stats=collect_stats, return_known=return_known)
+                                          collect_stats=collect_stats, return_known=return_known, seen=seen)
         if new_result != result:
             if verbose:
                 print("Hmmm. After retry we have got another result! word: %s, 1st result: %s, 2nd result: %s" %
@@ -581,8 +607,8 @@ def ozhegov_parse(filename, out_filename=None):
                 m = re.search(u'^==((?:\s+[а-яА-ЯёЁ]+)+)', fields[5], re.U)
                 if m:
                     m = re.findall(u'\s+([а-яА-ЯёЁ]+)', m.group(1), re.U)
-                    if len(m) > 1:
-                        # Ignore multi-word definitions.
+                    if len(m) > 1 or 'в старину' in fields[4].lower():
+                        # Ignore multi-word definitions as well as ancient word forms.
                         continue
                     same = get_word_normal_form(m[0], use_external_word_forms_dict=False)
                 if art and same and art != same:
