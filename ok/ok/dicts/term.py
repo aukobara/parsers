@@ -34,18 +34,20 @@ def context_aware(func):
     def wrapped(*args, **kwargs):
         assert len(args) <= 2 or 'context' in kwargs, "@context_aware method call must have context= named parameter " \
                                                       "if it has another arguments"
+        term = args[0]
+        assert isinstance(term, TypeTerm)
+
         context = None
-        if 'context' in kwargs:
-            context = TermContext.ensure_context(kwargs.get('context'))
-            kwargs['context'] = context
-        elif len(args) == 2:
-            context = TermContext.ensure_context(args[1])
-            if type(context) != type(args[1]):
-                args = list(args)
-                args[1] = context
+        if term._is_context_required or term._is_context_required is None:
+            if 'context' in kwargs:
+                context = TermContext.ensure_context(kwargs.get('context'))
+                kwargs['context'] = context
+            elif len(args) == 2:
+                context = TermContext.ensure_context(args[1])
+                if type(context) != type(args[1]):
+                    args = list(args)
+                    args[1] = context
         if context:
-            term = args[0]
-            assert isinstance(term, TypeTerm)
             context_key = context.call_key(func_idx, term.term_id)
             result = context.cached_result(context_key)
             if result is None:
@@ -243,7 +245,7 @@ class TypeTerm(unicode):
 
     not_a_term_character_pattern = re.compile('[^%s]+' % RE_RUSSIAN_CHAR_SET, re.U)
 
-    __slots__ = ('_term_id', '_variants', '_do_not_pair', '_always_pair', '_word_forms')
+    __slots__ = ('_term_id', '_variants', '_do_not_pair', '_always_pair', '_word_forms', '_is_context_required')
 
     term_dict = TypeTermDict()
 
@@ -282,6 +284,7 @@ class TypeTerm(unicode):
             # Mostly - synonyms. It is used for same-same word matching
             # If None it means word forms has not been initialized.
             self._word_forms = None
+            self._is_context_required = None
 
             # Put term to cache and assign id
             self._term_id = self.term_dict.save_term(self)
@@ -417,8 +420,10 @@ class TypeTerm(unicode):
                 result = self._collect_self_word_forms(context=None)
                 # Context is not required and thus collected word forms may be cached
                 self._word_forms = result[:]
+                self._is_context_required = False
             except ContextRequiredTypeTermException:
                 self._word_forms = [u'__nocache__']
+                self._is_context_required = True
                 if not context and fail_on_context:
                     raise
 
@@ -433,6 +438,19 @@ class TypeTerm(unicode):
             result = self._word_forms[:]
 
         return result
+
+    def is_context_required(self):
+        if self._is_context_required is None:
+            try:
+                if hasattr(self.word_forms, 'context_aware_index'):
+                    word_forms = getattr(context_aware, '_context_aware_function_reg')[self.word_forms.context_aware_index]
+                    word_forms(self, context=None, fail_on_context=True)
+                else:
+                    self.word_forms(context=None, fail_on_context=True)
+                self._is_context_required = False
+            except ContextRequiredTypeTermException:
+                self._is_context_required = True
+        return self._is_context_required
 
     def _collect_self_word_forms(self, need_normal_form=True, context=None):
         """
@@ -600,23 +618,40 @@ class CompoundTypeTerm(TypeTerm):
 
         if need_all_main_spaced:
             tokens = self.simple_sub_terms[:]
-            token_buf = []
-            while tokens:
-                token = tokens.pop(0)
-                token_main_form = token.get_main_form(context=context)
+            tokens_count = len(tokens)
+            token_buf = [None] * tokens_count
+            i = 0
+            while i < tokens_count:
+                token_main_form = tokens[i].get_main_form(context=context)
 
                 if isinstance(token_main_form, CompoundTypeTerm):
                     if token_main_form._spaced_form == self._spaced_form:
-                        # Recursion
-                        token_main_form = token
+                        # Recursion - simple spaced form was processed already
+                        # token_main_form = token
+                        token_buf = {}
+                        break
                     else:
-                        # Self contained main form like pepsi vs pepsi-cola
-                        while tokens and tokens[0] in token_main_form.sub_terms:
+                        sub_terms = token_main_form.simple_sub_terms
+                        if tokens[i] in sub_terms:
+                            # Self contained main form like pepsi vs pepsi-cola
                             # Eat everything that will be added with spaced form
-                            tokens.pop(0)
+                            sub_terms_count = len(sub_terms)
+                            first_idx = sub_terms.index(tokens[i])
+                            last_idx = sub_terms_count - sub_terms[::-1].index(tokens[i]) - 1
+                            j = i - 1
+                            while j >= 0 and first_idx-(i-j) >= 0 and tokens[j] == sub_terms[first_idx-(i-j)]:
+                                token_buf[j] = None
+                                j -= 1
+                            j = i
+                            while j < tokens_count - 1 and last_idx+(j-i)+1 < sub_terms_count \
+                                    and tokens[j+1] == sub_terms[last_idx+(j-i)+1]:
+                                # Need to find last token covered by spaced form
+                                j += 1
+                            i = j
                         token_main_form = token_main_form._spaced_form
-                token_buf.append(token_main_form)
-            all_main_spaced_form = ' '.join(token_buf)
+                token_buf[i] = token_main_form
+                i += 1
+            all_main_spaced_form = ' '.join(filter(bool, token_buf))
             if all_main_spaced_form and all_main_spaced_form != self:
                 if not collected_forms or collected_forms[0] != all_main_spaced_form:
                     collected_forms = [TypeTerm.make(all_main_spaced_form)] + collected_forms

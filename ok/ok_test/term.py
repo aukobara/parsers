@@ -7,7 +7,7 @@ import pytest
 from ok.dicts import to_str, main_options
 from ok.dicts.product import Product
 from ok.dicts.product_type import ProductType
-from ok.dicts.product_type_dict import reload_product_type_dict
+from ok.dicts.product_type_dict import reload_product_type_dict, ProductTypeDict
 from ok.dicts.russian import get_word_normal_form
 from ok.dicts.term import load_term_dict, TypeTerm, ContextRequiredTypeTermException, dump_term_dict_from_product_types, \
     CompoundTypeTerm, ContextDependentTypeTerm, ctx_def, DEFAULT_CONTEXT, WithPropositionTypeTerm, TermContext, \
@@ -55,6 +55,37 @@ def test_context_terms_parse_compound(pdt):
     types = pdt.collect_sqn_type_tuples(u'продукт йогуртный перс/мар/ананас/дыня')
     _assert_prod_mar_types(types)
 
+def test_context_terms_parse_expand_abbr(pdt):
+    types = pdt.collect_sqn_type_tuples('коктейль молочный стерилиз')
+    _assert_all_types_are_finalized(types)
+
+    pt_full = ProductType('коктейль', 'молочный', 'стерилизованный')
+
+    assert pt_full in types
+
+def test_context_terms_parse_match_with_prop():
+    pdt = ProductTypeDict()
+    pdt.min_meaningful_type_capacity = 2
+    """@param ProductTypeDict pdt: pdt"""
+    sqn1 = 'приправа лимонная к рыбе'
+    p1 = Product({'sqn': sqn1})
+
+    sqn2 = 'приправа лимонная для рыбы'
+    p2 = Product({'sqn': sqn2})
+
+    pdt.build_from_products([p1, p2], strict_products=False)
+    types = pdt.get_type_tuples(meaningful_only=True)
+    _assert_all_types_are_finalized(types)
+
+    pt_full = ProductType('приправа', 'лимонная', 'рыба')
+    assert pt_full in types
+    assert types[pt_full] == [sqn1, sqn2]
+    assert pt_full.relations()
+
+    p1_types = pdt.find_product_types(sqn1)
+    assert pt_full in p1_types
+    p2_types = pdt.find_product_types(sqn2)
+    assert pt_full in p2_types
 
 def test_context_terms_main_form_with_compatible_compound(pdt):
     term_comp = TypeTerm.make('продукт-йогуртный')
@@ -254,12 +285,56 @@ def test_context_terms_parse_ambigous_with_dict(pdt):
         pdt.collect_sqn_type_tuples(u'сгущ продукт мол-раст с сахаром сгущенка с кофе')
 
 
-def test_compound_spaced_main_form():
+def test_compound_spaced_recursive_main_form():
     # Pepsi has known word_normal_form 'Pepsi-Cola'. That may produce recursion when calculate all spaced main form
-    term = TypeTerm.make(u'пепси-кола')
-    main_form = term.get_main_form()
-    assert main_form == 'пепси кола'
+    term_str = 'тест1-тест2'
 
+    class TestTerm(TypeTerm):
+        def get_main_form(self, context=None):
+            return TypeTerm.make(term_str)
+
+    term1 = TestTerm('тест1')
+    term2 = TestTerm('тест2')
+    assert term1.get_main_form() == term_str
+    assert term2.get_main_form() == term_str
+
+    term_pre = TypeTerm.make('тестпре')
+    term_post = TypeTerm.make('тестпост')
+    term = TypeTerm.make(' '.join([term_pre, term_str, term_post]))
+
+    for i in range(2):
+        main_form = term.get_main_form()
+        assert main_form == 'тестпре тест1 тест2 тестпост'
+        assert main_form.simple_sub_terms == [term_pre, term1, term2, term_post]
+        term = main_form
+
+def test_compound_spaced_recursive_main_form_with_tranform():
+    # 'Славянский' has known word_normal_form 'Церковно-Славянский' and 'Церковно' transforms to 'Церковь'.
+    # That may produce recursion when calculate all spaced main form. Also check that other words are not touched
+    term_str = 'тест1-тест2'
+    term1_trans = TypeTerm.make('тест1транс')
+
+    class TestTerm(TypeTerm):
+        def get_main_form(self, context=None):
+            return TypeTerm.make(term_str)
+
+    class TestTermTrans(TypeTerm):
+        def get_main_form(self, context=None):
+            return term1_trans
+
+    term1 = TestTermTrans('тест1')
+    term2 = TestTerm('тест2')
+    assert term1.get_main_form() == term1_trans
+    assert term2.get_main_form() == term_str
+
+    term_pre = TypeTerm.make('тестпре')
+    term_post = TypeTerm.make('тестпост')
+    term = TypeTerm.make(' '.join([term_pre, term1, term_str, term_post]))
+
+    for i in range(2):
+        main_form = term.get_main_form()
+        assert main_form == 'тестпре тест1транс тест1 тест2 тестпост'
+        term = main_form
 
 def test_context_terms_fail_on_context():
     t = TypeTerm.make('мол-шок')
