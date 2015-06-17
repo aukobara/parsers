@@ -298,15 +298,28 @@ class ProductTypeDict(object):
             print(u"Collected %d type tuples" % len(result))
         return result
 
-    def filter_meaningful_types(self, types_iter):
+    def filter_meaningful_types(self, types_iter, type_tuples=None):
         """
         Take iterator and return filtered iterator without types to be ignored for processing
-        @param collections.Iterable[ProductType, list[unicode]] types_iter: iterator over product types dict items
+        @param collections.Iterable[ProductType]|dict of (ProductType, list[unicode]) types_iter: iterator over product
+                types dict items
+        @param dict of (ProductType, list[unicode])|None type_tuples: product types related data (sqns). If None,
+                try to consider types_iter as type_tuples
         @rtype: collections.Iterable[ProductType, list[unicode]]
         """
-        for p_type, data in types_iter:
-            if p_type.meaningful or len(data) >= self.min_meaningful_type_capacity or len(p_type) == 1 or p_type.relations():
-                yield p_type, data
+        if type_tuples is None:
+            type_tuples = dict() if not isinstance(types_iter, dict) else types_iter
+        for p_type in types_iter:
+            if p_type.meaningful or self.count_related_sqns(p_type, type_tuples) >= self.min_meaningful_type_capacity \
+                    or len(p_type) == 1:
+                yield p_type, type_tuples.get(p_type)
+
+    @staticmethod
+    def count_related_sqns(p_type, type_tuples):
+        related_sqns = {sqn for tt in [p_type] + p_type.related_types(TYPE_TUPLE_RELATION_EQUALS,
+                                                                         TYPE_TUPLE_RELATION_CONTAINS)
+                            for sqn in type_tuples.get(tt, [])}
+        return len(related_sqns)
 
     @staticmethod
     def compare_types(t1, t2, max_similarity=0):
@@ -377,7 +390,7 @@ class ProductTypeDict(object):
         last_group_length = 0
         i_count = 0
         relations_created = 0
-        for t, sqns in sorted(self.filter_meaningful_types(type_tuples.viewitems()), key=lambda _i: len(_i[0])):
+        for t, sqns in sorted(type_tuples.viewitems(), key=lambda _i: len(_i[0])):
             terms = t.get_terms_ids()
             main_form_terms_set = set(t.get_main_form_term_ids())
             for i in range(len(t)):
@@ -506,7 +519,7 @@ class ProductTypeDict(object):
         """@type: dict of (ProductType, set[ProductType])"""
         sqn_types = defaultdict(set)
         """@type: dict of (unicode, set[ProductType])"""
-        for t, sqns in self.filter_meaningful_types(type_tuples.viewitems()):
+        for t, sqns in self.filter_meaningful_types(type_tuples):
             for sqn in sqns:
                 sqn_types[sqn].add(t)
         for product in products:
@@ -622,7 +635,7 @@ class ProductTypeDict(object):
             return dict(self._type_tuples)
         else:
             if not self._meaningful_type_tuples:
-                self._meaningful_type_tuples = dict((k, v) for k, v in self.filter_meaningful_types(self._type_tuples.viewitems()))
+                self._meaningful_type_tuples = dict((k, v) for k, v in self.filter_meaningful_types(self._type_tuples))
             return self._meaningful_type_tuples
 
     def get_root_type_tuples(self):
@@ -645,17 +658,12 @@ class ProductTypeDict(object):
         type_tuples = self.get_type_tuples(meaningful_only=True)
         for k, sqns in sorted(type_tuples.viewitems(), key=lambda _t: to_str(_t[0])):
             sqns_in_self_num = len(set(sqns))
-            sqns_under_num = len(set(sqn for tt in [k] + k.related_types(TYPE_TUPLE_RELATION_EQUALS,
-                                                                         TYPE_TUPLE_RELATION_CONTAINS)
-                                     for sqn in type_tuples[tt]))
+            sqns_under_num = self.count_related_sqns(k, type_tuples)
             types[to_str(k)] = ['%d/%d' % (sqns_in_self_num, sqns_under_num)] + [to_str(rel) for rel in k.relations()]
-            # types['+'.join(map(unicode, k.get_terms_ids()))] = ['%d/%d' % (sqns_in_self_num, sqns_under_num)] + \
-            #        ['%s%s%s' % ('+'.join(map(unicode, rel.to_type.get_terms_ids())), rel.rel_type[0],
-            #                        '%0.2f' % rel.rel_attr if rel.rel_attr else '') for rel in k.relations()]
 
         with open(json_filename, 'wb') as f:
             f.truncate()
-            f.write(ujson.dumps(types, ensure_ascii=False))
+            f.write(ujson.dumps(types, indent=4, ensure_ascii=False))
                                # check_circular=True).encode("utf-8"))
                                # indent=4).encode("utf-8"))
 
@@ -704,10 +712,13 @@ class ProductTypeDict(object):
         pseudo_sqn = 1
         seen_rel = defaultdict(dict)
         for type_str, rel_str in types.viewitems():
-            type_items = type_str.split(u' + ')
+            type_items = map(TypeTerm.make, type_str.split(u' + '))
             # All types are loaded from external sources or knowledge base are considered meaningful regardless of
             # other their characteristics
-            pt = ProductType(*type_items, meaningful=True, singleton=not dont_change)
+            if dont_change:
+                pt = ProductType(*type_items, meaningful=True, singleton=False)
+            else:
+                pt = ProductType.make_from_terms(type_items, meaningful=True)
             wrapper = EqWrapper(pt)
             if wrapper in seen_rel:
                 # Type has been added already by another relation
@@ -725,9 +736,12 @@ class ProductTypeDict(object):
                 r_match = re.findall(u'^(\w+)(?:\[([^\]]+)\])?(~)?\s+(.*)$', r_str)
                 if r_match:
                     relation, rel_attr, is_soft, type_to_str = r_match[0]
-                    type_to_items = type_to_str.split(u' + ')
+                    type_to_items = map(TypeTerm.make, type_to_str.split(u' + '))
 
-                    type_to = ProductType(*type_to_items, meaningful=True, singleton=not dont_change)
+                    if dont_change:
+                        type_to = ProductType(*type_to_items, meaningful=True, singleton=True)
+                    else:
+                        type_to = ProductType.make_from_terms(type_to_items, meaningful=True)
                     wrapper = EqWrapper(type_to)
                     if pt in seen_rel and wrapper in seen_rel[pt]:
                         # Reverse to this relation has been already created. Use type instance from it
@@ -756,22 +770,18 @@ class ProductTypeDict(object):
         return self
 
     @staticmethod
-    def get_product_tag_context(product, context=None):
-        context = context[:] if context else []
-        context.extend(tag.strip().lower() for tag in product.get('tags', set()) if tag.strip())
-        return context
+    def get_product_tag_context(product):
+        return [tag.strip().lower() for tag in product.get('tags', set()) if tag.strip()]
 
-def dump_json():
-    from ok.dicts import main_options
+def dump_json(config):
     types = ProductTypeDict()
     ProductTypeDict.VERBOSE = True
     types.min_meaningful_type_capacity = 2
-    config = main_options(sys.argv)
     if config.products_meta_in_csvname:
         products = Product.from_meta_csv(config.products_meta_in_csvname)
         types.build_from_products(products, strict_products=True)
     else:
-        types.from_json(config.product_types_in_json)
+        types.from_json(config.product_types_in_json, pure_json=is_types_file_pure_json(config))
     types.to_json('out/product_types_2.json')
 
 
@@ -827,8 +837,6 @@ def update_types_in_product_meta(config):
 def from_hdiet_csv(config):
     """
     Load and pre-parse products raw data from HDiet crawler
-    @type prodcsvname: str
-    @return:
     """
     from ok.dicts.prodproc import ProductFQNParser
     from ok.dicts import remove_nbsp
@@ -952,7 +960,8 @@ if __name__ == '__main__':
         config = ok.dicts.main_options(sys.argv)
         # print_sqn_tails()
         if config.action == 'dump-json':
-            dump_json()
+            config = ok.dicts.main_options(sys.argv, products_meta_in_csvname=None)
+            dump_json(config)
         elif config.action == 'update-products':
             update_types_in_product_meta(config)
         elif config.action == 'gen-types-hdiet-products':

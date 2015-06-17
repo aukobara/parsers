@@ -78,14 +78,14 @@ class ProductType(tuple):
         return self._singleton
 
     @classmethod
-    def make_from_terms(cls, terms):
+    def make_from_terms(cls, terms, meaningful=False):
         """@param list[TypeTerm] terms: list of TypeTerms"""
         wrapper = EqWrapper(terms)
         if wrapper in cls.__v:
             found = wrapper.match
             assert found._singleton
         else:
-            found = ProductType(*terms, _skip_cache_lookup=True)
+            found = ProductType(*terms, meaningful=meaningful, _skip_cache_lookup=True)
         return found
 
     def __getitem__(self, y):
