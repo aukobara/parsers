@@ -5,6 +5,9 @@ from ok.dicts import to_str
 
 from ok.dicts.term import TypeTerm, TermContext
 
+# identical relation is special relation type that is used in runtime type matching only and is not present in regular
+# types dict. It is used to distinguish really the same types and types are 'same-same' i.e. equals (comparing their
+# main forms and ignoring terms order)
 TYPE_TUPLE_RELATION_IDENTICAL = u"identical"
 TYPE_TUPLE_RELATION_EQUALS = u"equals"
 TYPE_TUPLE_RELATION_SIMILAR = u"similar"

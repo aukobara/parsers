@@ -5,21 +5,23 @@ from ast import literal_eval
 from collections import OrderedDict, defaultdict
 import csv
 import itertools
+import json
 import re
 
 import Levenshtein
 import gc
 from jsmin import jsmin
 import ujson
-from ok.dicts import to_str
 
+from ok.dicts import to_str
 from ok.dicts.product import Product
 from ok.dicts.product_type import ProductType,\
-    TYPE_TUPLE_RELATION_CONTAINS, TYPE_TUPLE_RELATION_EQUALS, TYPE_TUPLE_RELATION_SUBSET_OF, EqWrapper
+    TYPE_TUPLE_RELATION_CONTAINS, TYPE_TUPLE_RELATION_EQUALS, TYPE_TUPLE_RELATION_SUBSET_OF, EqWrapper, \
+    TYPE_TUPLE_RELATION_SIMILAR, TYPE_TUPLE_RELATION_ALMOST
 from ok.dicts.term import TypeTerm, CompoundTypeTerm, WithPropositionTypeTerm, TagTypeTerm, TypeTermException, \
     ContextRequiredTypeTermException, ContextDependentTypeTerm, load_term_dict, TermContext
 
-TYPE_TUPLE_MIN_CAPACITY = 4  # Number of SQNs covered by word combination
+TYPE_TUPLE_MIN_CAPACITY = 2  # Number of SQNs covered by word combination
 
 
 class ProductTypeDict(object):
@@ -649,22 +651,27 @@ class ProductTypeDict(object):
 
         return self._root_types[:]
 
+    def _get_json_repr_dict(self):
+        """@rtype: OrderedDict of (ProductType, list[unicode|ProductType.Relation])"""
+        types = OrderedDict()
+        type_tuples = self.get_type_tuples(meaningful_only=True)
+        for p_type, sqns in sorted(type_tuples.viewitems(), key=lambda _t: to_str(_t[0])):
+            sqns_in_self_num = len(set(sqns))
+            sqns_under_num = self.count_related_sqns(p_type, type_tuples)
+            types[p_type] = ['%d/%d' % (sqns_in_self_num, sqns_under_num)] + [rel for rel in p_type.relations()
+                                                                              if rel.to_type in type_tuples]
+        return types
+
     def to_json(self, json_filename):
         """
         Persist type structures to JSON file
         """
-        types = OrderedDict()
-        type_tuples = self.get_type_tuples(meaningful_only=True)
-        for k, sqns in sorted(type_tuples.viewitems(), key=lambda _t: to_str(_t[0])):
-            sqns_in_self_num = len(set(sqns))
-            sqns_under_num = self.count_related_sqns(k, type_tuples)
-            types[to_str(k)] = ['%d/%d' % (sqns_in_self_num, sqns_under_num)] + [to_str(rel) for rel in k.relations()]
+        types = self._get_json_repr_dict()
+        text_types = OrderedDict((to_str(p_type), map(to_str, rels)) for p_type, rels in types.viewitems())
 
         with open(json_filename, 'wb') as f:
             f.truncate()
-            f.write(ujson.dumps(types, indent=4, ensure_ascii=False))
-                               # check_circular=True).encode("utf-8"))
-                               # indent=4).encode("utf-8"))
+            f.write(json.dumps(text_types, indent=4, ensure_ascii=False).encode('utf-8'))
 
         """
         pd_hdiet = ProductTypeDict()
@@ -678,9 +685,46 @@ class ProductTypeDict(object):
                                 for t, v in sorted(self.get_type_tuples(meaningful_only=True).viewitems(), key=lambda _t: to_str(_t[0]))))
         """
         if self.VERBOSE:
-            print("Dumped json of %d type tuples to %s" % (len(types), json_filename))
+            rel_count = sum(map(len, text_types.values())) - len(text_types)  # subtract sqn count rows for each type
+            print("Dumped json of %d type tuples with %d relations to %s" % (len(text_types), rel_count, json_filename))
 
-    def from_json(self, json_filename, dont_change=False, pure_json=False):
+    REL_MAPPING = {
+        TYPE_TUPLE_RELATION_CONTAINS: 'c',
+        TYPE_TUPLE_RELATION_EQUALS: 'e',
+        TYPE_TUPLE_RELATION_SUBSET_OF: 'o',
+        TYPE_TUPLE_RELATION_SIMILAR: 's',
+        TYPE_TUPLE_RELATION_ALMOST: 'a',
+    }
+    REL_MAPPING_BACKWARD = dict(zip(REL_MAPPING.values(), REL_MAPPING.keys()))
+    DAWG_CHECKSUM_ATTR = 'dawg_checksum'
+
+    def to_bin_json(self, json_filename):
+        """
+        Persist type structures to JSON file
+        """
+        def rel_to_bin(r):
+            """@param ProductType.Relation r: relation"""
+            assert r.rel_type in ProductTypeDict.REL_MAPPING
+            rel_attr = '%0.2f' % r.rel_attr if isinstance(r.rel_attr, (float, int)) else to_str(r.rel_attr) or ''
+            return '%s%s%s' % ('+'.join(map(str, r.to_type.get_terms_ids())), ProductTypeDict.REL_MAPPING[r.rel_type], rel_attr)
+
+        types = self._get_json_repr_dict()
+        bin_types = {
+            '+'.join(map(str, p_type.get_terms_ids())): [rel_to_bin(r) for r in rels[1:]]
+            for p_type, rels in types.viewitems()
+        }
+
+        # Term dictionary checksum to validate correctness of term_ids in output file during load
+        dawg_checksum = TypeTerm.term_dict.dawg_checksum()
+        with open(json_filename, 'wb') as f:
+            f.truncate()
+            f.write(ujson.dumps([{ProductTypeDict.DAWG_CHECKSUM_ATTR: dawg_checksum}, bin_types], ensure_ascii=False))
+
+        if self.VERBOSE:
+            rel_count = sum(map(len, bin_types.values()))
+            print("Dumped binary json of %d type tuples with %d relations to %s" % (len(bin_types), rel_count, json_filename))
+
+    def from_json(self, json_filename, dont_change=False, pure_json=False, binary_format=False):
         """
         Restore type structures from JSON file (see format in to_json)
         SQNs cannot be restored from type dump and should be updated separately if required. For API compatibility
@@ -690,6 +734,9 @@ class ProductTypeDict(object):
                     This is required when load additional dicts for comparison, filtering etc. e.g. old versions of dict
         @param bool pure_json: if True skip file pre-processing and cleanup - it can save some seconds on large
                     auto-generated files when it is known they have no js garbage like comments and so on
+        @param bool binary_format: if True json considered as result of to_bin_json() method
+        @rtype: dict of (ProductType, list[unicode])
+        @return: Loaded types mapped to fake sqn lists. SQNs are cloned by times specified in first row of each type
         """
         gc.disable()
 
@@ -704,84 +751,147 @@ class ProductTypeDict(object):
             print('Assumed file %s is pure json - skip pre-processing' % json_filename)
 
         types = ujson.loads(s.decode("utf-8"))
+        if binary_format:
+            dawg_checksum = types[0].get(ProductTypeDict.DAWG_CHECKSUM_ATTR)
+            in_memory_dawg_checksum = TypeTerm.term_dict.dawg_checksum()
+            if not dawg_checksum or in_memory_dawg_checksum != dawg_checksum:
+                raise IOError('DAWG checksum does not correspond in memory version')
+            types = types[1]
+
+        if self.VERBOSE:
+            file_rel_count = sum(map(len, types.values())) - (len(types) if not binary_format else 0)
+            print("Parsing %d type tuples with %d relations from file %s" % (len(types), file_rel_count, json_filename))
+
         if not dont_change:
             ProductType.reload()
+            if self.VERBOSE:
+                print("Global product types has been reloaded")
+
+        def parse_terms(terms_str):
+            terms = [int(ts) if binary_format else ts.strip() for ts in terms_str.split(u'+')]
+            if not binary_format:
+                # For text format convert to TypeTerms
+                terms = map(TypeTerm.make, terms)
+            return terms
 
         type_tuples = defaultdict(list)
         pseudo_sqn = 1
         seen_rel = defaultdict(dict)
         for type_str, rel_str in types.viewitems():
-            type_items = map(TypeTerm.make, type_str.split(u' + '))
+            type_items = parse_terms(type_str)
             # All types are loaded from external sources or knowledge base are considered meaningful regardless of
             # other their characteristics
             if dont_change:
-                pt = ProductType(*type_items, meaningful=True, singleton=False)
+                p_type = ProductType(*type_items, meaningful=True, singleton=False)
+                wrapper = EqWrapper(p_type)
+                if wrapper in seen_rel:
+                    # Type has been added already by another relation
+                    p_type = wrapper.match
             else:
-                pt = ProductType.make_from_terms(type_items, meaningful=True)
-            wrapper = EqWrapper(pt)
-            if wrapper in seen_rel:
-                # Type has been added already by another relation
-                pt = wrapper.match
-            type_tuples[pt] = []
+                p_type = ProductType.make_from_terms(type_items, meaningful=True)
+            type_tuples[p_type] = []
 
-            # Compatibility with old format: there was one plain integer and json parse it to int() itself
-            sqns_in_self, _ = re.findall('^(\d+)(?:/(\d+))?$', rel_str[0])[0] \
-                                if not isinstance(rel_str[0], int) else (rel_str[0], None)
-            for i in range(int(sqns_in_self)):
-                type_tuples[pt].append(to_str(pseudo_sqn))
+            start_relations_index = 0
+            if binary_format:
+                type_tuples[p_type] = [to_str(pseudo_sqn)]
                 pseudo_sqn += 1
+            else:
+                if isinstance(rel_str[0], int) or rel_str[0].isdigit():
+                    # Compatibility with old format: there was one plain integer and json parse it to int() itself
+                    sqns_in_self = rel_str[0]
+                    start_relations_index = 1
+                else:
+                    sqns_in_self, _ = re.findall('^(\d+)(?:/(\d+))?$', rel_str[0])[0]
+                    if sqns_in_self and sqns_in_self.isdigit():
+                        start_relations_index = 1
 
-            for r_str in rel_str[1:]:
-                r_match = re.findall(u'^(\w+)(?:\[([^\]]+)\])?(~)?\s+(.*)$', r_str)
-                if r_match:
-                    relation, rel_attr, is_soft, type_to_str = r_match[0]
-                    type_to_items = map(TypeTerm.make, type_to_str.split(u' + '))
+                for i in range(int(sqns_in_self)):
+                    type_tuples[p_type].append(to_str(pseudo_sqn))
+                    pseudo_sqn += 1
+
+            rel_type, rel_attr, is_soft, type_to_str = [None] * 4
+            for r_str in rel_str[start_relations_index:]:
+                if binary_format:
+                    r_match = re.findall('^([0-9+]+)(\w)(.*)$', r_str)
+                    if r_match:
+                        type_to_str, rel_type, rel_attr = r_match[0]
+                        rel_type = ProductTypeDict.REL_MAPPING_BACKWARD[rel_type]
+                        is_soft = rel_type in (TYPE_TUPLE_RELATION_ALMOST, TYPE_TUPLE_RELATION_SIMILAR)
+                else:
+                    r_match = re.findall('^(\w+)(?:\[([^\]]+)\])?(~)?\s+(.*)$', r_str)
+                    if r_match:
+                        rel_type, rel_attr, is_soft, type_to_str = r_match[0]
+                        is_soft = is_soft == u'~'
+
+                if rel_type and type_to_str:
+                    type_to_items = parse_terms(type_to_str)
 
                     if dont_change:
-                        type_to = ProductType(*type_to_items, meaningful=True, singleton=True)
+                        p_type_related = ProductType(*type_to_items, meaningful=True, singleton=False)
+                        wrapper = EqWrapper(p_type_related)
+                        if p_type in seen_rel and wrapper in seen_rel[p_type]:
+                            # Reverse to this relation has been already created. Use type instance from it
+                            p_type_related = wrapper.match
                     else:
-                        type_to = ProductType.make_from_terms(type_to_items, meaningful=True)
-                    wrapper = EqWrapper(type_to)
-                    if pt in seen_rel and wrapper in seen_rel[pt]:
-                        # Reverse to this relation has been already created. Use type instance from it
-                        type_to = wrapper.match
+                        p_type_related = ProductType.make_from_terms(type_to_items, meaningful=True)
 
                     if rel_attr:
                         try:
                             rel_attr = literal_eval(rel_attr)
                         except ValueError:
                             pass  # Just use string as is
-                    r_to = ProductType.Relation(from_type=pt, to_type=type_to, rel_type=relation, is_soft=is_soft == u'~', rel_attr=rel_attr)
-                    if pt in seen_rel and type_to in seen_rel[pt]:
+                    relation = ProductType.Relation(from_type=p_type, to_type=p_type_related, rel_type=rel_type,
+                                                is_soft=is_soft, rel_attr=rel_attr)
+                    if p_type in seen_rel and p_type_related in seen_rel[p_type]:
                         # Already processed back relation
-                        r_from = seen_rel[pt][type_to]
-                        pt.make_relation(type_to, r_to.rel_type, r_from.rel_type, r_to.is_soft, r_to.rel_attr, r_from.rel_attr)
+                        r_from = seen_rel[p_type][p_type_related]
+                        assert r_from, "The same relation is detected more than two times"
+                        p_type.make_relation(p_type_related, relation.rel_type, r_from.rel_type,
+                                             relation.is_soft, relation.rel_attr, r_from.rel_attr)
+                        seen_rel[p_type][p_type_related] = None
                     else:
-                        seen_rel[type_to][pt] = r_to
+                        # Keep back relation until related type is met
+                        seen_rel[p_type_related][p_type] = relation
+                elif self.VERBOSE:
+                    print("WARN: meet unparseable relation: %s" % r_str)
+
+        if self.VERBOSE:
+            # Check remaining unresolved relations
+            for p_type_related in seen_rel:
+                for p_type in seen_rel[p_type_related]:
+                    if seen_rel[p_type_related][p_type] is not None:
+                        print("Detected hanged unresolved relation from type %s: %s" % (
+                              p_type, to_str(seen_rel[p_type_related][p_type])))
+
         self._type_tuples.clear()
         self._type_tuples.update(type_tuples)
         self._meaningful_type_tuples = None
 
         gc.enable()
         if self.VERBOSE:
-            print("Loaded %d type tuples from json %s" % (len(self._type_tuples), json_filename))
+            rel_count = sum(map(len, (p_type.relations() for p_type in type_tuples)))
+            print("Loaded %d type tuples with %d relations from json %s" % (len(type_tuples), rel_count, json_filename))
 
-        return self
+        return type_tuples
 
     @staticmethod
     def get_product_tag_context(product):
         return [tag.strip().lower() for tag in product.get('tags', set()) if tag.strip()]
 
 def dump_json(config):
+    load_term_dict(config.term_dict)
+
     types = ProductTypeDict()
-    ProductTypeDict.VERBOSE = True
+    # ProductTypeDict.VERBOSE = True
     types.min_meaningful_type_capacity = 2
     if config.products_meta_in_csvname:
         products = Product.from_meta_csv(config.products_meta_in_csvname)
         types.build_from_products(products, strict_products=True)
     else:
-        types.from_json(config.product_types_in_json, pure_json=is_types_file_pure_json(config))
+        types.from_json(config.product_types_in_json, pure_json=is_types_file_pure_json(config),
+                        binary_format='.bin.' in config.product_types_in_json)
     types.to_json('out/product_types_2.json')
+    types.to_bin_json('out/product_types_2_bin.json')
 
 
 def update_types_in_product_meta(config):

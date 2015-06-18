@@ -6,15 +6,34 @@ from ok.dicts import build_path, to_str, main_options
 from ok.dicts.product import Product
 from ok.dicts.product_type import ProductType, TYPE_TUPLE_RELATION_CONTAINS, TYPE_TUPLE_RELATION_EQUALS, \
     TYPE_TUPLE_RELATION_SUBSET_OF, TYPE_TUPLE_RELATION_ALMOST
-from ok.dicts.product_type_dict import ProductTypeDict
+from ok.dicts.product_type_dict import ProductTypeDict, reload_product_type_dict
+from ok.dicts.term import load_term_dict, TypeTerm
 from ok.settings import ensure_baseline_dir
 
+TEST_RESOURCES_DIR = 'resources/test'
 
 # noinspection PyUnresolvedReferences
 @pytest.fixture
 def types_dict():
     pdt = ProductTypeDict()
+    pdt.VERBOSE = True
     ProductType.reload()
+    return pdt
+
+# noinspection PyUnresolvedReferences
+@pytest.fixture(scope='module')
+def types_dict_full_common():
+    load_term_dict()
+    pdt = reload_product_type_dict()
+    return pdt
+
+# noinspection PyUnresolvedReferences
+@pytest.fixture
+def types_dict_test_data():
+    pdt = types_dict()
+    pdt.from_json(build_path(TEST_RESOURCES_DIR, 'product_types_test_mar.json', None))
+    TypeTerm.term_dict.update_dawg()
+    assert pdt.get_type_tuples()
     return pdt
 
 def test_build_tag_types_from_products_new(types_dict):
@@ -121,18 +140,93 @@ def test_hdiet_merge_tags_full(types_dict):
     assert to_str(relation) in types_to_json[to_str(pt1)]
 
 
-def test_from_json_dont_change_full(types_dict):
-    """@param ProductTypeDict types_dict: pdt"""
-    config = main_options([])
-    types_dict.from_json(config.product_types_in_json)
+def test_from_json_dont_change(types_dict_test_data):
+    """@param ProductTypeDict types_dict: types_dict_test_data"""
+    assert len(ProductType.all_cached_singletons()) == len(types_dict_test_data.get_type_tuples())
 
-    assert len(types_dict.get_type_tuples()) > 0
-    assert len(ProductType.all_cached_singletons()) == len(types_dict.get_type_tuples())
-
-    types_dict = ProductTypeDict()
+    new_types_dict = ProductTypeDict()
     ProductType.reload()
-    types_dict.from_json(config.product_types_in_json, dont_change=True)
+    new_types_dict.from_json(build_path(TEST_RESOURCES_DIR, 'product_types_test_mar.json', None), dont_change=True)
 
-    assert len(types_dict.get_type_tuples()) > 0
+    assert len(new_types_dict.get_type_tuples()) > 0
     assert len(ProductType.all_cached_singletons()) == 0
 
+
+def test_to_from_json(types_dict, tmpdir):
+    """
+    @param ProductTypeDict types_dict: types_dict
+    @param LocalPath tmpdir: pytest temp dir
+    """
+    p1 = ProductType('тест1')
+    p2 = ProductType('тест2')
+    p3 = ProductType('тест3')
+    p3.contains(p2)
+    p3.contains(p1)
+    p2.contains(p1)
+    types_dict._type_tuples[p1] = [1]
+    types_dict._type_tuples[p2] = [1]
+    types_dict._type_tuples[p3] = [1]
+    filename = str(tmpdir.join('test_types_dict.json'))
+    types_dict.to_json(json_filename=filename)
+    loaded = types_dict.from_json(json_filename=filename, dont_change=True)
+    assert loaded.viewkeys() == {p1, p2, p3}
+    # loaded_rel_count = sum(map(len, (l_type.relations() for l_type in loaded)))
+    # assert loaded_rel_count == 6
+    l1, l2, l3 = sorted(loaded, key=to_str)
+    assert l3.related_types(TYPE_TUPLE_RELATION_CONTAINS) == [l1, l2]
+    assert l2.related_types(TYPE_TUPLE_RELATION_CONTAINS) == [l1]
+    assert l2.related_types(TYPE_TUPLE_RELATION_SUBSET_OF) == [l3]
+    assert l1.related_types(TYPE_TUPLE_RELATION_SUBSET_OF) == [l2, l3]
+    # Check there is no other relations than asserted above
+    assert l3.relations() == l3.relations(TYPE_TUPLE_RELATION_CONTAINS)
+    assert l2.relations() == l2.relations(TYPE_TUPLE_RELATION_CONTAINS) + l2.relations(TYPE_TUPLE_RELATION_SUBSET_OF)
+    assert l1.relations() == l1.relations(TYPE_TUPLE_RELATION_SUBSET_OF)
+
+
+def test_to_json_only_meaningful(types_dict):
+    """
+    @param ProductTypeDict types_dict: types_dict
+    @param LocalPath tmpdir: pytest temp dir
+    """
+    types_dict.min_meaningful_type_capacity = 2
+    p1 = ProductType('тест1')
+    p2 = ProductType('тест1', 'тест2', meaningful=True)
+    p3 = ProductType('тест1', 'тест2', 'тест3')
+    p1.contains(p2)
+    p1.contains(p3)
+    p2.contains(p3)
+    types_dict._type_tuples[p1] = [1]
+    types_dict._type_tuples[p2] = [1]
+    types_dict._type_tuples[p3] = [1]
+
+    json_types = types_dict._get_json_repr_dict()
+    assert json_types.viewkeys() == {p1, p2}
+    assert json_types[p1][1:] == [p1.get_relation(p2)]
+    assert json_types[p2][1:] == [p2.get_relation(p1)]
+
+
+def test_from_bin_json(types_dict_test_data, tmpdir):
+    """
+    @param ProductTypeDict types_dict_test_data: types_dict
+    @param LocalPath tmpdir: pytest temp dir
+    """
+    pdt = types_dict_test_data
+    old_types = sorted(pdt.get_type_tuples().keys())
+    assert old_types
+
+    filename = str(tmpdir.join('test_types_dict.bin.json'))
+    pdt.to_bin_json(json_filename=filename)
+
+    pdt_new = ProductTypeDict()
+    pdt_new.VERBOSE = True
+    pdt_new.from_json(filename, dont_change=True, pure_json=True, binary_format=True)
+
+    new_types = sorted(pdt_new.get_type_tuples().keys())
+    assert old_types == new_types
+    for i in range(len(old_types)):
+        assert len(old_types[i].relations()) == len(new_types[i].relations())
+        assert old_types[i].relations() == new_types[i].relations()
+
+
+def test_from_bin_json_full(types_dict_full_common, tmpdir):
+    test_from_bin_json(types_dict_full_common, tmpdir)
