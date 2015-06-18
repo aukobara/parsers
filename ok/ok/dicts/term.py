@@ -141,6 +141,16 @@ class TypeTermDict(object):
         assert not any(isinstance(self.get_by_unicode(key), PrefixTypeTerm) for key in self.__terms_dawg.keys()), \
             "TODO: INVALIDATE Prefix Types before merge them to DAWG"
 
+    def dawg_checksum(self):
+        if self.__terms:
+            raise TypeTermException("DAWG was dynamically updated. Use update_dawg() first to persist terms")
+        from zlib import adler32
+        from io import BytesIO
+        b = BytesIO()
+        self.__terms_dawg.write(b)
+        checksum = adler32(b.getvalue()) & 0xffffffff
+        return checksum
+
     def save_term(self, term):
         return self.__term_to_idx(term)
 
@@ -149,7 +159,7 @@ class TypeTermDict(object):
         @param int term_id: Term ID
         @rtype: TypeTerm|None
         """
-        return self.__terms_idx[term_id] if term_id < self.__next_idx else None
+        return self.__terms_idx[term_id] if 0 < term_id < self.__next_idx else None
 
     def get_max_id(self):
         return self.__next_idx - 1
@@ -330,11 +340,17 @@ class TypeTerm(unicode):
         """
         Factory method returns TypeTerm instance of correct type.
         Type is determined by term_str using .is_valid_term_for_type() method of each known type.
-        @param unicode|TypeTerm term_str: string
+        @param unicode|TypeTerm|int term_str: int considered as term_id (raise TypeTermException if not exist);
+                TypeTerm returns as is if persistent; otherwise it is a term string
         @rtype: TypeTerm
         """
         if isinstance(term_str, TypeTerm) and not term_str.is_new():
             return term_str
+        if isinstance(term_str, int):
+            term = TypeTerm.get_by_id(term_str)
+            if not term:
+                raise TypeTermException("Term_id[%d] does not found" % term_str)
+            return term
         term_str = to_str(term_str)
         term = TypeTerm.term_dict.get_by_unicode(term_str)
         if term:
