@@ -1,5 +1,7 @@
 # coding: utf-8
 from urlparse import urlunparse
+import re
+
 import scrapy
 from scrapy.contrib.exporter import CsvItemExporter
 from scrapy.http.request.form import FormRequest
@@ -7,15 +9,9 @@ from scrapy.http.response.text import TextResponse
 from scrapy.selector.unified import Selector
 from scrapy.log import ERROR
 from scrapy.utils.url import parse_url
-from ok.items import CatItem, ProductItem, ROOT_CAT_ITEM
-import re
-from ok.settings import FixEncodingLogFormatter
 
-'''//*[@id="departmentLink_16568_alt"]'''
-'''<a id="departmentLink_16568_alt" href="http://www.okeydostavka.ru/msk/..." aria-haspopup="true" data-toggle="departmentMenu_16568" 
-	class="link menuLink" data-parent="allDepartmentsMenu" role="menuitem" tabindex="-1">
-										title
-	</a>'''
+from ok.items import CatItem, ProductItem, ROOT_CAT_ITEM
+from ok import FixEncodingLogFormatter
 
 
 class RootCatSpider(scrapy.Spider):
