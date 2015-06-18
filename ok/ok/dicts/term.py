@@ -604,10 +604,15 @@ class CompoundTypeTerm(TypeTerm):
 
         if spaced_forms:
             if not collected_forms or collected_forms[0] != spaced_forms[0]:
-                spaced_form_term = TypeTerm.make(spaced_forms[0])
-                collected_forms = [spaced_form_term] + collected_forms
+                collected_forms = [spaced_forms[0]] + collected_forms
             if len(spaced_forms) > 1:
                 collected_forms.extend(t for t in spaced_forms if t not in collected_forms[1:])
+
+        # sub_terms = self.simple_sub_terms
+        # if len(sub_terms) > 1:
+        #     joined_form = ''.join(sub_terms)
+        #     if joined_form and joined_form != self:
+        #         collected_forms.append(TypeTerm.make(joined_form))
 
         return collected_forms
 
@@ -628,7 +633,7 @@ class CompoundTypeTerm(TypeTerm):
                     if token_main_form._spaced_form == self._spaced_form:
                         # Recursion - simple spaced form was processed already
                         # token_main_form = token
-                        token_buf = {}
+                        token_buf = []
                         break
                     else:
                         sub_terms = token_main_form.simple_sub_terms

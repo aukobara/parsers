@@ -541,7 +541,7 @@ class ProductTypeDict(object):
                 if t == tag_type:
                     continue
                 t_sqn_set = set(type_tuples[t])
-                # Parent tag type must contains all sqns of type as well as all its transitive relations
+                # Parent tag type must contains all sqns of type as well as all its aggregated relations
                 # However, do not take into consideration other tag types which will be updated in this loop
                 [t_sqn_set.update(type_tuples[tt])
                     for tt in t.related_types(TYPE_TUPLE_RELATION_EQUALS, TYPE_TUPLE_RELATION_CONTAINS)
@@ -573,7 +573,6 @@ class ProductTypeDict(object):
                 else:
                     r = tag_type.equals_to(t, dont_change=True)
 
-                # TODO - implement 'almost' relation
                 if r:
                     new_relations.append(r)
             if self.VERBOSE and len(new_relations) % 10 == 0: print(u'.', end='')
