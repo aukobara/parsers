@@ -69,7 +69,7 @@ class ProductTypeDict(object):
             word spellings like morph.normal_form, synonyms etc
         @rtype: dict of (ProductType, unicode)
         """
-        result = dict()
+        result = {}
 
         terms = TypeTerm.parse_term_string(sqn)
         # NOTE: Parsed terms must go first in context as far as they have more priority in resolving of ambiguity
@@ -85,8 +85,13 @@ class ProductTypeDict(object):
                 term_list = {term}
                 if isinstance(term, CompoundTypeTerm):
                     term_list.update(term.sub_terms)
-                if with_spellings:
-                    term_list.update([wf for t in term_list for wf in t.word_forms(context=_context, fail_on_context=False) or []])
+                for t in set(term_list):
+                    wf = t.word_forms(context=_context, fail_on_context=False)
+                    if not wf:
+                        # Term is not compatible with anything due to unsufficient context. Skip
+                        term_list.remove(t)
+                    elif with_spellings:
+                        term_list.update(wf)
                 terms_cache[term] = term_list
             return term_list
 
@@ -145,6 +150,13 @@ class ProductTypeDict(object):
                             # Do not join words that cannot be paired (like word and the same word with proposition)
                             continue
                         add_result(pt_terms)
+
+        if terms:
+            if not get_term_with_sub_terms(first_word, context):
+                # First word has no sufficient context to resolve. It will be non-compatible anyway with any term. Skip.
+                return {}
+            # Filter out non-compatible terms
+            terms = [t for t in terms if get_term_with_sub_terms(t, context)]
 
         add_combinations(terms, 0, context)
         if len(terms) > 0:
