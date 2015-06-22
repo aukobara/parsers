@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function, unicode_literals
+
 import csv
 import re
 import Levenshtein
 
 from transliterate import translit
 
-from ok.dicts import cleanup_token_str, add_string_combinations
+from ok.dicts import add_string_combinations, to_str
+from ok.query import cleanup_token_str
 from ok.dicts.russian import isenglish, isrussian
 
 
@@ -28,7 +31,7 @@ class Brand(object):
 
     @staticmethod
     def to_key(name):
-        return (name if isinstance(name, unicode) else unicode(name, "utf-8")).strip().lower()
+        return (name if isinstance(name, unicode) else to_str(name, "utf-8")).strip().lower()
 
     @staticmethod
     def exist(name):
@@ -54,7 +57,7 @@ class Brand(object):
                        if not skip_duplicate or b.type != Brand.TYPE_DUPLICATE], key=lambda b: b.name)
 
     def __init__(self, name=UNKNOWN_BRAND_NAME, brand_type=TYPE_DEFAULT):
-        self.name = name if isinstance(name, unicode) else unicode(name, "utf-8")
+        self.name = to_str(name)
         """@type: unicode"""
         if Brand.exist(self.name):
             raise Exception("Brand with name[%s] already exists" % self.name)
@@ -253,8 +256,8 @@ class Brand(object):
                         # TODO: Ignore (log only) if distance is 2 and both changes are immediately one after another
                         # as far as such diff produces a lot of false matches
                         if Brand.check_false_positive_brand_match(b_token0, s_token):
-                            print "FOUND FALSE POSITIVE BRAND MATCH: brand variant[%s], sqn_token[%s], distance:[%d], sqn[%s]" % (
-                            b_token0, s_token, dist, s)
+                            print("FOUND FALSE POSITIVE BRAND MATCH: brand variant[%s], sqn_token[%s], distance:[%d], sqn[%s]" % (
+                                b_token0, s_token, dist, s))
                         else:
                             similar_found = s_token
                             variant_spelling_origin[similar_found] = u'%s~%f' % (b_token0, dist)
@@ -310,8 +313,8 @@ class Brand(object):
         brand_variants.update(similar_tokens)
         if not add_new_synonyms and similar_tokens:
             # As far brand modification is switched off in this mode trace similar_tokens here
-            print u"SIMILAR TOKENS FOR SQN[%s] BRAND[%s]: %s" % \
-                  (s, self.name, u', '.join(u'%s(%s)' % (st, variant_spelling_origin[st]) for st in similar_tokens))
+            print(u"SIMILAR TOKENS FOR SQN[%s] BRAND[%s]: %s" %
+                   (s, self.name, u', '.join(u'%s(%s)' % (st, variant_spelling_origin[st]) for st in similar_tokens)))
 
         # Start with longest brand names to avoid double processing of shortened names
         for b in sorted(brand_variants, key=len, reverse=True):
@@ -330,11 +333,11 @@ class Brand(object):
                     result = result[:pos] + rs2 + result[pos+len(b):]
                     pos += len(rs2)
                     if add_new_synonyms and self.add_synonym(was):
-                        print u"NEW SYNONYM FOR BRAND %s(%s) => %s, %s" % \
-                              (was, variant_spelling_origin.get(was, u""), s, str(self).decode("utf-8"))
+                        print(u"NEW SYNONYM FOR BRAND %s(%s) => %s, %s" %
+                               (was, variant_spelling_origin.get(was, u""), s, str(self).decode("utf-8")))
                 else:
                     if len(b) > 2:
-                        print u"Suspicious string [%s] may contain brand name [%s]" % (s, b)
+                        print(u"Suspicious string [%s] may contain brand name [%s]" % (s, b))
                     pos += len(b)
                 pos = result.lower().find(b.lower(), pos)
 
@@ -417,7 +420,7 @@ class Brand(object):
         if existing_brands:
             dup_brand = Brand.exist(manufacturer)
             if dup_brand and dup_brand != brand and dup_brand.type != Brand.TYPE_DUPLICATE:  # Ignore already merged
-                print "Duplicate manufacturer brand detected, trying to merge. Main: %s, Dup: %s" % (brand.name, dup_brand.name)
+                print("Duplicate manufacturer brand detected, trying to merge. Main: %s, Dup: %s" % (brand.name, dup_brand.name))
                 cls.merge_brand(brand, dup_brand)
                 # Mark duplicate brand
                 dup_brand.type = Brand.TYPE_DUPLICATE
