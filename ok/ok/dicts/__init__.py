@@ -5,22 +5,9 @@ Basic text processing utils
 """
 from collections import namedtuple
 import os
-import re
 from sys import argv
 
 from ok.settings import ensure_baseline_dir
-
-
-def cleanup_token_str(s, ext_symbols=None):
-    """
-    Cleanup one-line string from non-label symbols - colon, quotes, periods etc
-    Replace multi-spaces to single space. Strip
-    @param unicode s: one-line string
-    @param list[unicode] ext_symbols: list of additional symbols to clean
-    @rtype: unicode
-    """
-    ext = u'|'.join(ext_symbols) if ext_symbols else None
-    return re.sub(u'(?:\s|"|,|\.|«|»|“|”|\(|\)|\?|\+|:' + (u'|' + ext if ext else u'') + ')+', u' ', s).strip()
 
 
 def add_string_combinations(patterns, *repl):
