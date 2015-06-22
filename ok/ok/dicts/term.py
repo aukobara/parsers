@@ -6,7 +6,8 @@ import re
 import dawg
 import itertools
 
-from ok.dicts import cleanup_token_str, to_str, main_options
+from ok.dicts import to_str, main_options
+from ok.query import parse_query
 from ok.dicts.russian import get_word_normal_form, is_known_word, RE_RUSSIAN_CHAR_SET
 
 TYPE_TERM_PROPOSITION_LIST = (u'в', u'во', u'с', u'со', u'из', u'для', u'и', u'на', u'без', u'к', u'не', u'де', u'по', u'под')
@@ -111,23 +112,29 @@ class TypeTermDict(object):
         self.__terms_idx = [None] * 10000
         self.__next_idx = 1
 
-    def update_dawg(self):
-        # Convert __terms dict to DAWG and clear. Search by prefixes can be used in DAWG only.
-        # All new terms will be saved in __terms only and not searchable by prefixes until next update_dawg()
-        count_wf = 0
-        key_set = set(self.__terms.keys())
-        seen_set = set()
-        while key_set > seen_set:
-            # New terms can appear during word forms generation
-            for term_str in key_set - seen_set:
-                # Ensure all word forms are initialized before moving to dawg. All terms in dawg must be immutable
-                term = self.get_by_unicode(term_str)
-                if isinstance(term, ContextDependentTypeTerm):
-                    count_wf += len(term.all_context_word_forms())
-                else:
-                    count_wf += len(term.word_forms(context=None, fail_on_context=False) or [])
-                seen_set.add(term_str)
+    def update_dawg(self, skip_word_forms_validation=False):
+        """
+        Convert __terms dict to DAWG and clear. Search by prefixes can be used in DAWG only.
+        All new terms will be saved in __terms only and not searchable by prefixes until next update_dawg()
+        @param bool skip_word_forms_validation: if True, do not invalidate all word_forms. Use this if absolutely
+                    confident that all word_forms are already loaded to term dict
+        """
+        if not skip_word_forms_validation:
+            count_wf = 0
             key_set = set(self.__terms.keys())
+            seen_set = set()
+            while key_set > seen_set:
+                # New terms can appear during word forms generation
+                for term_str in key_set - seen_set:
+                    # Ensure all word forms are initialized before moving to dawg. All terms in dawg must be immutable
+                    term = self.get_by_unicode(term_str)
+                    if isinstance(term, ContextDependentTypeTerm):
+                        count_wf += len(term.all_context_word_forms())
+                    else:
+                        count_wf += len(term.word_forms(context=None, fail_on_context=False) or [])
+                    seen_set.add(term_str)
+                key_set = set(self.__terms.keys())
+
         # noinspection PyCompatibility
         new_dawg = dawg.BytesDAWG((to_str(k), bytes(v)) for k, v in
                                   itertools.chain(self.__terms_dawg.iteritems(), self.__terms.viewitems()))
@@ -218,7 +225,10 @@ class TypeTermDict(object):
         if verbose:
             print("Dumped %d terms to %s" % (len(self.__terms_dawg.keys()), filename))
 
-    def from_file(self, filename, verbose=False):
+    def from_file(self, filename, verbose=False, skip_word_forms_validation=False):
+        """
+        @param bool skip_word_forms_validation: see description in update_dawg()
+        """
         if verbose:
             print("Load term_dict dawg from file: %s" % filename)
             if self.__terms:
@@ -234,7 +244,7 @@ class TypeTermDict(object):
             assert term.term_id == term_id
         assert self.__next_idx == term_id + 1, "Internal index does not match to dawg data!"
 
-        self.update_dawg()
+        self.update_dawg(skip_word_forms_validation=skip_word_forms_validation)
 
         try:
             assert list(new_dawg.keys()) == list(self.__terms_dawg.keys()), \
@@ -246,7 +256,11 @@ class TypeTermDict(object):
             raise
 
         if verbose:
+            if skip_word_forms_validation:
+                print("Word forms invalidation skipped")
             print("Loaded %d terms from %s" % (len(self.__terms_dawg.keys()), filename))
+
+        return self
 
 
 class TypeTerm(unicode):
@@ -496,7 +510,7 @@ class TypeTerm(unicode):
         @param unicode terms_str: string of terms
         @rtype: list[TypeTerm]
         """
-        words = re.split(u'\s+', cleanup_token_str(terms_str))
+        words = parse_query(terms_str)
         terms = []
         """@type: list[TypeTerm]"""
         buf = u''

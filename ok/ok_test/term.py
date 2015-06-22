@@ -271,9 +271,9 @@ def test_context_terms_parse_compound_proposition_with_dict(pdt):
 
 
 def test_context_terms_parse_ambigous_with_dict(pdt):
-    types = pdt.collect_sqn_type_tuples(u'продукт мол-раст сгущ с сахаром сгущенка с кофе')
+    types = pdt.collect_sqn_type_tuples('продукт мол-раст сгущ с сахаром сгущенка с кофе')
 
-    pt_full = ProductType(u'продукт', u'молоко', u'сгущенка')
+    pt_full = ProductType('продукт', 'молоко', 'сгущенка')
     pt_not_context = ProductType('продукт', 'растворимый', 'с кофе')
     pt_comp_context = ProductType('продукт', 'молоко', 'растворимый', 'с кофе')
 
@@ -281,8 +281,14 @@ def test_context_terms_parse_ambigous_with_dict(pdt):
     assert pt_not_context in types
     assert pt_comp_context in types
 
-    with pytest.raises(ContextRequiredTypeTermException):
-        pdt.collect_sqn_type_tuples(u'сгущ продукт мол-раст с сахаром сгущенка с кофе')
+    # Change first (priority) word
+    types = pdt.collect_sqn_type_tuples(u'сгущ продукт мол-раст с сахаром сгущенка с кофе')
+
+    assert pt_full not in types
+    assert pt_not_context not in types
+    assert pt_comp_context not in types
+    pt_full_wo_ambiguity_terms = ProductType('продукт', 'с сахаром', 'сгущенка', 'с кофе')
+    pt_full_wo_ambiguity_terms in types
 
 
 def test_compound_spaced_recursive_main_form():
