@@ -5,25 +5,18 @@ from collections import defaultdict, namedtuple, OrderedDict
 import re
 from ok.dicts import main_options
 
-RE_RUSSIAN_CHAR_SET = 'А-Яа-я0-9A-Za-zёЁ'
+RE_RUSSIAN_CHAR_SET = 'А-Яа-яёЁ'
+RE_ENGLISH_CHAR_SET = 'A-Za-z'
+RE_DIGITS_CHAR_SET = '0-9'
+RE_WORD_OR_NUMBER_CHAR_SET = RE_RUSSIAN_CHAR_SET + RE_ENGLISH_CHAR_SET + RE_DIGITS_CHAR_SET
+RE_RUSSIAN_CHAR_SET_COMP = re.compile('^[%s]$' % RE_RUSSIAN_CHAR_SET, re.U)
+RE_ENGLISH_CHAR_SET_COMP = re.compile('^[%s]$' % RE_ENGLISH_CHAR_SET, re.U)
 
 def isenglish(s):
-    try:
-        (s.encode("utf-8") if isinstance(s, unicode) else s).decode('ascii')
-        return True
-    except UnicodeDecodeError:
-        return False
-
+    return bool(RE_ENGLISH_CHAR_SET_COMP.match(s))
 
 def isrussian(s):
-    if isenglish(s):
-        return False
-    try:
-        (s.encode("utf-8") if isinstance(s, unicode) else s).decode('cp1251')
-        return True
-    except UnicodeDecodeError:
-        return False
-
+    return bool(RE_RUSSIAN_CHAR_SET_COMP.match(s))
 
 def is_simple_russian_word(s):
     return re.match('^[%s]{2,}(-[%s]{2,})?$' % (RE_RUSSIAN_CHAR_SET, RE_RUSSIAN_CHAR_SET), s)
