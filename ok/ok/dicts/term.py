@@ -8,7 +8,8 @@ import itertools
 
 from ok.dicts import to_str, main_options
 from ok.query import parse_query
-from ok.dicts.russian import get_word_normal_form, is_known_word, RE_RUSSIAN_CHAR_SET
+from ok.dicts.russian import get_word_normal_form, is_known_word, is_simple_russian_word, RE_WORD_OR_NUMBER_CHAR_SET
+from ok.utils import EventfulDict
 
 TYPE_TERM_PROPOSITION_LIST = (u'в', u'во', u'с', u'со', u'из', u'для', u'и', u'на', u'без', u'к', u'не', u'де', u'по', u'под')
 TYPE_TERM_PROPOSITION_AND_WORD_LIST = (u'со',)
@@ -267,7 +268,7 @@ class TypeTerm(unicode):
     # Multi-variant string. It has main representation but also additional variants which can be used for
     # combinations. Typical example is compound words separated by hyphen.
 
-    not_a_term_character_pattern = re.compile('[^%s]+' % RE_RUSSIAN_CHAR_SET, re.U)
+    not_a_term_character_pattern = re.compile('[^%s]+' % RE_WORD_OR_NUMBER_CHAR_SET, re.U)
 
     __slots__ = ('_term_id', '_variants', '_do_not_pair', '_always_pair', '_word_forms', '_is_context_required')
 
@@ -808,7 +809,7 @@ class PrefixTypeTerm(TypeTerm):
     @classmethod
     def is_valid_term_for_type(cls, term_str):
         simple_type_valid = super(PrefixTypeTerm, cls).is_valid_term_for_type(term_str)
-        if not simple_type_valid or len(term_str) <= 3:
+        if not simple_type_valid or len(term_str) < 3:
             return False
         return cls.term_dict.count_terms_with_prefix(term_str, count_self=False) >= 1
 
@@ -867,7 +868,7 @@ DEFAULT_CONTEXT = u'__default__'
 class ContextDependentTypeTerm(TypeTerm):
 
     # If any term in context of ctx_terms use main_form
-    ctx_dependent_terms = {
+    ctx_dependent_terms = EventfulDict({
         # Very often cross-dep. TODO: Check cross-dependencies - e.g. шок <-> мол, шок <-> нач
         'шок': [ctx_def(['глазурь', 'конфеты', 'крем', 'молочный', 'мороженое', 'пломбир', 'батончик', 'начинка'], 'шоколадный')],
         'гор': [ctx_def(['шоколад'], 'горький')],
@@ -891,8 +892,11 @@ class ContextDependentTypeTerm(TypeTerm):
                ctx_def([DEFAULT_CONTEXT], 'гл')],
         'глаз': [ctx_def(['мороженое', 'пломбир', 'шоколад'], 'глазурь'),
                  ctx_def([DEFAULT_CONTEXT], 'глаз')],
+        'глазир': [ctx_def([DEFAULT_CONTEXT], 'глазированный')],
         'кат': [ctx_def(['1', '2', 'баранина', 'бройлеры', 'говядина', 'гуси', 'индейки', 'конина', 'оленина', 'телятина', 'цыплята'], 'категории'),
                 ctx_def(['конфеты'], 'кат')],
+        'морс': [ctx_def(['соль', 'рыба'], 'морской'),
+                 ctx_def([DEFAULT_CONTEXT], 'морс')],
 
         # one-value variants
         'ст': [ctx_def(['горчица', 'желе', 'йогурт', 'кофе', 'соус', 'кетчуп', 'цикорий'], 'стекло')],
@@ -918,8 +922,11 @@ class ContextDependentTypeTerm(TypeTerm):
         'сл': [ctx_def(['напиток', 'вода'], 'слабо')],
         'леч': [ctx_def(['вода'], 'лечебная')],
         'пос': [ctx_def(['сельдь'], 'посол')],
-        'сп': [ctx_def(['сельдь'], 'спец')],
+        'сп': [ctx_def(['сельдь'], 'специальный')],
+        'спец': [ctx_def([DEFAULT_CONTEXT], 'специальный')],
         'корн': [ctx_def(['салат'], 'корн')],
+        'том': [ctx_def(['сок'], 'томатный')],
+        'фарш': [ctx_def([DEFAULT_CONTEXT], 'фарш'), ctx_def(['оливки'], 'фаршированные')],
 
         # Default only - abbreviations and synonyms
         'стер': [ctx_def([DEFAULT_CONTEXT], 'стерилизованный')],
@@ -944,13 +951,13 @@ class ContextDependentTypeTerm(TypeTerm):
         'кисломол': [ctx_def([DEFAULT_CONTEXT], 'кисломолочный')],
         'аром': [ctx_def([DEFAULT_CONTEXT], 'аромат')],
         'ультрапаст': [ctx_def([DEFAULT_CONTEXT], 'ультрапастеризованный')],
-        'витам': [ctx_def([DEFAULT_CONTEXT], 'витамин')],
+        'вит': [ctx_def([DEFAULT_CONTEXT], 'витамин')],
         'питьев': [ctx_def([DEFAULT_CONTEXT], 'питьевой')],
         'плавл': [ctx_def([DEFAULT_CONTEXT], 'плавленный')],
         'сгущ': [ctx_def([DEFAULT_CONTEXT], 'сгущёнка')],
         'зернен': [ctx_def([DEFAULT_CONTEXT], 'зерненный')],
         'зам': [ctx_def([DEFAULT_CONTEXT], 'замороженный')],
-        'рж': [ctx_def([DEFAULT_CONTEXT], 'ржаные')],
+        'рж': [ctx_def([DEFAULT_CONTEXT], 'ржаной')],
         'нат': [ctx_def([DEFAULT_CONTEXT], 'натуральный')],
         'натр': [ctx_def([DEFAULT_CONTEXT], 'натрий')],
         'низкокал': [ctx_def([DEFAULT_CONTEXT], 'низкокалорийный')],
@@ -961,25 +968,94 @@ class ContextDependentTypeTerm(TypeTerm):
         'сочн': [ctx_def([DEFAULT_CONTEXT], 'сочный')],
         'прес': [ctx_def([DEFAULT_CONTEXT], 'прессованный')],
         'сах': [ctx_def([DEFAULT_CONTEXT], 'сахар')],
-    }
+
+        # Update 25062016 - semi-auto-generated
+        'газ': [ctx_def([DEFAULT_CONTEXT], 'газированный')],
+        'белк': [ctx_def([DEFAULT_CONTEXT], 'белковый')],
+        'перс': [ctx_def([DEFAULT_CONTEXT], 'персик')],
+        'асс': [ctx_def([DEFAULT_CONTEXT], 'ассортимент')],
+        'атл': [ctx_def([DEFAULT_CONTEXT], 'атлантический')],
+        'бакл': [ctx_def([DEFAULT_CONTEXT], 'баклажан')],
+        'ваф': [ctx_def([DEFAULT_CONTEXT], 'вафля')],
+        'вял': [ctx_def([DEFAULT_CONTEXT], 'вяленый')],
+        'доб': [ctx_def([DEFAULT_CONTEXT], 'добавление')],
+        'кож': [ctx_def([DEFAULT_CONTEXT], 'кожа')],
+        'осн': [ctx_def([DEFAULT_CONTEXT], 'основа')],
+        'охл': [ctx_def([DEFAULT_CONTEXT], 'охлаждённый')],
+        'пив': [ctx_def([DEFAULT_CONTEXT], 'пиво')],
+        'рыб': [ctx_def([DEFAULT_CONTEXT], 'рыба')],
+        'ябл': [ctx_def([DEFAULT_CONTEXT], 'яблоко')],
+        'ветч': [ctx_def([DEFAULT_CONTEXT], 'ветчина')],
+        'вишн': [ctx_def([DEFAULT_CONTEXT], 'вишня')],
+        'возд': [ctx_def([DEFAULT_CONTEXT], 'воздух')],
+        'конв': [ctx_def([DEFAULT_CONTEXT], 'конверт')],
+        'конц': [ctx_def([DEFAULT_CONTEXT], 'концентрат')],
+        'мекс': [ctx_def([DEFAULT_CONTEXT], 'мексиканский')],
+        'минд': [ctx_def([DEFAULT_CONTEXT], 'миндаль')],
+        'морк': [ctx_def([DEFAULT_CONTEXT], 'морковь')],
+        'мясн': [ctx_def([DEFAULT_CONTEXT], 'мясной')],
+        'очищ': [ctx_def([DEFAULT_CONTEXT], 'очищенный')],
+        'прир': [ctx_def([DEFAULT_CONTEXT], 'природа')],
+        'рифл': [ctx_def([DEFAULT_CONTEXT], 'рифленый')],
+        'стак': [ctx_def([DEFAULT_CONTEXT], 'стакан')],
+        'топл': [ctx_def([DEFAULT_CONTEXT], 'топлёный')],
+        'цейл': [ctx_def([DEFAULT_CONTEXT], 'цейлон')],
+        'шлиф': [ctx_def([DEFAULT_CONTEXT], 'шлифование')],
+        # Unknown
+        'уп': [ctx_def([DEFAULT_CONTEXT], 'упаковка')],
+        'зол': [ctx_def([DEFAULT_CONTEXT], 'золото')],
+        'йог': [ctx_def([DEFAULT_CONTEXT], 'йогурт')],
+        'йодир': [ctx_def([DEFAULT_CONTEXT], 'йодированный')],
+        'панир': [ctx_def([DEFAULT_CONTEXT], 'панировка')],
+        'сухар': [ctx_def([DEFAULT_CONTEXT], 'сухарь')],
+        'трост': [ctx_def([DEFAULT_CONTEXT], 'тростник')],
+        'алк': [ctx_def([DEFAULT_CONTEXT], 'алкогольный')],
+        'безалк': [ctx_def([DEFAULT_CONTEXT], 'безалкогольный')],
+        'картоф': [ctx_def([DEFAULT_CONTEXT], 'картофельный')],
+        'пригот': [ctx_def([DEFAULT_CONTEXT], 'приготовления')],
+        'делик': [ctx_def([DEFAULT_CONTEXT], 'деликатесный')],
+        'итал': [ctx_def([DEFAULT_CONTEXT], 'итальянский')],
+        'сыв': [ctx_def([DEFAULT_CONTEXT], 'сыворотка')],
+        'чернопл': [ctx_def([DEFAULT_CONTEXT], 'черноплодный')],
+        'неразд': [ctx_def([DEFAULT_CONTEXT], 'неразделанный')],
+        'хруст': [ctx_def([DEFAULT_CONTEXT], 'хрустящий')],
+        'лес': [ctx_def([DEFAULT_CONTEXT], 'лесной')],
+        'имит': [ctx_def([DEFAULT_CONTEXT], 'имитированный')],
+        'суб': [ctx_def(['кофе'], 'сублимированный')],
+        'зел': [ctx_def([DEFAULT_CONTEXT], 'зеленый')],
+
+    })
     # Test definition - is used in smoke tests
     ctx_dependent_terms.update({u'мар': [ctx_def(['йогурт', 'напиток'], 'маракуйя')]})
 
-    # Reverse index for search by prefix
-    ctx_dependent_full_terms = dawg.BytesDAWG(
-        (ctx.main_form, key.encode('utf-8')) for key, ctx_defs in ctx_dependent_terms.viewitems() for ctx in ctx_defs)
-    ctx_triggers = {trigger_term for key, ctx_defs in ctx_dependent_terms.viewitems() for ctx in ctx_defs for
-                    trigger_term in ctx.ctx_terms} - {DEFAULT_CONTEXT}
+    ctx_dependent_full_terms = ctx_triggers = None
+    _last_ctx_dependent_terms_version = ctx_dependent_terms.version - 1
+
+    @classmethod
+    def ensure_full_terms_index(cls):
+        if cls._last_ctx_dependent_terms_version == cls.ctx_dependent_terms.version:
+            # Index is up-to-date
+            return
+        # Reverse index for search by prefix
+        cls.ctx_dependent_full_terms = dawg.BytesDAWG(
+            (ctx.main_form, key.encode('utf-8')) for key, ctx_defs in cls.ctx_dependent_terms.viewitems() for ctx in ctx_defs)
+        cls.ctx_triggers = {trigger_term for key, ctx_defs in cls.ctx_dependent_terms.viewitems() for ctx in ctx_defs
+                            for trigger_term in ctx.ctx_terms} - {DEFAULT_CONTEXT}
+        cls._last_ctx_dependent_terms_version = cls.ctx_dependent_terms.version
+
+    ctx_dependent_terms.after_change(lambda: ContextDependentTypeTerm.ensure_full_terms_index())
 
     _context_log_enabled = False
 
     @classmethod
     def is_valid_term_for_type(cls, term_str):
         simple_valid = super(ContextDependentTypeTerm, cls).is_valid_term_for_type(term_str)
-        return simple_valid and (term_str in cls.ctx_dependent_terms or cls.is_prefix(term_str))
+        return simple_valid and (term_str in cls.ctx_dependent_terms or cls.is_valid_term_for_prefix(term_str))
 
     @classmethod
-    def is_prefix(cls, term_str):
+    def is_valid_term_for_prefix(cls, term_str):
+        cls.ensure_full_terms_index()
+
         if len(term_str) <= 2 or term_str in cls.ctx_dependent_terms or term_str in cls.ctx_dependent_full_terms \
                 or term_str in cls.ctx_triggers:
             return False
@@ -988,11 +1064,72 @@ class ContextDependentTypeTerm(TypeTerm):
                     for full_term, key in cls.ctx_dependent_full_terms.iteritems(to_str(term_str)))
         return found
 
+    def __init__(self, from_str=''):
+        """@param unicode from_str: term string"""
+        if self.is_new():
+            self._ctx_map = None
+            """@type: dict of (TypeTerm|unicode, TypeTerm)"""
+            self._last_ctx_dependent_terms_version = self.ctx_dependent_terms.version - 1
+            self._ctx_map_hints = defaultdict(list)
+            """@type: dict of (TypeTerm, list[tuple[TypeTerm])]"""
+            self._context_log = set()
+            self._prefix_base_key = None
+        super(ContextDependentTypeTerm, self).__init__(from_str)
+
+    def get_ctx_map(self):
+        """@rtype: dict of (TypeTerm|unicode, TypeTerm)"""
+        if self._ctx_map is None or self._last_ctx_dependent_terms_version != self.ctx_dependent_terms.version:
+            ctx_map = dict()
+
+            base_term = self.get_prefix_base_key()
+            if base_term is not None:
+                # Prefix term may have simplified context. Take only context definitions where prefix is part of full term
+                prefix_ctx_defs = [pref_def for pref_def in self.ctx_dependent_terms[base_term] if pref_def.main_form.startswith(self)]
+                if len(self) >= 5:
+                    # For long prefix it is ~100% term equals to full term
+                    # Simplify context to default form and assert it matches one full term only
+                    full_terms = {pref_def.main_form for pref_def in prefix_ctx_defs}
+                    if len(full_terms) == 1:
+                        prefix_ctx_defs = [ctx_def([DEFAULT_CONTEXT], next(iter(full_terms)))]
+                assert prefix_ctx_defs
+                ctx_defs = prefix_ctx_defs
+            else:
+                ctx_defs = self.ctx_dependent_terms[self]
+                """@type: list[ctx_def]"""
+
+            for ctx_def_item in ctx_defs:
+                # In default definitions term may be returned as is
+                main_form_term = self if ctx_def_item.main_form == self else TypeTerm.make(get_word_normal_form(ctx_def_item.main_form))
+                for ctx_term_str in ctx_def_item.ctx_terms:
+                    if ctx_term_str == DEFAULT_CONTEXT:
+                        ctx_map[DEFAULT_CONTEXT] = main_form_term
+                    else:
+                        if ContextDependentTypeTerm.is_valid_term_for_type(ctx_term_str) or \
+                                (main_form_term != self and isinstance(main_form_term, ContextDependentTypeTerm)):
+                            raise TypeTermException(
+                                "ContextDependent term's [%s] context cannot be defined using another "
+                                "ContextDependent term: %s" %
+                                (self, ctx_term_str))
+                        if CompoundTypeTerm.is_valid_term_for_type(ctx_term_str):
+                            raise TypeTermException(
+                                "ContextDependent term's [%s] context cannot be defined using compound terms: %s" %
+                                (self, ctx_term_str))
+
+                        ctx_term = TypeTerm.make(ctx_term_str)
+                        ctx_map[ctx_term.get_main_form(context=None)] = main_form_term
+            self._ctx_map = ctx_map
+            self._last_ctx_dependent_terms_version = self.ctx_dependent_terms.version
+        return self._ctx_map
+
+    def is_prefix(self):
+        return self.is_valid_term_for_prefix(self)
+
     def get_prefix_base_key(self):
         """@rtype: ContextDependentTypeTerm"""
         if self._prefix_base_key is None:
-            if not self.is_prefix(self):
+            if not self.is_prefix():
                 return None
+            self.ensure_full_terms_index()
             # noinspection PyCompatibility
             keys = [key.decode('utf-8') for full_term, key in self.ctx_dependent_full_terms.iteritems(to_str(self))
                     if self.startswith(key.decode('utf-8'))]
@@ -1006,49 +1143,6 @@ class ContextDependentTypeTerm(TypeTerm):
             assert isinstance(base_term, ContextDependentTypeTerm)
             self._prefix_base_key = base_term
         return self._prefix_base_key
-
-    def __init__(self, from_str=''):
-        """@param unicode from_str: term string"""
-        if self.is_new():
-            self._ctx_map = None
-            """@type: dict of (TypeTerm|unicode, TypeTerm)"""
-            self._ctx_map_hints = defaultdict(list)
-            """@type: dict of (TypeTerm, list[tuple[TypeTerm])]"""
-            self._context_log = set()
-            self._prefix_base_key = None
-        super(ContextDependentTypeTerm, self).__init__(from_str)
-
-    def get_ctx_map(self):
-        """@rtype: dict of (TypeTerm|unicode, TypeTerm)"""
-        if self._ctx_map is None:
-            ctx_map = dict()
-            if self.is_prefix(self):
-                # Find base key and take its map
-                base_term = self.get_prefix_base_key()
-                ctx_map = base_term.get_ctx_map()
-            else:
-                for ctx_def_item in self.ctx_dependent_terms[self]:
-                    # In default definitions term may be returned as is
-                    main_form_term = self if ctx_def_item.main_form == self else TypeTerm.make(get_word_normal_form(ctx_def_item.main_form))
-                    for ctx_term_str in ctx_def_item.ctx_terms:
-                        if ctx_term_str == DEFAULT_CONTEXT:
-                            ctx_map[DEFAULT_CONTEXT] = main_form_term
-                        else:
-                            if ContextDependentTypeTerm.is_valid_term_for_type(ctx_term_str) or \
-                                    (main_form_term != self and isinstance(main_form_term, ContextDependentTypeTerm)):
-                                raise TypeTermException(
-                                    "ContextDependent term's [%s] context cannot be defined using another "
-                                    "ContextDependent term: %s" %
-                                    (self, ctx_term_str))
-                            if CompoundTypeTerm.is_valid_term_for_type(ctx_term_str):
-                                raise TypeTermException(
-                                    "ContextDependent term's [%s] context cannot be defined using compound terms: %s" %
-                                    (self, ctx_term_str))
-
-                            ctx_term = TypeTerm.make(ctx_term_str)
-                            ctx_map[ctx_term.get_main_form(context=None)] = main_form_term
-            self._ctx_map = ctx_map
-        return self._ctx_map
 
     @context_aware
     def get_main_form(self, context=None):
@@ -1194,8 +1288,10 @@ class ContextDependentTypeTerm(TypeTerm):
         ctx_map = self.get_ctx_map()
         # Check if main_form in definition is self (acceptable for default context definition)
         # If not all other terms must not be context dependant
-        [collected_word_forms.update([main_form] if main_form == self else main_form.word_forms(context=None))
-                for main_form in ctx_map.values()]
+        # For prefixes check their base key
+        base_key = self.get_prefix_base_key()
+        [collected_word_forms.update([main_form] if main_form == self or main_form == base_key else main_form.word_forms(context=None))
+                                        for main_form in ctx_map.values()]
         return list(collected_word_forms)
 
     def all_context_main_forms(self):
@@ -1204,8 +1300,10 @@ class ContextDependentTypeTerm(TypeTerm):
         ctx_map = self.get_ctx_map()
         # Check if main_form in definition is self (acceptable for default context definition)
         # If not all other terms must not be context dependant
-        [collected_main_forms.add(main_form if main_form == self else main_form.get_main_form(context=None))
-                for main_form in ctx_map.values()]
+        # For prefixes check their base key
+        base_key = self.get_prefix_base_key()
+        [collected_main_forms.add(main_form if main_form == self or main_form == base_key else main_form.get_main_form(context=None))
+                                    for main_form in ctx_map.values()]
         return list(collected_main_forms)
 
 class TermContext(deque):
@@ -1326,25 +1424,49 @@ class TermContext(deque):
 
 
 def print_prefix_word_candidates():
-    wc = 0
     term_dict = TypeTerm.term_dict
-    prefix_terms = []
+    prefix_terms = {}
     for i in range(1, term_dict.get_max_id() + 1):
         term = term_dict.get_by_id(i)
-        if len(term) < 2:
+        if len(term) < 2 or type(term) != TypeTerm or not is_simple_russian_word(term):
             continue
-        full_terms = term_dict.find_by_unicode_prefix(term, return_self=False)
-        if full_terms and not any(term in _t.word_forms() or term.get_main_form() in _t.word_forms() for _t in full_terms):
-            if len(full_terms) == 1 or \
-                    any(_t.get_main_form() != full_terms[0].get_main_form() for _t in full_terms[1:]):
-                wc += 1
-                print(u'%s%s => %s' % (term, (u'?' if not is_known_word(term) else ''),
-                                       ', '.join(u'%s (%s)' % (_t, _t.get_main_form())
-                                                 for _t in full_terms if term not in _t.word_forms())))
-                prefix_terms.append(term)
-    print("Total %d candidates" % wc)
-    print()
-    print("['%s']" % "', '".join(prefix_terms))
+        full_terms = [_t for _t in term_dict.find_by_unicode_prefix(term, return_self=False) if type(_t) == TypeTerm]
+        if full_terms:
+            if any(term in _t.word_forms() or term.get_main_form() in _t.word_forms() for _t in full_terms):
+                continue
+            # if len(full_terms) == 1)
+            #     or not any(_t.get_main_form() != full_terms[0].get_main_form() for _t in full_terms[1:]):
+            prefix_terms[term] = full_terms
+    seen = set()
+
+    print("=" * 80)
+    print("3-4 char or unknown (almost) same main form and count>2")
+    exclude = ['лен', 'мир', 'фри', 'вино', 'грей', 'карт', 'море']
+    for term, full_terms in sorted(prefix_terms.items(), key=lambda _k:'%2d%s' % (len(_k[0]), _k[0])):
+        if (len(term) not in [3, 4] and is_known_word(term)) or len(full_terms) < 2 or term in exclude:
+            continue
+        main_forms = defaultdict(set)
+        [main_forms[full_term.get_main_form()].add(full_term) for full_term in full_terms]
+        mf_lens = tuple(sorted(map(len, main_forms.values())))
+        len_ft = len(full_terms)
+        if mf_lens in {(len_ft,), (1, len_ft-1)} - {(1, 1)}:
+            main_form = max(main_forms, key=lambda _mf: len(main_forms[_mf]))
+            print("'%s': [ctx_def([DEFAULT_CONTEXT], '%s')]," % (term, main_form))
+            seen.add(term)
+    print("Excluded: ", to_str(exclude))
+    seen.update(exclude)
+
+    print("=" * 80)
+    print("Remaining: %d" % len(set(prefix_terms) - seen))
+    for term, full_terms in sorted(prefix_terms.items(), key=lambda _k:'%2d%s' % (len(_k[0]), _k[0])):
+        if term in seen:
+            continue
+        print(u'%s%s => %s' % (term, (u'?' if not is_known_word(term) else ''),
+                               ', '.join(u'%s (%s)' % (_t, _t.get_main_form()) for _t in prefix_terms[term])))
+
+    print("Total %d candidates" % len(prefix_terms))
+    # print()
+    # print("['%s']" % "', '".join(prefix_terms))
 
 
 def dump_term_dict_from_product_types(config, filename='out/term_dict.dawg'):
@@ -1353,7 +1475,7 @@ def dump_term_dict_from_product_types(config, filename='out/term_dict.dawg'):
     TypeTerm.term_dict = term_dict
     print("Load product type dict...")
     from ok.dicts.product_type_dict import reload_product_type_dict
-    reload_product_type_dict(config=config)
+    reload_product_type_dict(config=config, force_text_format=True)
     term_dict.print_stats()
     print("Update dawg...")
     term_dict.update_dawg()
@@ -1390,7 +1512,7 @@ def print_logged_contexts_for_product_type_dict(config):
         if isinstance(term, ContextDependentTypeTerm):
             context_log = term._context_log
             # print('%s => [%s]' % (term, '], ['.join(' + '.join(context) for context in context_log)))
-            ctx_terms = sorted(set(tc.replace(' # __self__', '') for context in context_log for tc in context if tc != term))
+            ctx_terms = sorted(set(tc for context in context_log for tc in context if tc != term))
             print("    '%s': [ctx_definition(['%s'], '%s')]," % (term, "', '".join(ctx_terms), term))
     print('}')
 

@@ -31,6 +31,7 @@ def pdt():
 @pytest.fixture
 def pdt_full():
     # TODO: rewrite to parametrized fixture
+    load_term_dict()
     _pdt = reload_product_type_dict(config=None)
     return _pdt
 
@@ -102,7 +103,7 @@ def test_context_terms_compound_main_form_with_compatible_compound(pdt):
 
     assert isinstance(term_comp, CompoundTypeTerm)
     term_main = term_context_req.get_main_form(context=context)
-    assert term_main == 'перс маракуйя ананас дыня'
+    assert term_main == 'персик маракуйя ананас дыня'
     assert isinstance(term_context_req, CompoundTypeTerm)
     sub_term_context_req = term_context_req.simple_sub_terms[1]
     assert sub_term_context_req == 'мар'
@@ -165,6 +166,80 @@ def test_context_terms_default_as_self(pdt):
     # tear down
     del context_terms_def['тестт']
 
+def test_context_terms_default_as_self_prefix(pdt):
+    context_terms_def = ContextDependentTypeTerm.ctx_dependent_terms
+    context = ['контекст']
+    context_terms_def['тес'] = [ctx_def([DEFAULT_CONTEXT], 'тестт'), ctx_def(context, 'тесттовый')]
+
+    t_prefix = TypeTerm.make('тест')
+    assert isinstance(t_prefix, ContextDependentTypeTerm)
+    assert t_prefix.is_prefix()
+    assert t_prefix.get_main_form(context=context) == 'тесттовый'
+    assert t_prefix.word_forms(context=context) == ['тесттовый', t_prefix]
+    assert set(t_prefix.all_context_main_forms()) == {'тестт', 'тесттовый'}
+    assert set(t_prefix.all_context_word_forms()) == {'тестт', 'тесттовый', t_prefix}
+
+    # tear down
+    del context_terms_def['тес']
+
+def test_context_terms_prefix_has_no_short_contexts(pdt):
+    # Prefix ctx dependent term must not use contexts where it is not a prefix of full term
+    context_terms_def = ContextDependentTypeTerm.ctx_dependent_terms
+    context = ['контекст']
+    context_terms_def['тст'] = [ctx_def(context, 'тст'), ctx_def([DEFAULT_CONTEXT], 'тстполный')]
+
+    t_prefix = TypeTerm.make('тстп')
+    assert isinstance(t_prefix, ContextDependentTypeTerm)
+    assert t_prefix.is_prefix()
+    assert t_prefix.get_main_form(context=context) == 'тстполный'
+    assert t_prefix.word_forms(context=context) == ['тстполный', t_prefix]
+    assert set(t_prefix.all_context_main_forms()) == {'тстполный'}
+    assert set(t_prefix.all_context_word_forms()) == {'тстполный', t_prefix}
+
+    # tear down
+    del context_terms_def['тст']
+
+def test_context_terms_def_consistent():
+    context_terms_def = ContextDependentTypeTerm.ctx_dependent_terms
+    context = ['контекст']
+    context_terms_def['тестт'] = [ctx_def(context, 'тестт')]
+
+    t = TypeTerm.make('тестт')
+    assert isinstance(t, ContextDependentTypeTerm)
+    assert t.get_main_form(context=context) == 'тестт'
+    assert t.all_context_main_forms() == [t]
+    assert t.all_context_word_forms() == [t]
+
+    # Change definitions. Expect terms and prefixes refresh their defs as well
+    context_terms_def['тестт'] = [ctx_def(context, 'тестт2')]
+    assert t is TypeTerm.make('тестт')
+    assert t.get_main_form(context=context) == 'тестт2'
+    assert t.all_context_main_forms() == ['тестт2']
+    assert t.all_context_word_forms() == ['тестт2', t]
+
+    # tear down
+    del context_terms_def['тестт']
+
+def test_context_terms_def_consistent_prefix():
+    context_terms_def = ContextDependentTypeTerm.ctx_dependent_terms
+    context = ['контекст']
+    context_terms_def['тестт'] = [ctx_def(context, 'тесттпрефикс')]
+
+    t = TypeTerm.make('тесттпреф')
+    assert isinstance(t, ContextDependentTypeTerm)
+    assert t.get_main_form(context=context) == 'тесттпрефикс'
+    assert t.all_context_main_forms() == ['тесттпрефикс']
+    assert t.all_context_word_forms() == ['тесттпрефикс', t]
+
+    # Change definitions. Expect terms and prefixes refresh their defs as well
+    context_terms_def['тестт'] = [ctx_def(context, 'тесттпрефикс2')]
+    assert t is TypeTerm.make('тесттпреф')
+    assert t.get_main_form(context=context) == 'тесттпрефикс2'
+    assert t.all_context_main_forms() == ['тесттпрефикс2']
+    assert t.all_context_word_forms() == ['тесттпрефикс2', t]
+
+    # tear down
+    del context_terms_def['тестт']
 
 def test_context_terms_default_all(pdt):
     context_terms_def = ContextDependentTypeTerm.ctx_dependent_terms
@@ -178,14 +253,19 @@ def test_context_terms_default_all(pdt):
         assert main_form == get_word_normal_form(context_terms_def[term_str][0].main_form)
 
 def test_context_prefixed_terms():
-    prefix_ctx_terms = [TypeTerm.make('шокол'), TypeTerm.make('шоколадн')]
+    prefix_ctx_terms = [TypeTerm.make('шоко'), TypeTerm.make('шокол')]
     t_base = TypeTerm.make('шок')
     t_norm = TypeTerm.make('шоколад')
     t_ctx = TypeTerm.make('батончик')
 
     for t in prefix_ctx_terms:
         assert isinstance(t, ContextDependentTypeTerm)
-        with pytest.raises(ContextRequiredTypeTermException):
+        assert t.is_prefix()
+        if len(t) <= 4:
+            with pytest.raises(ContextRequiredTypeTermException):
+                t.get_main_form(context=None)
+        else:
+            # For long prefix terms simplified context must be built
             t.get_main_form(context=None)
         main_form = t.get_main_form(context=[t, t_ctx])
         assert main_form == t_norm
@@ -310,6 +390,7 @@ def test_compound_spaced_recursive_main_form():
 
     for i in range(2):
         main_form = term.get_main_form()
+        assert isinstance(main_form, CompoundTypeTerm)
         assert main_form == 'тестпре тест1 тест2 тестпост'
         assert main_form.simple_sub_terms == [term_pre, term1, term2, term_post]
         term = main_form
@@ -502,6 +583,15 @@ def test_context_cache_exceptions():
     assert term_exc_counts['шок'] == 2
     # Tear down
     ContextDependentTypeTerm.get_main_form = get_main_form_orig
+
+def test_context_recursive_def(pdt):
+    ctx_dependent_terms = ContextDependentTypeTerm.ctx_dependent_terms
+    assert 'том' in ctx_dependent_terms
+    assert any(ctx_def.main_form == 'томатный' for ctx_def in ctx_dependent_terms['том'])
+
+    types = pdt.collect_sqn_type_tuples('кетчуп томат')
+    pt = ProductType('кетчуп', 'помидор')
+    assert pt in types
 
 def test_context_terms_full(pdt_full):
     try:
