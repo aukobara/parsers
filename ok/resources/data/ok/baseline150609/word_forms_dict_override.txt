@@ -17,3 +17,6 @@
 каша~same:каша # Ozhegov zzhhet
 сахар~same:сахар # was: рафинад
 пресс~same:пресс # was: пресс-папье
+сметанковый~noun:сметана # unknown form
+грудка~pet:грудь # ambiguity ~pet:груда
+мясо~same:мясо # was говядина - too narrow and confuse with other types of meet
