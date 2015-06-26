@@ -230,3 +230,27 @@ def test_from_bin_json(types_dict_test_data, tmpdir):
 
 def test_from_bin_json_full(types_dict_full_common, tmpdir):
     test_from_bin_json(types_dict_full_common, tmpdir)
+
+def test_full_to_short_term_find_full(types_dict_full_common):
+    """
+    @param ProductTypeDict types_dict_full_common: types_dict
+    """
+    pdt = types_dict_full_common
+    rel = pdt.find_product_type_relations('свин охлажд')
+    pt_to_find = ProductType('свинина', 'охл')
+    found = None
+    for r_list in rel.values():
+        for r in r_list:
+            if r.to_type == pt_to_find:
+                found = r
+                break
+    try:
+        assert found
+    except:
+        for pt, r_list in rel.viewitems():
+            print("Type matched: %s, main form ids: %s" % (to_str(pt), pt.get_main_form_term_ids()))
+            print("Type to find: %s, main form ids: %s" % (to_str(pt_to_find), pt_to_find.get_main_form_term_ids()))
+            for r in r_list:
+                print(to_str(r))
+            print("=" * 80)
+        raise

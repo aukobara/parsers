@@ -894,7 +894,7 @@ def dump_json(config):
     load_term_dict(config.term_dict)
 
     types = ProductTypeDict()
-    # ProductTypeDict.VERBOSE = True
+    ProductTypeDict.VERBOSE = True
     types.min_meaningful_type_capacity = 2
     if config.products_meta_in_csvname:
         products = Product.from_meta_csv(config.products_meta_in_csvname)
@@ -1056,14 +1056,21 @@ def print_sqn_tails():
         print(u'%s: %s' % (t, len(set(s))))
 
 
-def reload_product_type_dict(config=None):
+def reload_product_type_dict(config=None, force_text_format=False):
     import ok.dicts
 
     if not config:
         config = ok.dicts.main_options([])
     pd = ProductTypeDict()
     pd.VERBOSE = True
-    pd.from_json(config.product_types_in_json, pure_json=is_types_file_pure_json(config))
+
+    if not force_text_format and '.bin' not in config.product_types_in_json:
+        import os.path
+        bin_filename = '%s.bin%s' % os.path.splitext(config.product_types_in_json)
+        if os.path.isfile(bin_filename):
+            config = config._replace(product_types_in_json=bin_filename)
+
+    pd.from_json(config.product_types_in_json, pure_json=is_types_file_pure_json(config), binary_format='.bin' in config.product_types_in_json)
     return pd
 
 
