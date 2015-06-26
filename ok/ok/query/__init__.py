@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, unicode_literals
+
+import re
+
 from ok.utils import ImmutableListMixin
 
 """
-This is package for query processing modules like tokenizer, parsing context, etc
+This is a package for query processing modules like tokenizer, parsing context, etc
 """
-import re
 
 RE_QUERY_SEPARATOR = '\s|"|,|\.|«|»|“|”|\(|\)|\?|!|\+|:'
 RE_QUERY_PATTERN = re.compile('([%s]+)?([^%s]+)([%s]+)?|([%s]+)' % (RE_QUERY_SEPARATOR, RE_QUERY_SEPARATOR, RE_QUERY_SEPARATOR, RE_QUERY_SEPARATOR), re.U)
@@ -202,12 +204,6 @@ class Query(ImmutableListMixin, list):
         list.__setitem__(new_query, token.position, new_token)
 
         return new_query
-
-    def __getstate__(self):
-        return self.__dict__
-
-    def __setstate__(self, from_dict):
-        self.__dict__.update(from_dict)
 
 
 def parse_query(q_str, predecessor_query=None):
