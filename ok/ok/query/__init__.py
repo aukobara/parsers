@@ -2,6 +2,7 @@
 from __future__ import print_function, unicode_literals
 
 import re
+import itertools
 
 from ok.utils import ImmutableListMixin
 
@@ -149,7 +150,7 @@ class Query(ImmutableListMixin, list):
             self._last_changed_cache = -1
             return default
 
-        pq_tokens = pq and pq.tokens
+        pq_tokens = pq.tokens
         pq_count = pq_tokens and len(pq_tokens)
         if abs(items_count - pq_count) > 1:
             # Predecessor query is too different from this query
@@ -208,3 +209,41 @@ class Query(ImmutableListMixin, list):
 
 def parse_query(q_str, predecessor_query=None):
     return Query(q_str, predecessor_query=predecessor_query)
+
+class RS(object):
+    def __init__(self, query, size, data, searcher):
+        self.query = query
+        self.size = size
+        self.data = data
+        self.searcher = searcher
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_):
+        self.searcher.close()
+
+def find_products(products_query_str):
+    import whoosh_contrib
+    whoosh_contrib.init_index()
+
+    ix = whoosh_contrib.indexes[whoosh_contrib.INDEX_PRODUCTS]
+    """@type: whoosh.index.Index"""
+    searcher = ix.searcher()
+    q = whoosh_contrib.find_products.FindProductsQuery(products_query_str, searcher)
+    data = q()
+    # Retrieve first item to obtain match attributes
+    first = next(data, None)
+    rs = RS(q.matched_query, q.result_size, None if first is None else itertools.chain([first], data), searcher)
+    return rs
+
+
+def find_brands(brands_query_str):
+    import whoosh_contrib
+    whoosh_contrib.init_index()
+
+    ix = whoosh_contrib.indexes[whoosh_contrib.INDEX_BRANDS]
+    """@type: whoosh.index.Index"""
+    with ix.searcher() as searcher:
+        q = whoosh_contrib.find_brands.FindBrandsQuery(brands_query_str, searcher)
+        return list(q())

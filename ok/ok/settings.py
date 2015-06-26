@@ -41,6 +41,30 @@ def ensure_baseline_dir():
         if isdir(_base_dir):
             base_dir = _base_dir
     if not isdir(base_dir):
-        raise Exception("Cannot find base dir specified in settings: %s" % base_dir)
+        raise IOError("Cannot find base dir specified in settings: %s" % base_dir)
 
     return base_dir
+
+
+def ensure_project_path(path_in_project=None, mkdirs=False, is_file=False):
+    import os.path as path
+    if path_in_project and path.isabs(path_in_project):
+        project_path = path_in_project
+    else:
+        import ok
+        src_root = path.abspath(path.join(path.dirname(ok.__file__), '..'))
+        if not path_in_project:
+            project_path = src_root
+            is_file = False  # Overwrite is_file because src is directory anyway
+        else:
+            project_path = path.abspath(path.join(src_root, path_in_project))
+
+    dir_path, _ = path.split(project_path) if is_file else (project_path, None)
+    if not path.exists(dir_path):
+        if not mkdirs:
+            raise IOError("Cannot find intermediate dirs to path specified: %s" % project_path)
+        import os
+        # Do not create last name, because it can be a file name. Let's user create it
+        os.makedirs(dir_path)
+
+    return project_path
