@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals, print_function, absolute_import
 
-"""
-Basic text processing utils
-"""
 from collections import namedtuple
 import os
 from sys import argv
 
 from ok.settings import ensure_baseline_dir
 
+"""
+Basic text processing utils
+"""
 
 def add_string_combinations(patterns, *repl):
     # Collect all possible pattern combinations
@@ -37,6 +38,7 @@ conf_type = namedtuple('OKConfig', 'action toprint baseline_dir default_base_dir
                        'products_meta_in_csvname products_meta_out_csvname '
                        'product_types_in_json product_types_out_json '
                        'word_forms_dict term_dict')
+
 
 def main_options(opts=argv, **kwargs):
     """
