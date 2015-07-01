@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, unicode_literals
 
-import pytest
-from ok.query import parse_query, QuerySeparator, QueryToken
+from ok.query import parse_query
+from ok.query.tokens import QueryToken, QuerySeparator
 
 
 def test_query_parse():
@@ -11,6 +11,7 @@ def test_query_parse():
     assert all(isinstance(t, QuerySeparator) for t in q[::2])
     assert all(isinstance(t, QueryToken) for t in q[1::2])
     assert [t.position for t in q] == range(9)
+
 
 def test_query_parse_empty():
     assert parse_query(None) == []
@@ -21,11 +22,13 @@ def test_query_parse_empty():
     assert isinstance(q[0], QuerySeparator)
     assert q[0] == '...'
 
+
 def test_query_tokens():
     q = parse_query(' тст."тст"тест1 тест2 !')
     tokens = q.tokens
     assert tokens == ['тст', 'тст', 'тест1', 'тест2']
     assert all(isinstance(t, QueryToken) for t in tokens)
+
 
 def test_pre_post_separator():
     q = parse_query('тст.тст...')
@@ -35,6 +38,7 @@ def test_pre_post_separator():
     assert t2.pre_separator == '.'
     assert t2.post_separator == '...'
 
+
 def test_hash():
     q1 = parse_query('тст')
     d = {q1: 1}  # Assert dict accepts query as a key
@@ -43,6 +47,7 @@ def test_hash():
     q2 = parse_query('...тст...')
     assert q1.__hash__() == q2.__hash__()
 
+
 def test_last_changed_one_item():
     q1 = parse_query('тест')
     q2 = parse_query('тест', predecessor_query=q1)
@@ -50,6 +55,7 @@ def test_last_changed_one_item():
 
     q2 = parse_query('тест1', predecessor_query=q1)
     assert q2.last_changed_token() == 'тест1'
+
 
 def test_last_changed_multi_item():
     q1 = parse_query('тест тест2 тест3')
@@ -75,6 +81,7 @@ def test_last_changed_multi_item():
 
     q2 = parse_query('тест тест22 тест3 тест5', predecessor_query=q1)
     assert q2.last_changed_token() is None
+
 
 def test_replace():
     q1 = parse_query('тест1 "тест2" тест3')
