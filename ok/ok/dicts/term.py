@@ -1519,12 +1519,12 @@ def print_logged_contexts_for_product_type_dict(config):
 
 if __name__ == '__main__':
     import sys
-    import ok.dicts.term as terms
+    import ok.dicts.term as ot
     config = main_options(sys.argv)
     if config.action == 'dump-pdt':
-        terms.dump_term_dict_from_product_types(config)
+        ot.dump_term_dict_from_product_types(config)
     elif config.action == 'print-prefixes':
-        terms.load_term_dict()
-        terms.print_prefix_word_candidates()
+        ot.load_term_dict()
+        ot.print_prefix_word_candidates()
     elif config.action == 'print-logged-context':
-        terms.print_logged_contexts_for_product_type_dict(config)
+        ot.print_logged_contexts_for_product_type_dict(config)
