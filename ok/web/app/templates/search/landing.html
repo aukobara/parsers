@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='jquery-ui.css') }}">
+    <script src="{{ url_for('static', filename='jquery.js') }}"></script>
+    <script src="{{ url_for('static', filename='jquery-ui.js') }}"></script>
+</head>
+<style>
+.ui-autocomplete {
+    max-height: 550px;
+    overflow-y: auto;
+    /* prevent horizontal scrollbar */
+    overflow-x: hidden;
+     width: 200px;
+  }
+  /* IE 6 doesn't support max-height
+   * we use height instead, but this forces the menu to always be this tall
+   */
+  * html .ui-autocomplete {
+  height: 100px;
+  }
+
+#wrapper {
+    width: 1000px;
+    border: 1px solid black;
+    overflow: auto;
+    }
+#search-form {
+    width: 500px;
+    float: left;
+    }
+#product-list {
+    border: 1px solid green;
+    margin: 0 0 0 502px;
+    }
+#menu {
+    position: relative;
+    display: block;
+    }
+</style>
+
+<body>
+    <form action="{{ url_for('search.enter') }}" method="POST" class="search">
+      <dl>
+        <dt>What do you want?:
+        <dd><input id="query" type="text" size="100" name="q" value="{{ q }}">
+        <dd><input type="submit" value="What?">
+      </dl>
+    </form>
+
+<div id="wrapper">
+    <div id="search-form">
+        <div id="menu" class="ui-front"></div>
+        <ul class="entries">
+          {% for entry in product_list %}
+            <li>{{ entry.pfqn }}<br/>{{ entry.sqn }}|{{ entry.brand }}</li>
+          {% else %}
+            <li><em>...</em></li>
+          {% endfor %}
+          </ul>
+
+        <div id="facets">
+            <ul>
+            {% for facet, counts in facets.items() %}
+            <li>
+                {{ facet }}
+                <ul>
+                    {% for value, count in counts|dictsort(by='value')|reverse %}
+                        <li>{{ value }}: {{ count }}</li>
+                    {% endfor %}
+                </ul>
+            </li>
+            {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div id="product-list">
+        {% for entry in entries if entry.header %}
+        <h2>{{ entry.header }}: {{ entry.value }}</h2>
+        {% endfor %}
+        <ul class="entries">
+          {% for entry in entries if not entry.header %}
+            {% if loop.index0 is divisibleby 10 %}
+            <h2>...[{{ 'Results from %(start)d to %(end)d'|format(start=loop.index, end=(loop.index+9 if loop.index+9 < loop.length else loop.length+1)) }}]...</h2>
+            {% endif %}
+            <li>
+                <a href="{{ url_for('search.enter') }}?q={{ entry.pfqn|urlencode }}"><h4>{{ entry.pfqn }} (<i>~{{ '%0.2f'|format(entry.score) }}</i>)</h4></a>
+                {% if entry.types -%}
+                    Types: {{ entry.types }}<br/>
+                {% endif %}
+                {% if entry.matched -%}
+                    Matched: {{ entry.matched }}
+                {% endif -%}
+            </li>
+          {% else %}
+            <li><em>Unbelievable.  No entries here so far</em>
+          {% endfor %}
+          </ul>
+    </div>
+</div>
+
+<script>
+$( "#query" ).autocomplete({
+    minLength: 3,
+    appendTo: "menu",
+    position: {of: "#menu"},
+	source: function( request, response ) {
+          $.getJSON( "{{ url_for('search.suggest_json') }}", {
+            term: request.term
+          }, function( data ) {
+            var filtered = [];
+            var count = 0;
+            var last_top = ''
+            var query_i = $( "#query" ).get()[0];
+            for (var i = 0; i < data.results.length; i++) {
+                count = 0;
+                last_top = data.results[i]
+                filtered.push(data.results[i]);
+            }
+            response( filtered );
+            });
+        },
+    focus: function( event, ui ) {
+          $.getJSON( "{{ url_for('search.product_summary_json') }}", {
+            q: ui.item.value
+          }, function( data ) {
+            ul = $( "<ul/>" );
+            $.each( data.results, function( index, product ) {
+                li = $( '<li>' + product.pfqn + '</li>' ).appendTo(ul);
+                if (product.brand) {
+                    li.append( '<br/>' + product.sqn + '|' + product.brand );
+                };
+                });
+            $( "#product-list" ).html( ul );
+            });
+
+        return false;
+      },
+    select: function( event, ui ) {
+        $( "#query" ).val( ui.item.value );
+        return false;
+    },
+})
+.autocomplete( "instance" )._renderItem = function( ul, item ) {
+      return $( "<li>" )
+        .append( "<a><strong>" + item.label + "</strong></a>" )
+        .appendTo( ul );
+};
+$( "#query" ).autocomplete( "instance" )._resizeMenu = function() {
+        this.menu.element.outerWidth( 500 );
+};
+</script>
+
+</body>
+</html>
