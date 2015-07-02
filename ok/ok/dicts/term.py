@@ -7,7 +7,6 @@ import dawg
 import itertools
 
 from ok.dicts import to_str, main_options
-from ok.query import parse_query
 from ok.dicts.russian import get_word_normal_form, is_known_word, is_simple_russian_word, RE_WORD_OR_NUMBER_CHAR_SET
 from ok.utils import EventfulDict
 
@@ -40,7 +39,7 @@ def context_aware(func):
         assert isinstance(term, TypeTerm)
 
         context = None
-        if term._is_context_required or term._is_context_required is None:
+        if term._is_context_required is None or term._is_context_required:
             if 'context' in kwargs:
                 context = TermContext.ensure_context(kwargs.get('context'))
                 kwargs['context'] = context
@@ -473,11 +472,13 @@ class TypeTerm(unicode):
     def is_context_required(self):
         if self._is_context_required is None:
             try:
-                if hasattr(self.word_forms, 'context_aware_index'):
-                    word_forms = getattr(context_aware, '_context_aware_function_reg')[self.word_forms.context_aware_index]
-                    word_forms(self, context=None, fail_on_context=True)
-                else:
-                    self.word_forms(context=None, fail_on_context=True)
+                word_forms = self.__class__.word_forms
+                if hasattr(word_forms, 'context_aware_index'):
+                    # Take original not-context-wrapped method. Otherwise, we will got recursion
+                    word_forms = getattr(context_aware, '_context_aware_function_reg')[word_forms.context_aware_index]
+
+                # Call word_forms without context to check whether it fails
+                word_forms(self, context=None, fail_on_context=True)
                 self._is_context_required = False
             except ContextRequiredTypeTermException:
                 self._is_context_required = True
@@ -511,7 +512,8 @@ class TypeTerm(unicode):
         @param unicode terms_str: string of terms
         @rtype: list[TypeTerm]
         """
-        words = parse_query(terms_str)
+        import ok.query
+        words = ok.query.parse_query(terms_str)
         terms = []
         """@type: list[TypeTerm]"""
         buf = u''
@@ -557,6 +559,9 @@ class TypeTerm(unicode):
 
     def as_string(self):
         return to_str(self)
+
+    def __repr__(self):
+        return '<%s>%s:%s' % (self.__class__.__name__, ('', '[context]')[self.is_context_required()], super(TypeTerm, self).__repr__())
 
 
 class CompoundTypeTerm(TypeTerm):
@@ -637,7 +642,7 @@ class CompoundTypeTerm(TypeTerm):
             if not collected_forms or collected_forms[0] != spaced_forms[0]:
                 collected_forms = [spaced_forms[0]] + collected_forms
             if len(spaced_forms) > 1:
-                collected_forms.extend(t for t in spaced_forms if t not in collected_forms[1:])
+                collected_forms.extend(spaced_forms[1:])
 
         # sub_terms = self.simple_sub_terms
         # if len(sub_terms) > 1:
@@ -658,6 +663,8 @@ class CompoundTypeTerm(TypeTerm):
             token_buf = [None] * tokens_count
             i = 0
             while i < tokens_count:
+                if context is None and tokens[i].is_context_required():
+                    context = TermContext.ensure_context(tokens)
                 token_main_form = tokens[i].get_main_form(context=context)
 
                 if isinstance(token_main_form, CompoundTypeTerm):
@@ -901,7 +908,7 @@ class ContextDependentTypeTerm(TypeTerm):
         # one-value variants
         'ст': [ctx_def(['горчица', 'желе', 'йогурт', 'кофе', 'соус', 'кетчуп', 'цикорий'], 'стекло')],
         'осв': [ctx_def(['нектар', 'сок'], 'осветленный')],
-        'туш': [ctx_def(['говядина', 'суп'], 'тушеная')],
+        'туш': [ctx_def(['говядина', 'суп', 'свинина', 'мясо'], 'тушеная')],
         'потр': [ctx_def(['горбуша', 'форель', 'минтай', 'рыба'], 'потрошеная')],
         'крупн': [ctx_def(['чай'], 'крупнолистовой')],
         'хв': [ctx_def(['креветки'], 'хвост')],
@@ -1349,7 +1356,6 @@ class TermContext(deque):
 
                     if isinstance(t, CompoundTypeTerm):
                         # Extend context with compound terms sub-terms
-                        # self._extend_context(self, t.simple_sub_terms)
                         self.extend(t.simple_sub_terms)
                         if t in self.priority_terms:
                             self.priority_terms.update(t.simple_sub_terms)
