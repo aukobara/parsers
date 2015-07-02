@@ -30,7 +30,7 @@ def add_string_combinations(patterns, *repl):
 
 
 def remove_nbsp(s):
-    return None if s is None else s.replace(u'\u00a0', u' ') if isinstance(s, unicode) else s.replace('\xc2\xa0', ' ')
+    return None if s is None else s.replace('\u00a0', ' ') if isinstance(s, unicode) else s.replace(b'\xc2\xa0', b' ')
 
 
 conf_type = namedtuple('OKConfig', 'action toprint baseline_dir default_base_dir prodcsvname cat_csvname '
