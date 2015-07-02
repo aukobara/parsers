@@ -13,7 +13,7 @@ from ok.dicts.product_type import TYPE_TUPLE_RELATION_EQUALS, \
     TYPE_TUPLE_RELATION_IDENTICAL
 from ok.dicts.product_type_dict import ProductTypeDict
 from ok.dicts import remove_nbsp, main_options, to_str
-from ok.query import cleanup_token_str
+from ok.query.tokens import cleanup_token_str
 from ok.dicts.brand import Brand
 from ok.dicts.cats import Cats
 

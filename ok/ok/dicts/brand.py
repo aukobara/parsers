@@ -8,7 +8,7 @@ import Levenshtein
 from transliterate import translit
 
 from ok.dicts import add_string_combinations, to_str
-from ok.query import cleanup_token_str
+from ok.query.tokens import cleanup_token_str
 from ok.dicts.russian import isenglish, isrussian
 
 
