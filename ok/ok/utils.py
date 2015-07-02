@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals, print_function, absolute_import
 
 def is_immutable(self):
     raise TypeError('%r objects are immutable' % self.__class__.__name__)
@@ -410,3 +411,36 @@ class EventfulList(list):
     def _can_sort(self, *pargs, **kwargs):
         """Check if the list can be sorted."""
         return not bool(self._sort_callback(*pargs, **kwargs))
+
+
+def get_subpackages(parent_pack, seen=None, debug=False, top_package=None, implicit_dep=None):
+    import types, importlib
+
+    top_package = top_package or parent_pack
+    if debug:
+        print("get_subpackages: %s, top: %s" % (parent_pack.__name__, top_package))
+
+    child_mods = [mod for mod in parent_pack.__dict__.values() if isinstance(mod, types.ModuleType)]
+    r = []
+    seen = seen or set()
+    seen.add(parent_pack)
+    for mod in child_mods:
+        if debug: print("Found child %s of %s" % (mod.__name__, parent_pack.__name__))
+        if mod in seen or not mod.__name__.startswith(top_package.__name__ + '.'):
+            if debug: print("Child %s has been seen or not inside. Skip" % mod.__name__)
+            continue
+        r.extend(get_subpackages(mod, seen=seen, debug=debug, top_package=top_package, implicit_dep=implicit_dep))
+        if mod in implicit_dep:
+            for dep_pack_name in implicit_dep[mod]:
+                dep_mod = importlib.import_module(dep_pack_name)
+                if debug: print("Found implicit dep %s of %s" % (dep_mod.__name__, mod.__name__))
+                if dep_mod in seen:
+                    if debug: print("Implicit dep %s has been seen. Skip" % dep_mod.__name__)
+                    continue
+                r.extend(get_subpackages(dep_mod, seen=seen, debug=debug, top_package=dep_mod, implicit_dep=implicit_dep))
+                r.append(dep_mod)
+                if debug: print("Implicit dep %s of %s added" % (dep_mod.__name__, mod.__name__))
+        r.append(mod)
+        if debug: print("Child %s of %s added" % (mod.__name__, parent_pack.__name__))
+    if debug and not child_mods: print("No children found for %s" % parent_pack.__name__)
+    return r
