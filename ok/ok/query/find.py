@@ -65,20 +65,20 @@ class RS(object):
 
 
 def find_products(products_query_str, limit=10, return_fields=None, facet_fields=None):
-    from . import whoosh_contrib
+    from ok.query.whoosh_contrib import find_products
 
     # from whoosh import scoring
     # w_model = scoring.DebugModel()
     # searcher = ix.searcher(weighting=w_model)
 
-    q = whoosh_contrib.find_products.FindProductsQuery(products_query_str, return_fields=return_fields, facet_fields=facet_fields)
+    q = find_products.FindProductsQuery(products_query_str, return_fields=return_fields, facet_fields=facet_fields)
 
     # rs = RS(q, searcher, limit, on_close=lambda: log.debug(to_str(w_model.log)))
     return RS(q, limit)
 
 
 def find_brands(brands_query_str):
-    from . import whoosh_contrib
+    from ok.query.whoosh_contrib import find_brands
 
-    q = whoosh_contrib.find_brands.FindBrandsQuery(brands_query_str)
+    q = find_brands.FindBrandsQuery(brands_query_str)
     return RS(q, limit=None)

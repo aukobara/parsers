@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals, print_function, absolute_import
+
 from collections import defaultdict
 
 from whoosh import query
 from whoosh.analysis import RegexTokenizer, LowercaseFilter, StopFilter, StemFilter
+from whoosh.columns import RefBytesColumn
 from whoosh.fields import TEXT, SchemaClass, ID, KEYWORD
 from whoosh.qparser.plugins import PrefixPlugin, WildcardPlugin
 
@@ -14,8 +16,8 @@ from ok.dicts.product_type import ProductType
 from ok.dicts.product_type_dict import ProductTypeDict
 from ok.dicts.term import TypeTerm
 
-from .analyze import MainFormFilter
-from .base import BaseFindQuery
+from ok.query.whoosh_contrib.analyze import MainFormFilter
+from ok.query.whoosh_contrib.base import BaseFindQuery
 
 INDEX_NAME = 'Products.idx'
 
@@ -25,8 +27,8 @@ class ProductsSchema(SchemaClass):
                 analyzer=RegexTokenizer() | LowercaseFilter() | StopFilter(lang='ru') |
                          MainFormFilter() | StemFilter(lang='ru', cachesize=50000)
                 )
-    types = KEYWORD(stored=True, scorable=False, field_boost=2.0, lowercase=True, sortable=True)
-    brand = ID(stored=True, sortable=True)
+    types = KEYWORD(stored=True, scorable=False, field_boost=2.0, lowercase=True, sortable=RefBytesColumn())
+    brand = ID(stored=True, sortable=RefBytesColumn())
     field_serial_2 = ID()
 
 SCHEMA = ProductsSchema()
@@ -62,8 +64,8 @@ def data_checksum():
     from ok.dicts import main_options
     config = main_options([])
 
-    from . import text_data_file_checksum
-    return text_data_file_checksum(config.products_meta_in_csvname)
+    from ok.query.whoosh_contrib import indexes
+    return indexes.text_data_file_checksum(config.products_meta_in_csvname)
 
 
 class FindProductsQuery(BaseFindQuery):

@@ -5,7 +5,7 @@ from whoosh.fields import Schema, KEYWORD
 from whoosh.searching import Searcher
 from whoosh.qparser import QueryParser
 
-from .base import BaseFindQuery
+from ok.query.whoosh_contrib.base import BaseFindQuery
 
 INDEX_NAME = 'Brands.idx'
 SCHEMA = Schema(brand=KEYWORD(stored=True))

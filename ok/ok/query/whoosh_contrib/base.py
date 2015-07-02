@@ -16,11 +16,7 @@ class BaseFindQuery(object):
         """
         self.query_variants = query_variants
 
-        if searcher is not None:
-            self.searcher = searcher
-        else:
-            from . import searcher as get_searcher
-            self.searcher = get_searcher(self.index_name)
+        self._searcher = searcher
 
         self.result_size = None
         self.matched_query = None
@@ -36,12 +32,13 @@ class BaseFindQuery(object):
         """@type: whoosh.searching.Results"""
 
     def __call__(self, limit=10):
+        searcher = self.searcher
         match_found = False
         return_one_field = return_all = None
         return_fields = self.return_fields
 
         for q_attempt in self.query_variants:
-            r = self.searcher.search(q_attempt, limit=limit, terms=self.need_matched_terms, groupedby=self.facets)
+            r = searcher.search(q_attempt, limit=limit, terms=self.need_matched_terms, groupedby=self.facets)
             for match in r:
 
                 if not match_found:
@@ -75,6 +72,15 @@ class BaseFindQuery(object):
     def facet_counts(self, facet_field):
         return self._results.groups(facet_field)
 
+    @property
+    def searcher(self):
+        searcher = self._searcher
+        if searcher is None:
+            from ok.query.whoosh_contrib import indexes
+            searcher = self._searcher = indexes.searcher(self.index_name)
+        return searcher
+
     def close(self):
-        if not self.searcher.is_closed:
-            self.searcher.close()
+        searcher = self._searcher
+        if searcher is not None and not searcher.is_closed:
+            searcher.close()
