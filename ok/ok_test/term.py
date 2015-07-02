@@ -14,24 +14,24 @@ from ok.dicts.term import load_term_dict, TypeTerm, ContextRequiredTypeTermExcep
     context_aware
 
 
-# noinspection PyUnresolvedReferences
 @pytest.fixture(autouse=True)
 def clear_terms_dict():
     TypeTerm.term_dict.clear()
 
-# noinspection PyUnresolvedReferences
 @pytest.fixture
 def pdt():
-    config = main_options(
-        ['test.py', '-base-dir', 'resources\\test', '-in-product-types-json', 'product_types_test_mar.json'])
+    config = main_options([], baseline_dir='resources/test', product_types_in_json='product_types_test_mar.json')
     _pdt = reload_product_type_dict(config)
     return _pdt
 
-# noinspection PyUnresolvedReferences
 @pytest.fixture
-def pdt_full():
+def term_dict_full():
+    term_dict = load_term_dict()
+    return term_dict
+
+@pytest.fixture
+def pdt_full(term_dict_full):
     # TODO: rewrite to parametrized fixture
-    load_term_dict()
     _pdt = reload_product_type_dict(config=None)
     return _pdt
 
@@ -350,7 +350,7 @@ def test_context_terms_parse_compound_proposition_with_dict(pdt):
     assert 'в горький' in terms[1].word_forms(context=terms)
 
 
-def test_context_terms_parse_ambigous_with_dict(pdt):
+def test_context_terms_parse_ambiguous_with_dict(pdt):
     types = pdt.collect_sqn_type_tuples('продукт мол-раст сгущ с сахаром сгущенка с кофе')
 
     pt_full = ProductType('продукт', 'молоко', 'сгущенка')
@@ -360,6 +360,8 @@ def test_context_terms_parse_ambigous_with_dict(pdt):
     assert pt_full in types
     assert pt_not_context in types
     assert pt_comp_context in types
+    pt_full_wo_ambiguity_terms = ProductType('продукт', 'с сахаром', 'сгущенка')
+    assert pt_full_wo_ambiguity_terms in types
 
     # Change first (priority) word
     types = pdt.collect_sqn_type_tuples(u'сгущ продукт мол-раст с сахаром сгущенка с кофе')
@@ -367,9 +369,18 @@ def test_context_terms_parse_ambigous_with_dict(pdt):
     assert pt_full not in types
     assert pt_not_context not in types
     assert pt_comp_context not in types
-    pt_full_wo_ambiguity_terms = ProductType('продукт', 'с сахаром', 'сгущенка', 'с кофе')
-    pt_full_wo_ambiguity_terms in types
+    pt_full_wo_ambiguity_terms = ProductType('сгущ', 'продукт', 'с сахаром')
+    assert pt_full_wo_ambiguity_terms in types
 
+
+def test_context_compound_self_sufficient_context():
+    t_context_req = TypeTerm.make('туш')
+    assert t_context_req.is_context_required()
+
+    t = TypeTerm.make('говядина.туш')
+    assert isinstance(t, CompoundTypeTerm)
+    assert not t.is_context_required()
+    assert t.get_main_form(context=None) == 'говядина тушёный'
 
 def test_compound_spaced_recursive_main_form():
     # Pepsi has known word_normal_form 'Pepsi-Cola'. That may produce recursion when calculate all spaced main form

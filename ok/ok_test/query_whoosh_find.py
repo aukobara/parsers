@@ -14,12 +14,12 @@ app_log.addHandler(logging.StreamHandler())
 @pytest.fixture(scope='module')
 def ix_full():
     from whoosh.filedb.filestore import RamStorage
-    from ok.query import whoosh_contrib
+    from ok.query.whoosh_contrib import indexes
 
     st = RamStorage()
-    if whoosh_contrib.INDEX_PRODUCTS in whoosh_contrib.indexes:
-        del whoosh_contrib.indexes[whoosh_contrib.INDEX_PRODUCTS]
-    ix = whoosh_contrib.init_index(st, one_index=whoosh_contrib.INDEX_PRODUCTS)
+    if indexes.INDEX_PRODUCTS in indexes.indexes:
+        del indexes.indexes[indexes.INDEX_PRODUCTS]
+    ix = indexes.init_index(st, one_index=indexes.INDEX_PRODUCTS)
     return ix
 
 
@@ -31,13 +31,13 @@ def ix_test_docs():
 @pytest.fixture
 def ix_test(ix_test_docs):
     from whoosh.filedb.filestore import RamStorage
-    from ok.query import whoosh_contrib
+    from ok.query.whoosh_contrib import indexes
 
     st = RamStorage()
 
     # Clear all indexes before any test and recreate them in memory
-    whoosh_contrib.indexes.clear()
-    orig_index_def = dict(whoosh_contrib.index_def_dict)
+    indexes.indexes.clear()
+    orig_index_def = dict(indexes.index_def_dict)
 
     def test_feeder(writer):
         """@param whoosh.writing.IndexWriter writer: index writer"""
@@ -45,13 +45,13 @@ def ix_test(ix_test_docs):
             writer.add_document(**doc)
         return 1
 
-    whoosh_contrib.index_def_dict[whoosh_contrib.INDEX_PRODUCTS] = \
-        whoosh_contrib.IndexDef(orig_index_def[whoosh_contrib.INDEX_PRODUCTS].schema, test_feeder, lambda: 1)
+    indexes.index_def_dict[indexes.INDEX_PRODUCTS] = \
+        indexes.IndexDef(orig_index_def[indexes.INDEX_PRODUCTS].schema, test_feeder, lambda: 1)
 
-    ix = whoosh_contrib.init_index(st, one_index=whoosh_contrib.INDEX_PRODUCTS)
+    ix = indexes.init_index(st, one_index=indexes.INDEX_PRODUCTS)
 
     # Restore original schema
-    whoosh_contrib.index_def_dict.update(orig_index_def)
+    indexes.index_def_dict.update(orig_index_def)
 
     return ix
 
