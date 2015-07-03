@@ -11,7 +11,7 @@ from scrapy.log import ERROR
 from scrapy.utils.url import parse_url
 
 from ok.items import CatItem, ProductItem, ROOT_CAT_ITEM
-from ok import FixEncodingLogFormatter
+from ok.spiders import FixEncodingLogFormatter
 
 
 class RootCatSpider(scrapy.Spider):
