@@ -14,4 +14,4 @@ Scrapy==0.24.5
 transliterate==1.7.3.ok.patched.1
 ujson==1.34
 Werkzeug==0.10.4
-whoosh==2.7.0
+whoosh==2.7.0.ok.patched.1

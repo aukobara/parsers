@@ -22,24 +22,17 @@ from ok.query.whoosh_contrib import utils
 
 INDEX_NAME = 'Products.idx'
 
-class RefBytesColumnFixEquals(RefBytesColumn):
-    def __eq__(self, other):
-        return isinstance(other, RefBytesColumn) and \
-               all(((self._default == other._default),
-                   (self._fixedlen == other._fixedlen),
-                   ))
-
 class ProductsSchema(SchemaClass):
     pfqn = TEXT(stored=True,
                 analyzer=RegexTokenizer() | LowercaseFilter() | StopFilter(lang='ru') |
                          MainFormFilter() | StemFilter(lang='ru', cachesize=50000)
                 )
-    types = ID(stored=True, field_boost=2.0, sortable=RefBytesColumnFixEquals())
-    brand = ID(stored=True, sortable=RefBytesColumnFixEquals())
+    types = KEYWORD(stored=True, field_boost=2.0, sortable=RefBytesColumn())
+    brand = ID(stored=True, sortable=RefBytesColumn())
     field_serial_4 = ID()
 
 SCHEMA = ProductsSchema()
-
+"""@type: whoosh.fields.Schema"""
 
 def product_type_normalizer(value):
     values = value

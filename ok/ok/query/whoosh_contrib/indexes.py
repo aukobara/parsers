@@ -44,6 +44,7 @@ def init_index(storage=None, index_dir=None, readonly=True, one_index=None):
     """
     @param whoosh.filedb.filestore.Storage|None storage: whoosh storage. If none, storage is treated as FileStorage with dir in index_dir
     @param unicode|None index_dir: if not None use as FileStorage dir, otherwise default dir is used ('out/_whoosh_idx') related to current dir (os.cwd)
+    @rtype whoosh.index.FileIndex|dict of (unicode, whoosh.index.FileIndex)
     """
 
     assert not one_index or one_index in index_def_dict
