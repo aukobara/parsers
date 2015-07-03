@@ -18,18 +18,25 @@ from ok.dicts.term import TypeTerm
 
 from ok.query.whoosh_contrib.analyze import MainFormFilter
 from ok.query.whoosh_contrib.base import BaseFindQuery
+from ok.query.whoosh_contrib import utils
 
 INDEX_NAME = 'Products.idx'
 
+class RefBytesColumnFixEquals(RefBytesColumn):
+    def __eq__(self, other):
+        return isinstance(other, RefBytesColumn) and \
+               all(((self._default == other._default),
+                   (self._fixedlen == other._fixedlen),
+                   ))
 
 class ProductsSchema(SchemaClass):
     pfqn = TEXT(stored=True,
                 analyzer=RegexTokenizer() | LowercaseFilter() | StopFilter(lang='ru') |
                          MainFormFilter() | StemFilter(lang='ru', cachesize=50000)
                 )
-    types = KEYWORD(stored=True, scorable=False, field_boost=2.0, lowercase=True, sortable=RefBytesColumn())
-    brand = ID(stored=True, sortable=RefBytesColumn())
-    field_serial_2 = ID()
+    types = ID(stored=True, field_boost=2.0, sortable=RefBytesColumnFixEquals())
+    brand = ID(stored=True, sortable=RefBytesColumnFixEquals())
+    field_serial_4 = ID()
 
 SCHEMA = ProductsSchema()
 
@@ -63,9 +70,7 @@ def data_checksum():
     """@rtype: long"""
     from ok.dicts import main_options
     config = main_options([])
-
-    from ok.query.whoosh_contrib import indexes
-    return indexes.text_data_file_checksum(config.products_meta_in_csvname)
+    return utils.text_data_file_checksum(config.products_meta_in_csvname)
 
 
 class FindProductsQuery(BaseFindQuery):
@@ -87,7 +92,7 @@ class FindProductsQuery(BaseFindQuery):
 
         and_maybe_scoring_q = self.q = self.qp.parse(q)
 
-        self.p_types = self.pdt.collect_sqn_type_tuples(q.lower())
+        self.p_types = self.pdt.collect_sqn_type_tuples(q)
         len_map = defaultdict(set)
         [len_map[len(pt)].add(product_type_normalizer(pt)[0]) for pt in self.p_types]
 

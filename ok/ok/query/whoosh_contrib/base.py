@@ -8,6 +8,7 @@ class BaseFindQuery(object):
     # Class attributes to override
     need_matched_terms = False
     index_name = None
+    searcher_factory = None
 
     def __init__(self, query_variants, searcher=None, return_fields=None, facet_fields=None):
         """
@@ -17,6 +18,7 @@ class BaseFindQuery(object):
         self.query_variants = query_variants
 
         self._searcher = searcher
+        """@type: whoosh.searching.Searcher"""
 
         self.result_size = None
         self.matched_query = None
@@ -76,8 +78,11 @@ class BaseFindQuery(object):
     def searcher(self):
         searcher = self._searcher
         if searcher is None:
-            from ok.query.whoosh_contrib import indexes
-            searcher = self._searcher = indexes.searcher(self.index_name)
+            searcher_factory = self.searcher_factory
+            if searcher_factory is not None:
+                searcher = self._searcher = searcher_factory(self.index_name)
+            else:
+                raise Exception("Either searcher instance must be passed to query or searcher_factory set")
         return searcher
 
     def close(self):
