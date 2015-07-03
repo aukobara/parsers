@@ -6,7 +6,7 @@ from flask import render_template, Blueprint, jsonify, request
 
 from ok.dicts import to_str
 from ok.dicts.term import TypeTerm
-from ok.query import find_products
+from ok.query.find import find_products
 
 from app import cache, data_config
 
@@ -24,6 +24,8 @@ def get_term_dict():
 @mod.before_app_first_request
 def init_data():
     get_term_dict()
+    from ok.query.whoosh_contrib import indexes as ixs
+    ixs.init_index()
 
 
 @mod.route("/", methods=['GET', 'POST'])
