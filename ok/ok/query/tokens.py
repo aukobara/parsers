@@ -7,7 +7,7 @@ from ok.utils import ImmutableListMixin
 
 RE_QUERY_SEPARATOR = '\s|"|,|\.|«|»|“|”|\(|\)|\?|!|\+|:'
 RE_QUERY_PATTERN = re.compile('([%s]+)?([^%s]+)([%s]+)?|([%s]+)' % (RE_QUERY_SEPARATOR, RE_QUERY_SEPARATOR, RE_QUERY_SEPARATOR, RE_QUERY_SEPARATOR), re.U)
-RE_QUERY_PATTERN_SEPARATOR = re.compile('([%s]+)?' % RE_QUERY_SEPARATOR, re.U)
+RE_QUERY_PATTERN_IC = re.compile(RE_QUERY_PATTERN.pattern, re.U | re.IGNORECASE)
 
 
 def cleanup_token_str(s):
@@ -22,13 +22,23 @@ def cleanup_token_str(s):
 
 class QueryItemBase(unicode):
 
-    def __new__(cls, position, item_str, query=None):
+    def __new__(cls, position, item_str, *_, **__):
         return unicode.__new__(cls, item_str)
 
-    def __init__(self, position, item_str, query=None):
+    def __init__(self, position, item_str, char_pos, query=None):
         super(QueryItemBase, self).__init__(item_str)
         self.position = position
         self.query = query
+
+        if isinstance(char_pos, slice):
+            assert query is not None, "Must have access to original query string if slice specified as char position"
+            char_start_at, char_end_to, _ = char_pos.indices(len(query.original_query))
+            self.char_start = char_start_at
+            self.char_end = char_end_to - 1
+        else:
+            # Not a slice - treat as int
+            self.char_start = char_pos
+            self.char_end = char_pos + len(item_str) - 1
 
     def __repr__(self):
         return '%d:%s:%s' % (self.position, super(QueryItemBase, self).__repr__(), type(self))
@@ -44,6 +54,10 @@ class QueryItemBase(unicode):
         except IndexError:
             return None
 
+    @property
+    def original(self):
+        assert self.query
+        return self.query.original_query[self.char_start:self.char_end + 1]
 
 class QueryToken(QueryItemBase):
 
@@ -64,35 +78,54 @@ class QuerySeparator(QueryItemBase):
 
 class Query(ImmutableListMixin, list):
 
-    def __init__(self, q_str, predecessor_query=None):
+    def __init__(self, q_str, predecessor_query=None, lowercase=True):
         self.original_query = q_str
         self.predecessor_query = predecessor_query
         """@type: Query"""
-        super(Query, self).__init__(self.split(q_str, parent_query=self))
+        super(Query, self).__init__(self.split(q_str, parent_query=self, lowercase=lowercase))
 
     @staticmethod
-    def split(q_str, parent_query=None):
+    def split(q_str, parent_query=None, lowercase=True):
+        """
+        Split q_str to sequence of query items, where each one is either QueryToken or TokenSeparator.
+        Each item keeps its position in original string and reference to query object (if specified).
+        Usually, Token and Separators items go one by another. However, it may be changed in implementations because logic of
+        word boundary can be differ (e.g. lowerToUpper string can be treated as 'lower' 'to' 'upper' tokens without (or with empty)
+        separator between them)
+        @param unicode q_str: query string to parse
+        @param Query|None parent_query: query consists of returned items. If specified position attribute of each item
+                references to character in that query
+        @param bool lowercase: if False, keep characters in items as is, call .lower() otherwise.
+                Please note, characters in original query keeps as is and can be accessed by position if required.
+        """
         result = []
         if q_str:
-            token_it = re.finditer(RE_QUERY_PATTERN, q_str)
+            if lowercase:
+                q_str = q_str.lower()
+                re_pattern = RE_QUERY_PATTERN_IC
+            else:
+                re_pattern = RE_QUERY_PATTERN
+
+            token_it = re.finditer(re_pattern, q_str)
+
             position = 0
             for token_match in token_it:
                 sep_only = token_match.group(4)
                 if sep_only:
                     # Separator only variant
-                    result.append(QuerySeparator(position, sep_only, query=parent_query))
+                    result.append(QuerySeparator(position, sep_only, token_match.start(4), query=parent_query))
                     position += 1
                 else:
                     pre_sep = token_match.group(1)
                     token = token_match.group(2)
                     post_sep = token_match.group(3)
                     if pre_sep:
-                        result.append(QuerySeparator(position, pre_sep, query=parent_query))
+                        result.append(QuerySeparator(position, pre_sep, token_match.start(1), query=parent_query))
                         position += 1
-                    result.append(QueryToken(position, token, query=parent_query))
+                    result.append(QueryToken(position, token, token_match.start(2), query=parent_query))
                     position += 1
                     if post_sep:
-                        result.append(QuerySeparator(position, post_sep, query=parent_query))
+                        result.append(QuerySeparator(position, post_sep, token_match.start(3), query=parent_query))
                         position += 1
 
             assert result, 'Separator pattern is not valid - empty result for query: %s' % q_str
@@ -195,7 +228,7 @@ class Query(ImmutableListMixin, list):
         assert token.query is self
 
         new_query = Query(self.original_query, predecessor_query=self)
-        new_token = QueryToken(token.position, new_token_str, query=new_query)
+        new_token = QueryToken(token.position, new_token_str, slice(token.char_start, token.char_end + 1), query=new_query)
         # Query is immutable - call super method
         list.__setitem__(new_query, token.position, new_token)
 
