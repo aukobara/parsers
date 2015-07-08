@@ -112,6 +112,9 @@ def get_word_normal_form(word, strict=True, verbose=False, use_external_word_for
     # Produced good or bad word form
     is_w_norm_known = is_known_word(w_norm, use_external_word_forms_dict=use_external_word_forms_dict)
 
+    if verbose and not is_w_norm_known:
+        print("Morph produced unknown word form: %s => %s" % (word, w_norm))
+
     if use_external_word_forms_dict and is_w_norm_known:
         w_form = w_norm
         w_form_tag = parse_norm.tag
@@ -206,7 +209,7 @@ FOLLOWING ARE FUNCTIONS/TASKS TO WORK WITH EXTERNAL DICT DATA
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 
-class DictArticle(namedtuple('_DictArticle', 'title noun_base same pet')):
+class DictArticle(namedtuple('_DictArticle', 'title noun_base same pet source')):
     def __dict__(self):
         return self._asdict()
 
@@ -239,21 +242,21 @@ class _EffrDictParseContext(object):
         Return main article with all ambiguity clones
         @rtype: list[DictArticle]
         """
-        result = [DictArticle(self.art, self.noun_bases, self.same, self.pet)]
+        result = [DictArticle(self.art, self.noun_bases, self.same, self.pet, 'efremova')]
         if bool(self.noun_bases_ambiguity) + bool(self.same_ambiguity) + bool(self.pet_ambiguity) > 1:
             raise Exception("Too much ambiguity: only one of noun base, same word and pet name may be ambigue - process manually")
         if self.noun_bases_ambiguity:
             # Ambiguity has been detected. Add all
             for amb in self.noun_bases_ambiguity:
-                result.append(DictArticle(self.art, amb, [], []))
+                result.append(DictArticle(self.art, amb, [], [], 'efremova'))
         if self.same_ambiguity:
             # Ambiguity has been detected. Add all
             for amb in self.same_ambiguity:
-                result.append(DictArticle(self.art, [], amb, []))
+                result.append(DictArticle(self.art, [], amb, [], 'efremova'))
         if self.pet_ambiguity:
             # Ambiguity has been detected. Add all
             for amb in self.pet_ambiguity:
-                result.append(DictArticle(self.art, [], [], amb))
+                result.append(DictArticle(self.art, [], [], amb, 'efremova'))
         return result
 
 def effr_parse(filename, out_filename=None):
@@ -445,12 +448,12 @@ def _load_word_forms_dict(filename):
                 sames = take_article_part(forms_variant_str, u'same:')
                 pets = take_article_part(forms_variant_str, u'pet:')
                 if nouns or sames or pets:
-                    word_forms_dict[word].append(DictArticle(word, nouns, sames, pets))
+                    word_forms_dict[word].append(DictArticle(word, nouns, sames, pets, comment))
                     all_words.update(nouns + sames + pets)
         # Put all remaining known referenced words as empty articles to know they are real
         undefined_known_words = all_words.difference(word_forms_dict)
         for word in undefined_known_words:
-            word_forms_dict[word].append(DictArticle(word, [], [], []))
+            word_forms_dict[word].append(DictArticle(word, [], [], [], 'known words'))
     print("Loaded %d word forms (of %d total known words) from file with comment: %s" %
            (len(word_forms_dict) - len(undefined_known_words), len(word_forms_dict), comment))
 
@@ -470,6 +473,7 @@ def adjective_to_noun_word_form(word, default=None, verbose=False, seen=None):
     word = word.lower()
     articles = word_forms_dict.get(word, [])
     word_form = None
+    matched_art = None
     for art in articles:
         if art.noun_base:
             if word_form:
@@ -486,6 +490,10 @@ def adjective_to_noun_word_form(word, default=None, verbose=False, seen=None):
                 print(u"WARN: word %s has ambiguity in external dict. Multiple noun bases match: %s. Used first one" %
                        (word, ', '.join(art.noun_base)))
             word_form = matched_nouns[0]
+            matched_art = art
+
+    if verbose and matched_art:
+        print("adjective_to_noun_word_form%s: %s => %s. Source: %s" % ('[chained]' if seen is not None else '', word, word_form, matched_art.source))
 
     word_form = check_chained_word_forms(word, word_form, adjective_to_noun_word_form, verbose=verbose, seen=seen)
 
@@ -506,6 +514,7 @@ def noun_from_same_or_pet_word_form(word, default=None, verbose=False, seen=None
     word = word.lower()
     articles = word_forms_dict.get(word, [])
     word_form = None
+    matched_art = None
     for art in articles:
         if art.same or art.pet:
 
@@ -525,6 +534,10 @@ def noun_from_same_or_pet_word_form(word, default=None, verbose=False, seen=None
                 u"WARN: word %s has ambiguity in external dict. Multiple pet or same names match: %s. Used first one" %
                 (word, ', '.join(word_variants)))
             word_form = matched_variants[0]
+            matched_art = art
+
+    if verbose and word_form and matched_art:
+        print("noun_from_same_or_pet_word_form%s: %s => %s. Source: %s" % ('[chained]' if seen is not None else '', word, word_form, matched_art.source))
 
     word_form = check_chained_word_forms(word, word_form, noun_from_same_or_pet_word_form, verbose=verbose, seen=seen)
 
@@ -533,6 +546,7 @@ def noun_from_same_or_pet_word_form(word, default=None, verbose=False, seen=None
 
 def check_chained_word_forms(word, word_form, method, verbose=False, seen=None):
     word_forms_dict = _ensure_word_forms_dict()
+    seen = seen or {word}
 
     variants = [] if not word_form else [word_form]
     if not word_form:
@@ -541,9 +555,8 @@ def check_chained_word_forms(word, word_form, method, verbose=False, seen=None):
     for variant in variants:
         if variant in word_forms_dict:
             # Found word that is itself has variants. Try to do it recursively
-            if not seen or variant not in seen:
+            if variant not in seen:
                 # Protection from eternal recursion
-                seen = seen or {word}
                 seen.add(variant)
                 result = method(variant, verbose=verbose, seen=seen)
                 if result and result != variant:
@@ -574,11 +587,40 @@ def ozhegov_parse(filename, out_filename=None):
     original_dict_file = abspath(filename)
     original_dict_file_size = getsize(original_dict_file)
     print("Parsing Ozhegov dict from %s (size: %d)" % (original_dict_file, original_dict_file_size))
+
     with open(filename, 'rb') as f:
         # All articles one-liners. Start from article title and fields separated by '|'
         # Ambiguities may be on duplicated lines for the same title
         art_count = 0
         total_ambiguity_count = 0
+        previous_art = None
+        # True if current art has one of definitions without ==<same> marker, i.e. it has default form as well as 'same' form
+        art_seen_default = False
+
+        def add_article(_art, _same):
+            ambiguity_count = 0
+            previous_arts = ozhegov_dict[_art]
+            already_exists = False
+            for pa in previous_arts:
+                if pa.same:
+                    if _same not in pa.same:
+                        prefix = _same[:3]
+                        for i, prev_same in enumerate(pa.same):
+                            if len(prefix) == 3 and prev_same[:3] == prefix and len(_same) != len(prev_same):
+                                # Treat as different forms of the same word. Take shortest one
+                                pa.same[i] = min(prev_same, _same, key=len)
+                                break
+                        else:
+                            pa.same.append(_same)
+                            ambiguity_count += 1
+                    already_exists = True
+
+            if not already_exists:
+                ambiguity_count += bool(previous_arts)
+                ozhegov_dict[_art].append(DictArticle(_art, [], [_same], [], 'ozhegov'))
+
+            return ambiguity_count
+
         for line in f:
             line = line.strip().decode('cp1251').lower()
             if line:
@@ -595,40 +637,59 @@ def ozhegov_parse(filename, out_filename=None):
                         # Use NOUNs only
                         continue
 
+                if previous_art != art:
+                    # New article started. Check previous for ambiguity
+                    if previous_art is not None and previous_art in ozhegov_dict and art_seen_default:
+                        # Previous art has 'same' form definition as well as default form. It means ambiguity
+                        total_ambiguity_count += add_article(previous_art, previous_art)
+
+                    previous_art = art
+                    art_seen_default = False
+
                 art_count += 1
-                same = None
-                m = re.search(u'^==((?:\s+[а-яА-ЯёЁ]+)+)', fields[5], re.U)
+
+                m = re.search('^[<=]=((?:\s+[%s]+)+)' % RE_RUSSIAN_CHAR_SET, fields[5], re.U)
                 if m:
-                    m = re.findall(u'\s+([а-яА-ЯёЁ]+)', m.group(1), re.U)
+                    m = re.findall('\s+([%s]+)' % RE_RUSSIAN_CHAR_SET, m.group(1), re.U)
                     if len(m) > 1 or 'в старину' in fields[4].lower():
                         # Ignore multi-word definitions as well as ancient word forms.
                         continue
-                    same = get_word_normal_form(m[0], use_external_word_forms_dict=False)
+                    if pymorph.word_is_known(m[0]):
+                        norm = get_word_normal_form(m[0], use_external_word_forms_dict=False)
+                        if {'NOUN'} in pymorph.tag(norm)[0]:
+                            same = norm
+                else:
+                    art_seen_default = True
+                    same = None
+
                 if art and same and art != same:
-                    previous_arts = ozhegov_dict[art]
-                    if any(same in pa.same for pa in previous_arts):
-                        # Duplicate
-                        continue
-                    total_ambiguity_count += bool(previous_arts)
-                    ozhegov_dict[art].append(DictArticle(art, [], [same], []))
+                    total_ambiguity_count += add_article(art, same)
+
         print()
         print("Parsed %d terms of %d articles. Found %d ambiguities" %
               (len(ozhegov_dict), art_count, total_ambiguity_count))
 
     if out_filename:
-        print("Export parsed dict to %s" % abspath(out_filename))
         from datetime import datetime
         now = datetime.now()
+        output_count = 0
         with open(out_filename, 'wb') as f:
             f.truncate()
             f.write(b'# Generated from "%s" (size: %d) at %s\r\n' %
                     (original_dict_file, getsize(original_dict_file), now))
             for art, items in sorted(ozhegov_dict.viewitems(), key=lambda _i: _i[0]):
-                f.write(art.encode('utf-8'))
+                parts = ''
                 for item in items:
-                    if item.same:
-                        f.write((u'~same:%s' % (u'|'.join(sorted(item.same)))).encode('utf-8'))
-                f.write('\r\n'.encode('utf-8'))
+                    if item.same and (len(item.same) > 1 or item.same[0] != art):
+                        # Filter out articles with identical declaration of art
+                        parts += '~same:%s' % ('|'.join(sorted(item.same)))
+                if parts:
+                    f.write(art.encode('utf-8'))
+                    for part in parts:
+                        f.write(part.encode('utf-8'))
+                    f.write('\r\n'.encode('utf-8'))
+                    output_count += 1
+        print("Exported %d articles of parsed dict to %s" % (output_count, abspath(out_filename)))
 
     return ozhegov_dict
 
