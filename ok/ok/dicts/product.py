@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
-from UserDict import DictMixin
+from __future__ import unicode_literals, print_function
+
 import csv
+
+from ok.dicts import to_str
 
 PRODUCT_ATTRIBUTE_RAW_ID = 'raw_id'
 
@@ -45,7 +48,7 @@ class Product(dict):
         return self.get('raw_item', dict())
 
     def _validate_raw_item(self, raw_item):
-        if not isinstance(raw_item, (dict, DictMixin)):
+        if not all(hasattr(raw_item, attr) for attr in ('__contains__', '__getitem__')):
             raise Exception('Raw_item must be dict but %s comes to Product[pfqn=%s]' % (type(raw_item), self.pfqn))
     validators['raw_item'] = _validate_raw_item
 
@@ -72,7 +75,9 @@ class Product(dict):
         dict.__setitem__(self, key, value)
 
     def update(self, other=None, **kwargs):
-        for k, v in (other or kwargs).iteritems():
+        val = dict(other or {})
+        val.update(kwargs)
+        for k, v in val.items():
             self._validate(k, v)
         dict.update(self, other, **kwargs)
 
@@ -94,12 +99,10 @@ class Product(dict):
                     if field in product:
                         value = product[field]
                         if isinstance(value, (list, tuple, set)):
-                            value = u'|'.join(sorted(map(unicode, value)))
-                        d[field] = unicode(value).encode("utf-8")
+                            value = u'|'.join(sorted(map(to_str, value)))
+                        d[field] = to_str(value).encode("utf-8")
 
                 writer.writerow(d)
-
-        pass
 
     @staticmethod
     def from_meta_csv(csv_filename):
@@ -115,10 +118,13 @@ class Product(dict):
             fields = next(reader)
             for row in reader:
                 product_meta_row = dict(zip(fields, row))
-                product = Product(**{field: value.decode("utf-8") for field, value in product_meta_row.iteritems()})
+                product = Product(**{field: value.decode("utf-8") for field, value in product_meta_row.items()})
                 if 'tags' in product and product.get('tags') is not None:
                     product['tags'] = set(product['tags'].split(u'|'))
+                else:
+                    product['tags'] = set()
                 if 'types' in product and product.get('types') is not None:
                     product['types'] = set([ProductType(*pt_str.split(u' + ')) for pt_str in product['types'].split(u'|')])
+                else:
+                    product['types'] = set()
                 yield product
-        pass
