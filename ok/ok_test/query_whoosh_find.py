@@ -2,10 +2,12 @@
 from __future__ import unicode_literals, print_function, absolute_import
 
 import logging
+
 import pytest
 from whoosh.filedb.filestore import RamStorage
 
 import ok.query.find as oq_find
+from ok.query.whoosh_contrib import find_products
 
 app_log = logging.getLogger('ok')
 app_log.setLevel(logging.DEBUG)
@@ -94,9 +96,65 @@ def test_find_products_full(ix_full):
         assert rs.size > 0
         assert all('масло' in types for types in rs.data)
 
+def test_find_products_wpf_full(ix_full):
+    with oq_find.find_products('Масло слив 82.5% 180г', return_fields=['pfqn', 'types']) as rs:
+        assert rs.size > 0
+        assert all('масло' in types for pfqn, types in rs.data)
+
+def test_find_products_no_dup_queries(ix_test_many):
+    fq = find_products.FindProductsQuery('тест тест2 тест1234 35% 180г упаковка')
+    try:
+        q_list = fq.query_variants()
+        assert len(q_list) == len(set(q.normalize() for q in q_list))
+    finally:
+        fq.close()
+
+def test_find_products_filter_known_types(ix_test_many):
+    fq = find_products.FindProductsQuery('тест тест2 тест1234')
+    try:
+        q_list = fq.query_variants()
+        for q in q_list:
+            for term in q.iter_all_terms():
+                if term[0] == 'types':
+                    assert term[1] in ('тест', 'тест2', 'тест + тест2')
+    finally:
+        fq.close()
+
+class writer_mock(object):
+
+    def __init__(self):
+        self.doc_fields = None
+
+    def add_document(self, **kwargs):
+        self.doc_fields = self.doc_fields or []
+        self.doc_fields.append(dict(kwargs))
+
+def test_feeder():
+    from ok.dicts.product import Product
+    from ok.dicts.product_type import ProductType
+
+    p = Product(sqn='тест1 хвост', pfqn='тест1 большой хвост 3,5% 10 шт 0,125 г', types={ProductType('тест1', 'тест2')},
+                brand='бренд', brand_detected=False, fat='3,5%', pack='10 шт', weight='0,125 г')
+    writer = writer_mock()
+
+    find_products.feed_product(p, writer)
+
+    assert writer.doc_fields
+    assert len(writer.doc_fields) == 1
+    fields = writer.doc_fields[0]
+    assert fields['pfqn'] == 'тест1 большой хвост 3,5% 10 шт 0,125 г'
+    assert fields['types'] == ['тест1 + тест2']
+    assert fields['tail'] == ['хвост']
+    assert fields['brand'] == 'бренд'
+    assert fields['fat'] == '3,5%'
+    assert fields['pack'] == '10 шт'
+    assert fields['weight'] == '0,125 г'
+    # Check no other fields passed to writer
+    assert len(fields) == 7
+
 def test_index_does_not_recreated_if_no_changes_full(ix_full):
     """@param whoosh.index.FileIndex ix_full: test index in ram storage"""
-    from ok.query.whoosh_contrib import find_products, indexes
+    from ok.query.whoosh_contrib import indexes
     from whoosh.fields import TEXT
 
     assert ix_full.schema
