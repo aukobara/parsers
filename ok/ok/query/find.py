@@ -12,7 +12,7 @@ class RS(object):
         # or tuple with multiple fields data (if multiple fields in return_fields)
         self._data = None
         self._fetcher = fetcher
-        """@type: whoosh_contrib.base.BaseFindQuery"""
+        """@type: ok.query.whoosh_contrib.base.BaseFindQuery"""
         self.limit = limit
         """@type: int|None"""
         self.on_close = on_close
@@ -23,7 +23,7 @@ class RS(object):
             try:
                 first = next(data)
             except StopIteration:
-                self._data = []
+                self._data = iter([])
                 self._size = 0
             else:
                 self._data = itertools.chain([first], data)
@@ -63,6 +63,17 @@ class RS(object):
         self._ensure_fetched()
         return self._fetcher.facet_counts(facet_field)
 
+    def not_matched_terms(self):
+        """@rtype: list[unicode]"""
+        self._ensure_fetched()
+        matched_terms = {t[1].lower() for t in self._fetcher.matched_terms}
+        original_tokens = self._fetcher.q_tokenized.tokens
+        result = []
+        for token in original_tokens:
+            if token not in matched_terms:
+                result.append(token)
+        return result
+
 
 def find_products(products_query_str, limit=10, return_fields=None, facet_fields=None):
     from ok.query.whoosh_contrib import find_products
@@ -80,5 +91,5 @@ def find_products(products_query_str, limit=10, return_fields=None, facet_fields
 def find_brands(brands_query_str):
     from ok.query.whoosh_contrib import find_brands
 
-    q = find_brands.FindBrandsQuery(brands_query_str)
+    q = find_brands.FindBrandsQuery(brands_query_str, return_fields=['brand'])
     return RS(q, limit=None)
