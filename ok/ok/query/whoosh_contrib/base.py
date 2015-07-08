@@ -10,12 +10,12 @@ class BaseFindQuery(object):
     index_name = None
     searcher_factory = None
 
-    def __init__(self, query_variants, searcher=None, return_fields=None, facet_fields=None):
+    def __init__(self, q, searcher=None, return_fields=None, facet_fields=None):
         """
-        @param list[qcore.Query] query_variants: query string
         @param whoosh.searching.Searcher searcher: whoosh_contrib searcher
         """
-        self.query_variants = query_variants
+        self.q_original = q
+        self._q_tokenized = None
 
         self._searcher = searcher
         """@type: whoosh.searching.Searcher"""
@@ -33,13 +33,25 @@ class BaseFindQuery(object):
         self._results = None
         """@type: whoosh.searching.Results"""
 
+    @property
+    def q_tokenized(self):
+        q_tokenized = self._q_tokenized
+        if q_tokenized is None:
+            from ok.query import parse_query
+            q_tokenized = self._q_tokenized = parse_query(self.q_original)
+        return q_tokenized
+
+    def query_variants(self):
+        raise NotImplementedError
+
     def __call__(self, limit=10):
         searcher = self.searcher
         match_found = False
         return_one_field = return_all = None
         return_fields = self.return_fields
 
-        for q_attempt in self.query_variants:
+        q_attempt = None
+        for q_attempt in self.query_variants():
             r = searcher.search(q_attempt, limit=limit, terms=self.need_matched_terms, groupedby=self.facets)
             for match in r:
 
@@ -66,16 +78,30 @@ class BaseFindQuery(object):
                 self._match = None
                 break
 
+        # For last generator iteration keep last attempted query.
+        # It can be useful for analysis of empty result
+        self.matched_query = q_attempt
+
     # Current match object accessor helpers
     @property
     def current_match(self):
         return self._match
+
+    @property
+    def matched_terms(self):
+        """
+        @rtype: list[tuple[unicode]]
+        @return: list of tuples (field_name, term_value)
+        """
+        assert self.need_matched_terms, "Query class %r must set 'need_matched_terms' to access matched terms data" % self.__class__
+        return [(t[0], t[1].decode('utf-8')) for t in self.current_match.matched_terms()]
 
     def facet_counts(self, facet_field):
         return self._results.groups(facet_field)
 
     @property
     def searcher(self):
+        """@rtype: whoosh.searching.Searcher"""
         searcher = self._searcher
         if searcher is None:
             searcher_factory = self.searcher_factory
@@ -89,3 +115,8 @@ class BaseFindQuery(object):
         searcher = self._searcher
         if searcher is not None and not searcher.is_closed:
             searcher.close()
+
+    def is_term_in_index(self, field_name, term_value):
+        reader = self.searcher.reader()
+        return (field_name, term_value) in reader
+
