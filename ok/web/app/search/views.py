@@ -39,17 +39,20 @@ def enter():
         entries = []
         facets = {}
     else:
-        facet_fields = ['types']
-        with find_products(q, limit=None, return_fields=['pfqn', 'types'], facet_fields=facet_fields) as rs:
+        facet_fields = ['types', 'tail']
+        with find_products(q, limit=None, return_fields=['pfqn', 'types', 'tail'], facet_fields=facet_fields) as rs:
             entries = [{'header': 'query', 'value': to_str(repr(rs.query))},
                        {'header': 'size', 'value': rs.size}]
-            for pfqn, types in rs.data:
-                entry = {'pfqn': pfqn, 'score': rs.score, 'types': to_str(types), 'matched': to_str(rs._fetcher.current_match.matched_terms())}
+            for pfqn, types, tail in rs.data:
+                entry = {'pfqn': pfqn, 'score': rs.score,
+                         'types': to_str(types), 'tail': to_str(tail),
+                         'matched': to_str(rs._fetcher.current_match.matched_terms())}
                 entries.append(entry)
             facets = defaultdict(OrderedDict)
-            for facet in facet_fields:
-                counts = rs.facet_counts(facet)
-                facets[facet].update(counts)
+            if rs.size > 0:
+                for facet in facet_fields:
+                    counts = rs.facet_counts(facet)
+                    facets[facet].update(counts)
 
     return render_template('search/landing.html', q=q, entries=entries, product_list=[], facets=facets)
 
