@@ -172,6 +172,7 @@ class Brand(object):
         self._no_brand = no_brand
 
     _no_brand_names_cache = None
+
     @staticmethod
     def no_brand_names():
         if Brand._no_brand_names_cache is None:
@@ -192,7 +193,11 @@ class Brand(object):
         return isinstance(other, Brand) and self.name == other.name
 
     def __str__(self):
-        return ("%s [type: %s][synonyms: %s][m:%s]" % (self.name, self.type, "|".join(self.synonyms), "|".join(self.manufacturers))).encode("utf-8")
+        return self.__unicode__().encode("utf-8")
+
+    def __unicode__(self):
+        return "%s [type: %s][synonyms: %s][m:%s][link:%s]" % (
+            self.name, self.type, "|".join(self.synonyms), "|".join(self.manufacturers), "|".join(self.linked_brands))
 
     _false_positive_brand_matches ={
         u'Абрико'.lower(): u'абрикос',
@@ -219,6 +224,7 @@ class Brand(object):
         u'коровка'.lower(): u'коробка',
         u'никола'.lower(): u'рукола',
     }
+
     @staticmethod
     def check_false_positive_brand_match(brand_variant, sqn_token):
         matches = Brand._false_positive_brand_matches.get(brand_variant.lower())
@@ -353,6 +359,7 @@ class Brand(object):
     __re_manufacturer_pattern_eng = re.compile(RE_MANUFACTURER_PATTERN_ENG, re.IGNORECASE | re.UNICODE)
 
     __manufacturer_patterns_cache = dict()
+
     @classmethod
     def collect_manufacturer_patterns(cls, manufacturer):
         if manufacturer in cls.__manufacturer_patterns_cache:
@@ -455,7 +462,6 @@ class Brand(object):
                                  'manufacturers': u'|'.join(sorted(b.manufacturers)).encode("utf-8"),
                                  'linked': u'|'.join(sorted(b.linked_brands)).encode("utf-8")
                                  })
-        pass
 
     @staticmethod
     def from_csv(csv_filename):
