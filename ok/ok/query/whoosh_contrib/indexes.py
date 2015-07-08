@@ -21,10 +21,12 @@ indexes = {}
 
 """"""""""""""""""""""""""""""""""""""""""""""""
 
+
 def new_searcher(index_name, **kwargs):
     """@rtype: whoosh.searching.Searcher"""
     ix = init_index(one_index=index_name)
     return ix.searcher(**kwargs)
+
 
 def inject_searcher_factory():
     # Inject searcher_factory to Query clazz
@@ -39,6 +41,7 @@ def inject_searcher_factory():
                 log.debug(r"Query class %r has no searcher_factory attribute and, thus, will have to use client's searchers only" % queryClazz)
 
 inject_searcher_factory()
+
 
 def init_index(storage=None, index_dir=None, readonly=True, one_index=None):
     """
