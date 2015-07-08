@@ -509,17 +509,17 @@ class TypeTerm(unicode):
         Parse long string of multiple terms and return list of TypeTerms with respectful types.
         Main processing here is compound terms with proposition detection. Proposition is added to next word(s) as well.
         Also 'and' proposition is processed. All other work is delegated to TypeTerm.make()
-        @param unicode terms_str: string of terms
+        @param unicode|ok.query.tokens.Query terms_str: string of terms
         @rtype: list[TypeTerm]
         """
-        import ok.query
-        words = ok.query.parse_query(terms_str)
+        import ok.query as query
+        words = query.parse_query(terms_str).tokens
         terms = []
         """@type: list[TypeTerm]"""
         buf = u''
         buf_count = 0
         for w in words:
-            if w and TypeTerm.is_a_term(w):
+            if TypeTerm.is_a_term(w):
                 term = None
                 if TypeTerm.is_proposition(w) and not buf:
                     buf = w  # join proposition to the next words
@@ -579,7 +579,7 @@ class CompoundTypeTerm(TypeTerm):
         return cls.is_a_term(term_str) and cls.is_compound_term(term_str)
 
     def _tokenize(self, max_split=0):
-        tokens = re.split(TypeTerm.not_a_term_character_pattern, self, maxsplit=max_split)
+        tokens = re.split(self.not_a_term_character_pattern, self, maxsplit=max_split)
         return filter(len, tokens)
 
     def _filter_tokens(self, tokens):
@@ -590,10 +590,10 @@ class CompoundTypeTerm(TypeTerm):
         return tokens and (len(tokens) > 1 or tokens[0] != self)
 
     def _make_token_terms(self, tokens):
-        token_terms = [TypeTerm.make(token) for token in tokens]
-        self._spaced_form = u' '.join(token_terms)
-        if self != self._spaced_form and self._spaced_form not in token_terms:
-            token_terms.append(self.make(self._spaced_form))
+        token_terms = [self.make(token) for token in tokens]
+        spaced_form = self._spaced_form = u' '.join(token_terms)
+        if self != spaced_form and spaced_form not in token_terms:
+            token_terms.append(self.make(spaced_form))
         return token_terms
 
     def __init__(self, from_str=''):
@@ -729,8 +729,7 @@ class WithPropositionTypeTerm(CompoundTypeTerm):
         tokens = super(WithPropositionTypeTerm, self)._filter_tokens(tokens)
         # Take first proposition only
         if tokens and self.is_proposition(tokens[0]):
-            self.proposition = tokens[0]
-            tokens.pop(0)
+            self.proposition = tokens.pop(0)
         return tokens
 
     def _make_token_terms(self, tokens):
@@ -912,7 +911,6 @@ class ContextDependentTypeTerm(TypeTerm):
         'потр': [ctx_def(['горбуша', 'форель', 'минтай', 'рыба'], 'потрошеная')],
         'крупн': [ctx_def(['чай'], 'крупнолистовой')],
         'хв': [ctx_def(['креветки'], 'хвост')],
-        'плав': [ctx_def(['сыр'], 'плавленный')],
         'вар': [ctx_def(['докторская', 'колбаса', 'молочная', 'сгущёнка'], 'вареная')],
         'серв': [ctx_def(['колбаса'], 'сервелат')],
         'жар': [ctx_def(['арахис', 'картофель', 'лук', 'пюре'], 'жаренный')],
@@ -934,6 +932,7 @@ class ContextDependentTypeTerm(TypeTerm):
         'корн': [ctx_def(['салат'], 'корн')],
         'том': [ctx_def(['сок'], 'томатный')],
         'фарш': [ctx_def([DEFAULT_CONTEXT], 'фарш'), ctx_def(['оливки'], 'фаршированные')],
+        'пл': [ctx_def([DEFAULT_CONTEXT], 'плавленный'), ctx_def(['мороженое'], 'пломбир')],
 
         # Default only - abbreviations and synonyms
         'стер': [ctx_def([DEFAULT_CONTEXT], 'стерилизованный')],
@@ -960,7 +959,6 @@ class ContextDependentTypeTerm(TypeTerm):
         'ультрапаст': [ctx_def([DEFAULT_CONTEXT], 'ультрапастеризованный')],
         'вит': [ctx_def([DEFAULT_CONTEXT], 'витамин')],
         'питьев': [ctx_def([DEFAULT_CONTEXT], 'питьевой')],
-        'плавл': [ctx_def([DEFAULT_CONTEXT], 'плавленный')],
         'сгущ': [ctx_def([DEFAULT_CONTEXT], 'сгущёнка')],
         'зернен': [ctx_def([DEFAULT_CONTEXT], 'зерненный')],
         'зам': [ctx_def([DEFAULT_CONTEXT], 'замороженный')],
