@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals, print_function
+from collections import defaultdict
 
 import re
 
 from ok.utils import ImmutableListMixin
 
 RE_QUERY_SEPARATOR = '\s|"|,|\.|«|»|“|”|\(|\)|\?|!|\+|:'
-RE_QUERY_PATTERN = re.compile('([%s]+)?([^%s]+)([%s]+)?|([%s]+)' % (RE_QUERY_SEPARATOR, RE_QUERY_SEPARATOR, RE_QUERY_SEPARATOR, RE_QUERY_SEPARATOR), re.U)
-RE_QUERY_PATTERN_IC = re.compile(RE_QUERY_PATTERN.pattern, re.U | re.IGNORECASE)
 
 
 def cleanup_token_str(s):
@@ -21,6 +20,11 @@ def cleanup_token_str(s):
 
 
 class QueryItemBase(unicode):
+
+    regex = None
+    group_name = None
+    pre_condition = None
+    post_condition = None
 
     def __new__(cls, position, item_str, *_, **__):
         return unicode.__new__(cls, item_str)
@@ -41,7 +45,7 @@ class QueryItemBase(unicode):
             self.char_end = char_pos + len(item_str) - 1
 
     def __repr__(self):
-        return '%d:%s:%s' % (self.position, super(QueryItemBase, self).__repr__(), type(self))
+        return '%d:%s:%s' % (self.position, super(QueryItemBase, self).__repr__(), type(self).__name__)
 
     def pre_item(self):
         assert self.query
@@ -59,8 +63,11 @@ class QueryItemBase(unicode):
         assert self.query
         return self.query.original_query[self.char_start:self.char_end + 1]
 
-class QueryToken(QueryItemBase):
 
+class QueryToken(QueryItemBase):
+    """
+    Base class for non-separator meaningful tokens
+    """
     @property
     def pre_separator(self):
         item = self.pre_item()
@@ -72,11 +79,27 @@ class QueryToken(QueryItemBase):
         return item if isinstance(item, QuerySeparator) else None
 
 
-class QuerySeparator(QueryItemBase):
+class QueryWord(QueryToken):
+    """
+    Special class for words remaining after all other token classes.
+    In general, it is all regular tokens without special parsing rules.
+    """
     pass
 
 
+class QuerySeparator(QueryItemBase):
+
+    regex = '[%s]+' % RE_QUERY_SEPARATOR
+    group_name = 'separator'
+
+
 class Query(ImmutableListMixin, list):
+    """
+    Abstract Query class. In derived classes token_reg has to be assigned
+    to list of Token classes inherited from QueryItemBase.
+    """
+    token_reg = None
+    """@type: list"""
 
     def __init__(self, q_str, predecessor_query=None, lowercase=True):
         self.original_query = q_str
@@ -84,8 +107,41 @@ class Query(ImmutableListMixin, list):
         """@type: Query"""
         super(Query, self).__init__(self.split(q_str, parent_query=self, lowercase=lowercase))
 
-    @staticmethod
-    def split(q_str, parent_query=None, lowercase=True):
+    _regex = None
+    _regex_ic = None
+
+    @classmethod
+    def regex(cls, ignore_case=False):
+        regex = cls._regex_ic if ignore_case else cls._regex
+        if regex is None:
+            regex = ''
+            flags = re.UNICODE | re.IGNORECASE if ignore_case else re.UNICODE
+            for i, token_cls in enumerate(cls.token_reg):
+                assert issubclass(token_cls, QueryItemBase) and token_cls.group_name and token_cls.regex
+                if i > 0:
+                    regex += '|'
+                regex += '(?P<%s>%s)' % (token_cls.group_name, token_cls.regex)
+                if token_cls.post_condition:
+                    regex += '(?=%s|$)' % token_cls.post_condition
+
+            regex = re.compile(regex, flags)
+            if ignore_case:
+                cls._regex_ic = regex
+            else:
+                cls._regex = regex
+        return regex
+
+    _group_to_type = None
+
+    @classmethod
+    def _token_group_name_to_type(cls):
+        group_to_type = cls._group_to_type
+        if group_to_type is None:
+            group_to_type = cls._group_to_type = {token_type.group_name: token_type for token_type in cls.token_reg}
+        return group_to_type
+
+    @classmethod
+    def split(cls, q_str, parent_query=None, lowercase=True):
         """
         Split q_str to sequence of query items, where each one is either QueryToken or TokenSeparator.
         Each item keeps its position in original string and reference to query object (if specified).
@@ -102,31 +158,50 @@ class Query(ImmutableListMixin, list):
         if q_str:
             if lowercase:
                 q_str = q_str.lower()
-                re_pattern = RE_QUERY_PATTERN_IC
+                re_pattern = cls.regex(ignore_case=True)
             else:
-                re_pattern = RE_QUERY_PATTERN
+                re_pattern = cls.regex(ignore_case=False)
 
-            token_it = re.finditer(re_pattern, q_str)
+            group_name_to_type_dict = cls._token_group_name_to_type()
 
             position = 0
-            for token_match in token_it:
-                sep_only = token_match.group(4)
-                if sep_only:
-                    # Separator only variant
-                    result.append(QuerySeparator(position, sep_only, token_match.start(4), query=parent_query))
+            prev_char_at = 0
+
+            start_iter_at = 0
+            while start_iter_at < len(q_str):
+                token_it = re.finditer(re_pattern, q_str[start_iter_at:])
+                for token_match in token_it:
+                    matched_groups = token_match.groupdict()
+                    matched_items = filter(lambda _t: _t[1] is not None, matched_groups.items())
+                    assert len(matched_items) == 1, 'Query patterns overlapping check is failed'
+                    matched_group_name, item = matched_items[0]
+                    token_cls = group_name_to_type_dict[matched_group_name]
+
+                    match_char_at = token_match.start() + start_iter_at
+
+                    if token_cls.pre_condition and match_char_at > 0:
+                        pre_match = re.match('^.*%s$' % token_cls.pre_condition, q_str[:match_char_at], re_pattern.flags)
+                        if pre_match is None:
+                            # Pre-condition is not matched. Treat this as false-positive match and restart finditer from next char.
+                            # Current char will join to previous word
+                            start_iter_at = match_char_at + 1
+                            break
+
+                    if prev_char_at < match_char_at:
+                        prev_word = q_str[prev_char_at:match_char_at]
+                        result.append(QueryWord(position, prev_word, prev_char_at, query=parent_query))
+                        position += 1
+
+                    token = token_cls(position, item, match_char_at, query=parent_query)
+                    result.append(token)
                     position += 1
+                    prev_char_at = token_match.end() + start_iter_at
                 else:
-                    pre_sep = token_match.group(1)
-                    token = token_match.group(2)
-                    post_sep = token_match.group(3)
-                    if pre_sep:
-                        result.append(QuerySeparator(position, pre_sep, token_match.start(1), query=parent_query))
-                        position += 1
-                    result.append(QueryToken(position, token, token_match.start(2), query=parent_query))
-                    position += 1
-                    if post_sep:
-                        result.append(QuerySeparator(position, post_sep, token_match.start(3), query=parent_query))
-                        position += 1
+                    # Match iterator finished normally. No more cycles.
+                    break
+
+            if prev_char_at < len(q_str):
+                    result.append(QueryWord(position, q_str[prev_char_at:], prev_char_at, query=parent_query))
 
             assert result, 'Separator pattern is not valid - empty result for query: %s' % q_str
             assert len(q_str) == sum(map(len, result))  # Check all characters are covered
@@ -144,15 +219,32 @@ class Query(ImmutableListMixin, list):
     def __unicode__(self):
         return self.to_str()
 
-    _tokens_cache = None
+    _items_type_cache = None
+
+    def items_of_type(self, type_cls):
+        """@rtype: list[QueryItemBase]"""
+        assert issubclass(type_cls, QueryItemBase) and (type_cls in self.token_reg or type_cls is QueryWord or type_cls is QueryToken), \
+            "Query Item class %r is not registered in %r" % (type_cls, self.__class__)
+        items_type_cache = self._items_type_cache
+        if items_type_cache is None:
+            items_type_cache = defaultdict(list)
+            for item in self:
+                item_type = item.__class__
+                items_type_cache[item_type].append(item)
+                if issubclass(item_type, QueryToken):
+                    items_type_cache[QueryToken].append(item)
+            self._items_type_cache = items_type_cache
+        return items_type_cache.get(type_cls, [])[:]
 
     @property
     def tokens(self):
         """@rtype: list[QueryToken]"""
-        if self._tokens_cache is not None:
-            return self._tokens_cache
-        rv = self._tokens_cache = [token for token in self if isinstance(token, QueryToken)]
-        return rv[:]
+        return self.items_of_type(QueryToken)
+
+    @property
+    def words(self):
+        """@rtype: list[QueryWord]"""
+        return self.items_of_type(QueryWord)
 
     def _hashed_items(self):
         return self.tokens
@@ -221,15 +313,22 @@ class Query(ImmutableListMixin, list):
     def replace_token(self, token, new_token_str):
         """
         Produces new Query object with one token replaced by another.
-        @param QueryToken token: what to replace
+        @param QueryItemBase token: what to replace
         @param unicode new_token_str: string of new token. Must not contain separator characters.
         @return: new query with predecessor_query as this query
         """
-        assert token.query is self
+        assert isinstance(token, QueryItemBase) and token.query is self
 
-        new_query = Query(self.original_query, predecessor_query=self)
-        new_token = QueryToken(token.position, new_token_str, slice(token.char_start, token.char_end + 1), query=new_query)
+        query_type = self.__class__
+        token_type = token.__class__
+        new_query = query_type(self.original_query, predecessor_query=self)
+        new_token = token_type(token.position, new_token_str, slice(token.char_start, token.char_end + 1), query=new_query)
         # Query is immutable - call super method
         list.__setitem__(new_query, token.position, new_token)
 
         return new_query
+
+
+class DefaultQuery(Query):
+
+    token_reg = [QuerySeparator]
