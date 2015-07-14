@@ -28,7 +28,7 @@ ITEM_PIPELINES = {
 
 LOG_FORMATTER = "ok.FixEncodingLogFormatter"
 
-DICT_BASELINE_DEFAULT_DIR = 'resources/data/ok/baseline150609'
+DICT_BASELINE_DEFAULT_DIR = 'resources/data/ok/baseline150713'
 
 def ensure_baseline_dir():
     from os.path import abspath, isdir, join, dirname
