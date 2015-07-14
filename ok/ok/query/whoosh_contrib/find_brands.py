@@ -69,8 +69,7 @@ def products_data_source():
     from ok.dicts.product import Product
 
     config = main_options([])
-    for product in Product.from_meta_csv(config.products_meta_in_csvname):
-        yield product
+    return Product.from_meta_csv(config.products_meta_in_csvname)
 
 
 def feeder(writer):
