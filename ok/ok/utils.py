@@ -467,3 +467,41 @@ def to_str(something, encoding='utf-8'):
     except UnicodeEncodeError:
         pass
     return s
+
+
+def to_list(obj, list_cls=list):
+    """
+    Convert object to list. It is already list returns self
+    @return: list
+    """
+    if obj is None:
+        return list_cls()
+    if isinstance(obj, list_cls):
+        return obj
+    if isinstance(obj, (unicode, str)):
+        return list_cls((obj,))
+    if isinstance(obj, (list, tuple, set, frozenset)) or hasattr(obj, '__iter__'):
+        return list_cls(obj)
+    return list_cls((obj,))
+
+
+def any_item(seq, default=None, sort=True):
+    """
+    If seq is not empty sequence returns any item (preferable with constant order)
+    Otherwise, returns self or default value if seq is None
+    @param bool sort: If True - sort sequence to return smallest item to have persistent result.
+            For list and tuple first item returns always - sort param is ignored in this case because order of items is predefined.
+    """
+    if seq is None:
+        return default
+    if isinstance(seq, (list, tuple)):
+        return seq[0] if seq else default
+    if isinstance(seq, (str, unicode)):
+        return seq
+    if hasattr(seq, '__iter__'):
+        if sort:
+            items = sorted(seq)
+            return items[0] if items else default
+        else:
+            return next(iter(seq), default)
+    return seq
