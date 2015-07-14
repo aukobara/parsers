@@ -6,6 +6,7 @@ from ok.dicts.russian import RE_WORD_OR_NUMBER_CHAR_SET
 from ok.dicts.term import TermContext, CompoundTypeTerm, ContextRequiredTypeTermException, TypeTerm
 from ok.query import tokens
 from ok.query.tokens import RE_QUERY_SEPARATOR
+from ok.utils import any_item, to_list
 
 """
 Module for query helpers using in product query processing, data extraction, etc.
@@ -20,6 +21,27 @@ class ProductQuery(object):
 
     ptd = ProductTypeDict()
 
+    class ProductLookupAttribute(object):
+
+        def __init__(self, field, list_type=None):
+            self.list_type = list_type
+            self.field = field
+
+        def __get__(self, instance, _):
+            assert isinstance(instance, ProductQuery)
+            if self.list_type is not None:
+                value = to_list(instance._fields[self.field])
+                for i, item in enumerate(value):
+                    if isinstance(item, tuple):
+                        # Check if items are tuple with format (LookupValue, seq[query tokens])
+                        value[i] = item[0]
+                return self.list_type(value)
+            else:
+                value = any_item(instance._fields[self.field])
+                if isinstance(value, tuple):
+                    value = value[0]
+                return value
+
     def __init__(self, fields=None):
         self._fields = dict(fields or {})
         self._sqn_query = None
@@ -29,7 +51,24 @@ class ProductQuery(object):
     @classmethod
     def from_product(cls, product):
         assert isinstance(product, dict)
-        return cls(product)
+
+        def tokenize_attr(attr):
+            tok_values = to_list(attr)
+            for i, value in enumerate(tok_values):
+                tok_values[i] = (value.lower(), value)
+            return tok_values
+
+        fields = {'pfqn': product['pfqn'],
+                  'sqn': product['sqn'],
+                  'weight': tokenize_attr(product.get('weight')),
+                  'fat': tokenize_attr(product.get('fat')),
+                  'pack': tokenize_attr(product.get('pack')),
+                  'types': product['types'],
+                  'tags': product['tags'],
+                  'brand': product.get('brand'),
+                  'brand_detected': product.get('brand_detected')
+                  }
+        return cls(fields)
 
     @classmethod
     def from_sqn(cls, sqn, context=None, type_filter=None):
@@ -51,10 +90,9 @@ class ProductQuery(object):
 
         remain = pfqn_tokens.remaining_tokens()
 
-        brand = None
+        brands = None
         if remain:
             brands = cls.parse_brand(remain)
-            brand = brands[0] if brands else None
 
         p_types = cls.ptd.collect_sqn_type_tuples(remain, context=context) if remain else set()
         if type_filter is not None and p_types:
@@ -66,8 +104,8 @@ class ProductQuery(object):
                   'fat': fat,
                   'pack': pack,
                   'types': set(p_types),
-                  'brand': brand,
-                  'brand_detected': bool(brand)
+                  'brand': brands,
+                  'brand_detected': bool(brands)
                   }
         return cls(fields)
 
@@ -79,7 +117,7 @@ class ProductQuery(object):
         with find_brands(remain) as brand_rs:
             if brand_rs.size > 0:
                 for brand in brand_rs.data:
-                    brands.append(brand)
+                    brands.append((brand, tuple(brand_rs.matched_tokens())))
 
         return brands
 
@@ -119,33 +157,17 @@ class ProductQuery(object):
     def sqn(self):
         return self._fields['sqn']
 
-    @property
-    def brand(self):
-        return self._fields['brand']
+    brand = ProductLookupAttribute('brand')
+    brand_all = ProductLookupAttribute('brand', list_type=frozenset)
 
-    def brand_all(self):
-        return frozenset([self.brand])
+    weight = ProductLookupAttribute('weight')
+    weight_all = ProductLookupAttribute('weight', list_type=frozenset)
 
-    @property
-    def weight(self):
-        return self._fields['weight']
+    fat = ProductLookupAttribute('fat')
+    fat_all = ProductLookupAttribute('fat', list_type=frozenset)
 
-    def weight_all(self):
-        return frozenset([self.weight])
-
-    @property
-    def fat(self):
-        return self._fields['fat']
-
-    def fat_all(self):
-        return frozenset([self.fat])
-
-    @property
-    def pack(self):
-        return self._fields['pack']
-
-    def pack_all(self):
-        return frozenset([self.pack])
+    pack = ProductLookupAttribute('pack')
+    pack_all = ProductLookupAttribute('pack', list_type=frozenset)
 
     @property
     def types(self):
@@ -201,14 +223,22 @@ class ProductQuery(object):
         self._tail = tail
         return tail[:]
 
+    def __contains__(self, key):
+        return bool(self._fields.get(key))
+
     def __getitem__(self, key):
-        return getattr(self, key)
+        value = getattr(self, key)
+        return value() if callable(value) else value
 
     def get(self, key, default=None):
         try:
             return self.__getitem__(key)
         except KeyError:
             return default
+
+    def __repr__(self):
+        return '%s:{\r\n%s}' % (self.__class__, ',\r\n'.join('%6s: %s' % (field, to_list(value))
+                                                             for field, value in sorted(self._fields.items())))
 
 RE_NUMBER_FLOAT = '\d+(?:[.,]\d+)?'
 
@@ -265,15 +295,15 @@ class ProductQueryParser(tokens.Query):
 
     def weight(self):
         weight_tokens = self.items_of_type(ProductQueryParser.WeightFullQueryToken) or self.items_of_type(ProductQueryParser.WeightShortQueryToken)
-        return ' + '.join(weight_tokens) if weight_tokens else None
+        return weight_tokens
 
     def fat(self):
         fat_tokens = self.items_of_type(ProductQueryParser.FatQueryToken)
-        return ' + '.join(fat_tokens) if fat_tokens else None
+        return fat_tokens
 
     def pack(self):
         pack_tokens = self.items_of_type(ProductQueryParser.PackQueryToken)
-        return ' + '.join(pack_tokens) if pack_tokens else None
+        return pack_tokens
 
     def remaining_tokens(self):
         """@rtype: list[ok.query.tokens.QueryToken]"""

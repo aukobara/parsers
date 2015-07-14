@@ -4,10 +4,11 @@ from collections import defaultdict
 
 import logging
 import pytest
-from ok.dicts.term import TypeTerm
 
+from ok.dicts.term import TypeTerm
 from ok.query.product import ProductQuery, ProductQueryParser
 from ok.dicts.product_type import ProductType
+from ok.query import find as find_query
 
 app_log = logging.getLogger('ok')
 app_log.setLevel(logging.DEBUG)
@@ -23,47 +24,47 @@ def term_dict():
 def test_pfqn_parse_fat():
     pq = ProductQueryParser('продукт(10 % жирн) с соком')
 
-    assert pq.fat() == '10 % жирн'
+    assert pq.fat() == ['10 % жирн']
     assert pq.remaining_tokens() == 'продукт с соком'.split()
 
 
 def test_pfqn_parse_fat_complex():
     pq = ProductQueryParser('Продукт творож 5.6%130г клубника+бисквит')
 
-    assert pq.fat() == '5.6%'
-    assert pq.weight() == '130г'
+    assert pq.fat() == ['5.6%']
+    assert pq.weight() == ['130г']
     assert pq.remaining_tokens() == 'продукт творож клубника бисквит'.split()
 
 
 def test_pfqn_parse_plain_percent():
     pq = ProductQueryParser('продукт % с соком')
 
-    assert pq.fat() is None
+    assert pq.fat() == []
     assert pq.remaining_tokens() == 'продукт % с соком'.split()
 
 
 def test_pfqn_parse_pack():
     pq = ProductQueryParser('чай 25пак с жасмином')
 
-    assert pq.fat() is None
-    assert pq.pack() == '25пак'
+    assert pq.fat() == []
+    assert pq.pack() == ['25пак']
     assert pq.remaining_tokens() == 'чай с жасмином'.split()
 
 
 def test_pfqn_parse_pack_bounded_separator():
     pq = ProductQueryParser('чай пакетированный')
 
-    assert pq.fat() is None
-    assert pq.pack() is None
+    assert pq.fat() == []
+    assert pq.pack() == []
     assert pq.remaining_tokens() == 'чай пакетированный'.split()
 
 
 def test_pfqn_parse_pack_bounded_end_of_string():
     pq = ProductQueryParser('Кофе растворимый 150г пакет')
 
-    assert pq.fat() is None
-    assert pq.weight() == '150г'
-    assert pq.pack() == 'пакет'
+    assert pq.fat() == []
+    assert pq.weight() == ['150г']
+    assert pq.pack() == ['пакет']
     assert pq.remaining_tokens() == 'кофе растворимый'.split()
 
 
@@ -71,60 +72,60 @@ def test_pfqn_parse_pack_prebounded_separator():
     # Check pack 'уп.'
     pq = ProductQueryParser('кетчуп.')
 
-    assert pq.fat() is None
-    assert pq.pack() is None
+    assert pq.fat() == []
+    assert pq.pack() == []
     assert pq.remaining_tokens() == 'кетчуп'.split()
 
 
 def test_pfqn_parse_weight():
     pq = ProductQueryParser('сахар 1 кг. коричневый')
 
-    assert pq.fat() is None
-    assert pq.pack() is None
-    assert pq.weight() == '1 кг.'
+    assert pq.fat() == []
+    assert pq.pack() == []
+    assert pq.weight() == ['1 кг.']
     assert pq.remaining_tokens() == 'сахар коричневый'.split()
 
 
 def test_pfqn_parse_weight_short():
     pq = ProductQueryParser('сахар кг., коричневый')
 
-    assert pq.fat() is None
-    assert pq.pack() is None
-    assert pq.weight() == 'кг.'
+    assert pq.fat() == []
+    assert pq.pack() == []
+    assert pq.weight() == ['кг.']
     assert pq.remaining_tokens() == 'сахар коричневый'.split()
 
 
 def test_pfqn_parse_weight_bounded_from_non_digit():
     pq = ProductQueryParser('сахар1 кг. корич.')
 
-    assert pq.fat() is None
-    assert pq.pack() is None
-    assert pq.weight() == '1 кг.'
+    assert pq.fat() == []
+    assert pq.pack() == []
+    assert pq.weight() == ['1 кг.']
     assert pq.remaining_tokens() == 'сахар корич'.split()
 
 
 def test_pfqn_parse_weight_short_prebounded_separator():
     pq = ProductQueryParser('масл.')
 
-    assert pq.fat() is None
-    assert pq.pack() is None
-    assert pq.weight() is None
+    assert pq.fat() == []
+    assert pq.pack() == []
+    assert pq.weight() == []
     assert pq.remaining_tokens() == 'масл'.split()
 
     pq = ProductQueryParser('мас л.')
-    assert pq.weight() == 'л.'
+    assert pq.weight() == ['л.']
 
 
 def test_pfqn_parse_not_weight_short_postbounded_separator():
     pq = ProductQueryParser('рыба г/к')
 
-    assert pq.fat() is None
-    assert pq.pack() is None
-    assert pq.weight() is None
+    assert pq.fat() == []
+    assert pq.pack() == []
+    assert pq.weight() == []
     assert pq.remaining_tokens() == 'рыба г/к'.split()
 
     pq = ProductQueryParser('рыба /125 г/')
-    assert pq.weight() == '125 г'
+    assert pq.weight() == ['125 г']
 
 # ProductQuery tests
 
@@ -140,19 +141,23 @@ def test_product_pfqn_query_with_simple_brand():
 
     def parse_brand(_, remain):
         assert remain, 'йогурт эрмигурт с вишней'.split()
-        return 'Эрмигурт', [remain[0], remain[2], remain[3]]
+        return ['Эрмигурт']
     MockProductQuery.parse_brand = classmethod(parse_brand)
 
     def type_filter(p_types):
+        accept_types = [(TypeTerm.make('йогурт').term_id,)]
+        accept_term_ids = [TypeTerm.make('вишня').term_id]
+        reject_term_ids = [TypeTerm.make('эрмигурт').term_id]
         for p_type in p_types:
-            if TypeTerm.make('вишня').term_id in p_type or p_type == (TypeTerm.make('йогурт').term_id,):
+            if (any(term.term_id in accept_term_ids for term in p_type) or p_type in accept_types) and \
+                    not any(term.term_id in reject_term_ids for term in p_type):
                 yield p_type
 
     pq = MockProductQuery.from_pfqn(pfqn, type_filter=type_filter)
     assert pq.fat == '5%'
     assert pq.weight == '125 г'
     assert pq.brand == 'Эрмигурт'
-    assert pq.sqn == 'йогурт с вишней'.split()
+    assert pq.sqn == 'йогурт эрмигурт с вишней'.split()
     assert pq.types == {ProductType('йогурт',), ProductType('йогурт', 'вишня')}
 
     # Tear down
@@ -291,12 +296,24 @@ def test_product_pfqn_query_english_brand_full():
     assert pq.sqn == 'горчица французская стекло'.split()
     assert ProductType('горчица', 'французская') in pq.types
 
-@pytest.mark.xfail(reason="Incorrect brand matching with type term - need to change to variants concept")
 def test_product_pfqn_query_false_brand_as_type():
     pfqn = 'Филе треск. с/м в панировке'
 
     pq = ProductQuery.from_pfqn(pfqn)
 
-    assert pq.brand is None
-    assert pq.sqn == 'Филе треск с/м в панировке'.split()
-    assert ProductType('филе', 'трески') in pq.types
+    assert pq.brand == 'Филевское'
+    assert pq.sqn == 'филе треск с/м в панировке'.split()
+    assert ProductType('филе', 'треск') in pq.types
+    assert not any(term.startswith('филев') for ptype in pq.types for term in ptype)
+
+
+def test_find_product_false_brand_as_type():
+    pfqn = 'Филе треск. с/м в панировке'
+
+    with find_query.find_products(pfqn, return_fields=['brand', 'pfqn', 'types']) as rs:
+        assert rs.size > 0
+        brand, pfqn_rs, types = next(rs.data)
+        assert not brand.lower().startswith('филев')
+        assert all(term in pfqn_rs.lower() for term in ('филе', 'треск', 'паниров'))
+        assert 'филе' in types
+

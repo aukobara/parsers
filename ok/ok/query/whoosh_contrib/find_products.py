@@ -33,10 +33,10 @@ class ProductsSchema(SchemaClass):
                          MainFormFilter() | StemFilter(lang='ru', cachesize=50000)
                 )
     brand = ID(stored=True, sortable=RefBytesColumn())
-    weight = ID(analyzer=RegexTokenizer(expression=r'\s\+\s', gaps=True) | LowercaseFilter())
-    pack = ID(analyzer=RegexTokenizer(expression=r'\s\+\s', gaps=True) | LowercaseFilter())
-    fat = ID(analyzer=RegexTokenizer(expression=r'\s\+\s', gaps=True) | LowercaseFilter())
-    field_serial_10 = ID()
+    weight = ID()
+    pack = ID()
+    fat = ID()
+    field_serial_15 = ID()
 
 SCHEMA = ProductsSchema()
 """@type: whoosh.fields.Schema"""
@@ -58,20 +58,26 @@ def product_type_normalizer(value):
 
 
 def feeder(writer):
-    from ok.dicts import main_options
-    from ok.dicts.product import Product
-
-    config = main_options([])
-    products = Product.from_meta_csv(config.products_meta_in_csvname)
+    products = products_data_source()
     for p in products:
         feed_product(p, writer)
     return data_checksum()
 
 
+def products_data_source():
+    from ok.dicts import main_options
+    from ok.dicts.product import Product
+
+    config = main_options([])
+    return Product.from_meta_csv(config.products_meta_in_csvname)
+
+
 def feed_product(p, writer):
     pq = ProductQuery.from_product(p)
-    writer.add_document(pfqn=pq.pfqn, types=product_type_normalizer(pq.types), tail=pq.tail, brand=pq.brand,
-                        fat=pq.fat, pack=pq.pack, weight=pq.weight)
+    # TODO: make test to validate only simple text types are passed to writer as field terms
+    # whoosh will serialize terms and on next run their can be a problems with deserialized terms
+    writer.add_document(pfqn=pq.pfqn, types=product_type_normalizer(pq.types), tail=map(to_str, pq.tail), brand=pq.brand,
+                        fat=list(pq.fat_all), pack=list(pq.pack_all), weight=list(pq.weight_all))
 
 
 def data_checksum():
@@ -114,9 +120,7 @@ class FindProductsQuery(BaseFindQuery):
         pq = ProductQuery.from_pfqn(self.q_tokenized, type_filter=type_filter)
         and_maybe_scoring_q = self.tail_qp.parse(to_str(self.q_original))
 
-        supp_fields = ['weight', 'fat', 'pack', 'brand']
-        wfp_term_queries = []
-        [wfp_term_queries.append(query.Term(sf, pq[sf])) for sf in supp_fields if pq.get(sf)]
+        wfp_term_queries = self.supplementary_queries(pq)
 
         len_map = defaultdict(set)
         [len_map[len(pt)].add(p_type_cache[pt]) for pt in pq.types]
@@ -146,3 +150,17 @@ class FindProductsQuery(BaseFindQuery):
         # Final attempt of hope - if exact types not matched try direct pfqn query
         q_types.append(self.qp.parse(to_str(self.q_original)))
         return q_types
+
+    def supplementary_queries(self, pq):
+        """@param ok.query.product.ProductQuery pq: parsed query"""
+        supp_fields = ['weight', 'fat', 'pack', 'brand']
+        wfp_term_queries = []
+        for field in supp_fields:
+            if field in pq:
+                term_set = pq['%s_all' % field]
+                if len(term_set) == 1:
+                    wfp_term_queries.append(query.Term(field, next(iter(term_set))))
+                else:
+                    wfp_term_queries.append(query.Or(map(lambda term: query.Term(field, term), term_set)))
+
+        return wfp_term_queries

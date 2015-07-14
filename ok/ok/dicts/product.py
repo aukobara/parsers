@@ -113,6 +113,12 @@ class Product(dict):
         @rtype: collections.Iterable[Product]
         """
         from ok.dicts.product_type import ProductType
+
+        def reformat_attr(_product, field):
+            if field in product and product.get(field) is not None:
+                value = product[field]
+                product[field] = value.split(' + ') if ' + ' in value else value
+
         with open(csv_filename, 'rb') as f:
             reader = csv.reader(f)
             fields = next(reader)
@@ -120,11 +126,14 @@ class Product(dict):
                 product_meta_row = dict(zip(fields, row))
                 product = Product(**{field: value.decode("utf-8") for field, value in product_meta_row.items()})
                 if 'tags' in product and product.get('tags') is not None:
-                    product['tags'] = set(product['tags'].split(u'|'))
+                    product['tags'] = set(product['tags'].split('|'))
                 else:
                     product['tags'] = set()
                 if 'types' in product and product.get('types') is not None:
-                    product['types'] = set([ProductType(*pt_str.split(u' + ')) for pt_str in product['types'].split(u'|')])
+                    product['types'] = set([ProductType(*pt_str.split(' + ')) for pt_str in product['types'].split('|')])
                 else:
                     product['types'] = set()
+                reformat_attr(product, 'fat')
+                reformat_attr(product, 'weight')
+                reformat_attr(product, 'pack')
                 yield product
