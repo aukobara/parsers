@@ -15,7 +15,7 @@ INDEX_BRANDS = find_brands.INDEX_NAME
 
 IndexDef = namedtuple('_index_def', 'schema feeder checksum queries')
 index_def_dict = {INDEX_PRODUCTS: IndexDef(find_products.SCHEMA, find_products.feeder, find_products.data_checksum, [find_products.FindProductsQuery]),
-                  INDEX_BRANDS: IndexDef(find_brands.SCHEMA, find_brands.feeder, None, [find_brands.FindBrandsQuery])}
+                  INDEX_BRANDS: IndexDef(find_brands.SCHEMA, find_brands.feeder, find_brands.data_checksum, [find_brands.FindBrandsQuery])}
 indexes = {}
 """@type: dict of (str, whoosh.index.Index)"""
 
@@ -68,27 +68,32 @@ def init_index(storage=None, index_dir=None, readonly=True, one_index=None):
         ok_meta_index_name = '%s_ok_meta' % index_name
 
         ix = None
-        if storage.index_exists(indexname=index_name):
-            # Check index is consistent with data and schema
-            ix = storage.open_index(indexname=index_name)
-            log.info("Open '%s' index from '%s': %d documents" % (index_name, storage, ix.doc_count()))
-            assert ix.schema
-            if ix.schema != index_def.schema:
-                log.info("Schema was changed for index '%s' in '%s' - have to recreate index" % (index_name, storage))
-                ix = None
-            else:
-                if storage.file_exists(ok_meta_index_name):
-                    # Verify data checksum
-                    if index_def.checksum:
-                        required_checksum = index_def.checksum()
-                        with storage.open_file(ok_meta_index_name) as metadata_file:
-                            indexed_data_checksum = metadata_file.read_long()
-                        if required_checksum != indexed_data_checksum:
-                            log.info("Checksum of indexed data in index '%s' differs from required - have to recreate index" % index_name)
-                            ix = None
-                elif index_def.checksum:
-                    log.info("Checksum defined but existing index '%s' does not keep it - have to recreate index" % index_name)
+        try:
+            if storage.index_exists(indexname=index_name):
+                # Check index is consistent with data and schema
+                ix = storage.open_index(indexname=index_name)
+                log.info("Open '%s' index from '%s': %d documents" % (index_name, storage, ix.doc_count()))
+                assert ix.schema
+                if ix.schema != index_def.schema:
+                    log.info("Schema was changed for index '%s' in '%s' - have to recreate index" % (index_name, storage))
                     ix = None
+                else:
+                    if storage.file_exists(ok_meta_index_name):
+                        # Verify data checksum
+                        if index_def.checksum:
+                            required_checksum = index_def.checksum()
+                            with storage.open_file(ok_meta_index_name) as metadata_file:
+                                indexed_data_checksum = metadata_file.read_long()
+                            if required_checksum != indexed_data_checksum:
+                                log.info("Checksum of indexed data in index '%s' differs from required - have to recreate index" % index_name)
+                                ix = None
+                    elif index_def.checksum:
+                        log.info("Checksum defined but existing index '%s' does not keep it - have to recreate index" % index_name)
+                        ix = None
+        except AttributeError as ae:
+            log.warn('Indexed data in persistent storage cannot be loaded due to code changes in schema since index creation.'
+                     'Index will be refreshed with up-to-date schema code. Attribute (unpickle) error: %r', ae)
+            ix = None
 
         if not ix:
             log.info("Index '%s' does not exist (or expired) in '%s'. Try to create and feed" % (index_name, storage))
@@ -104,6 +109,7 @@ def init_index(storage=None, index_dir=None, readonly=True, one_index=None):
             ix = writable_storage.create_index(index_def.schema, indexname=index_name)
             with ix.writer() as w:
                 data_checksum = index_def.feeder(w)
+            ix.optimize()
             log.info("Index '%s' created in '%s'. Fed by %d documents" % (index_name, writable_storage, ix.doc_count()))
             if data_checksum:
                 with writable_storage.create_file(ok_meta_index_name) as metadata_file:
