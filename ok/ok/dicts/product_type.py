@@ -59,6 +59,7 @@ class ProductType(tuple):
 
     def __init__(self, *args, **kwargs):
         if not self.singleton:
+            tuple.__init__(args)
             self._relations = dict()
             self.__relations_cache = None
             """ @type: dict of (ProductType, ProductType.Relation) """
