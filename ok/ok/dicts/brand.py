@@ -383,7 +383,7 @@ class Brand(object):
 
     @staticmethod
     def merge_brand(main_brand, dup_brand):
-        if main_brand != dup_brand:
+        if main_brand is not dup_brand:
             # Duplicated manufacturer brand was found
             if main_brand.type == Brand.TYPE_MANUFACTURER and dup_brand.type == Brand.TYPE_MANUFACTURER:
                 raise Exception("Assertion failed - it's not possible to have two matched manufacturer's brands." +
@@ -401,11 +401,14 @@ class Brand(object):
                     main_brand.link_related(linked_brand)
 
     @classmethod
-    def findOrCreate_manufacturer_brand(cls, manufacturer):
+    def findOrCreate_manufacturer_brand(cls, manufacturer, add_pattern_synonyms=True):
         """
         Dynamically create manufacturer's brand if it matches known manufacturer->brand patterns
         @param unicode manufacturer: manufacturer's full name
-        @rtype: Brand | None
+        @param bool add_pattern_synonyms: if False do not add patterns after manufacturer name parsing as brand synonyms.
+                For new unknown manufacturer its synonyms will be empty. For existing (matching) brand synonyms will remain as is.
+                It is useful when synonyms are known and will be added later or matching brand is well known and its synonyms should be affected.
+        @rtype: Brand
         """
         # Collect patterns and check if such brand/manufacturer is already exist
         patterns = cls.collect_manufacturer_patterns(manufacturer)
@@ -433,7 +436,7 @@ class Brand(object):
                 dup_brand.type = Brand.TYPE_DUPLICATE
 
         for p in patterns:
-            if p.strip().lower() != manufacturer.strip().lower():
+            if add_pattern_synonyms and p.strip().lower() != manufacturer.strip().lower():
                 brand.add_synonym(p)
             brand.add_surrogate_keys(p)
             # If brand with name as pattern already exists link it.
@@ -490,7 +493,7 @@ class Brand(object):
                 name = brand_row["name"].decode("utf-8")
                 brand_type = brand_row.get("type", "").decode("utf-8")
                 if brand_type.lower() == Brand.TYPE_MANUFACTURER.lower():
-                    brand = Brand.findOrCreate_manufacturer_brand(name)
+                    brand = Brand.findOrCreate_manufacturer_brand(name, add_pattern_synonyms=False)
                 else:
                     brand = Brand.findOrCreate(name)
                     if brand.type == Brand.TYPE_MANUFACTURER:
