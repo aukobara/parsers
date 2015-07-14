@@ -9,6 +9,7 @@ from whoosh.columns import RefBytesColumn
 from whoosh.fields import TEXT, SchemaClass, ID, KEYWORD
 from whoosh.qparser.plugins import PrefixPlugin, WildcardPlugin
 from whoosh.qparser import QueryParser, syntax
+from ok.dicts import to_str
 
 from ok.dicts.product_type import ProductType
 from ok.dicts.term import TypeTerm
@@ -93,16 +94,10 @@ class FindProductsQuery(BaseFindQuery):
 
     p_type_cache = None
 
-    @property
-    def q_tokenized(self):
-        """@rtype: ProductQueryParser"""
-
-        q_tokenized = self._q_tokenized
-        if q_tokenized is None:
-            from ok.query.product import ProductQueryParser
-            q_tokenized = self._q_tokenized = ProductQueryParser(self.q_original)
-
-        return q_tokenized
+    @staticmethod
+    def _tokenize_query(q):
+        from ok.query.product import ProductQueryParser
+        return ProductQueryParser(q)
 
     def query_variants(self):
         p_type_cache = {}
@@ -117,7 +112,7 @@ class FindProductsQuery(BaseFindQuery):
                     yield p_type
 
         pq = ProductQuery.from_pfqn(self.q_tokenized, type_filter=type_filter)
-        and_maybe_scoring_q = self.tail_qp.parse(self.q_original)
+        and_maybe_scoring_q = self.tail_qp.parse(to_str(self.q_original))
 
         supp_fields = ['weight', 'fat', 'pack', 'brand']
         wfp_term_queries = []
@@ -126,12 +121,16 @@ class FindProductsQuery(BaseFindQuery):
         len_map = defaultdict(set)
         [len_map[len(pt)].add(p_type_cache[pt]) for pt in pq.types]
 
-        def get_query(term_group):
+        def get_query(term_group=None):
             if wfp_term_queries:
-                yield query.AndMaybe(term_group & query.And(wfp_term_queries), and_maybe_scoring_q)
-                if len(wfp_term_queries) > 1:
-                    yield query.AndMaybe(term_group & query.Or(wfp_term_queries), and_maybe_scoring_q)
-            yield query.AndMaybe(term_group, and_maybe_scoring_q)
+                if len(wfp_term_queries) == 1:
+                    wpf_group_queries = [wfp_term_queries[0]]
+                else:
+                    wpf_group_queries = [query.And(wfp_term_queries), query.Or(wfp_term_queries)]
+                for wpf_gq in wpf_group_queries:
+                    yield query.AndMaybe(term_group & wpf_gq if term_group else wpf_gq, and_maybe_scoring_q)
+            if term_group:
+                yield query.AndMaybe(term_group, and_maybe_scoring_q)
 
         q_types = []
         for _, len_p_types in sorted(len_map.items(), key=lambda _l: _l[0], reverse=True):
@@ -142,8 +141,8 @@ class FindProductsQuery(BaseFindQuery):
         if not q_types and wfp_term_queries:
             # Weird situation when no types but other attributes are present
             # It can be used for listing of all brand products
-            q_types.extend(get_query(query.Every('types')))
+            q_types.extend(get_query())
 
         # Final attempt of hope - if exact types not matched try direct pfqn query
-        q_types.append(self.qp.parse(self.q_original))
+        q_types.append(self.qp.parse(to_str(self.q_original)))
         return q_types

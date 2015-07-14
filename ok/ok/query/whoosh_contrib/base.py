@@ -10,7 +10,7 @@ class BaseFindQuery(object):
     index_name = None
     searcher_factory = None
 
-    def __init__(self, q, searcher=None, return_fields=None, facet_fields=None):
+    def __init__(self, q, searcher=None, return_fields=None, facet_fields=None, limit=10):
         """
         @param whoosh.searching.Searcher searcher: whoosh_contrib searcher
         """
@@ -27,6 +27,9 @@ class BaseFindQuery(object):
         self.facets = None if not facet_fields else \
             sorting.Facets({facet: sorting.FieldFacet(facet, allow_overlap=False, maptype=sorting.Count) for facet in facet_fields})
 
+        self.limit = limit
+        """@type: int"""
+
         # Accessor helper to current match document
         self._match = None
         """@type: whoosh.searching.Hit"""
@@ -37,22 +40,38 @@ class BaseFindQuery(object):
     def q_tokenized(self):
         q_tokenized = self._q_tokenized
         if q_tokenized is None:
-            from ok.query import parse_query
-            q_tokenized = self._q_tokenized = parse_query(self.q_original)
+            q_tokenized = self._q_tokenized = self._tokenize_query(self.q_original)
         return q_tokenized
 
+    @staticmethod
+    def _tokenize_query(q):
+        """@rtype: ok.query.tokens.Query"""
+        from ok.query import parse_query
+        return parse_query(q)
+
     def query_variants(self):
+        """
+        @rtype: list[whoosh.query.qcore.Query]
+        @return: list of whoosh queries to execute one by one until any result will be found.
+            They must be sorted in order of priority (aka potentially more exact matches must go first)
+        """
         raise NotImplementedError
 
-    def __call__(self, limit=10):
+    def __call__(self):
         searcher = self.searcher
         match_found = False
         return_one_field = return_all = None
         return_fields = self.return_fields
 
+        limit = self.limit
+        terms = self.need_matched_terms
+        facets = self.facets
+        search = self._search
+
         q_attempt = None
         for q_attempt in self.query_variants():
-            r = searcher.search(q_attempt, limit=limit, terms=self.need_matched_terms, groupedby=self.facets)
+
+            r = search(searcher, q_attempt, limit=limit, terms=terms, groupedby=facets)
             for match in r:
 
                 if not match_found:
@@ -63,6 +82,7 @@ class BaseFindQuery(object):
                     self.result_size = r.estimated_min_length()
                 if self.matched_query is None:
                     self.matched_query = q_attempt
+
                 self._match = match
                 self._results = r
                 match_found = True
@@ -82,19 +102,42 @@ class BaseFindQuery(object):
         # It can be useful for analysis of empty result
         self.matched_query = q_attempt
 
+    def _search(self, searcher, whoosh_query, **kwargs):
+        """
+        This method encapsulate one whoosh query attempt logic. It can be overridden by implementations to add
+        some logic like: post-filtering, query enhancement, more precise result size estimations, Results object wrapping,
+        whoosh internals tuning (e.g. replacement matcher or/and collector).
+        kwargs parameters are the same as for whoosh.searching.Searcher#search method. Main are described further:
+        @param whoosh.searching.Searcher searcher: index searcher
+        @param whoosh.query.qcore.Query whoosh_query: one of query produced by @query_variants()
+        @param int|None limit: max number of results to return. If None returns all. If not specified whoosh defaults this to 10
+        @param bool terms: If True collect matching terms for later use by caller logic. Some implementations can ignore this flag and implement
+                matching terms by their own
+        @param whoosh.sorting.Facets|None groupedby: if facets collection is required.
+        @return: whoosh Results like API object. Actually this can by any proxy object with required __iter__ implementation as well as __len__ methods.
+                    Also it will require groups() method implementation if facets we specified for this query
+        @rtype: whoosh.searching.Results
+        """
+        return searcher.search(whoosh_query, **kwargs)
+
     # Current match object accessor helpers
     @property
     def current_match(self):
         return self._match
 
     @property
-    def matched_terms(self):
+    def matched_tokens(self):
         """
-        @rtype: list[tuple[unicode]]
+        @rtype: list[ok.query.tokens.QueryToken]
         @return: list of tuples (field_name, term_value)
         """
         assert self.need_matched_terms, "Query class %r must set 'need_matched_terms' to access matched terms data" % self.__class__
-        return [(t[0], t[1].decode('utf-8')) for t in self.current_match.matched_terms()]
+        m_terms = frozenset(t[1].decode('utf-8') for t in self.current_match.matched_terms())
+        result = []
+        for token in self.q_tokenized.tokens:
+            if token in m_terms:
+                result.append(token)
+        return result
 
     def facet_counts(self, facet_field):
         return self._results.groups(facet_field)
@@ -120,3 +163,8 @@ class BaseFindQuery(object):
         reader = self.searcher.reader()
         return (field_name, term_value) in reader
 
+    def expand_term_prefix(self, field_name, term_prefix):
+        reader = self.searcher.reader()
+        """@type: whoosh.reading.IndexReader"""
+        for term in reader.expand_prefix(field_name, term_prefix):
+            yield term.decode('utf-8')

@@ -5,7 +5,7 @@ import itertools
 
 
 class RS(object):
-    def __init__(self, fetcher, limit, on_close=None):
+    def __init__(self, fetcher, on_close=None):
         self._size = None
         """@type: int"""
         # Generator object with sequence of data for one field (default, or one field in return_fields)
@@ -13,13 +13,11 @@ class RS(object):
         self._data = None
         self._fetcher = fetcher
         """@type: ok.query.whoosh_contrib.base.BaseFindQuery"""
-        self.limit = limit
-        """@type: int|None"""
         self.on_close = on_close
 
     def _ensure_fetched(self):
         if self._size is None:
-            data = self._fetcher(limit=self.limit)
+            data = self._fetcher()
             try:
                 first = next(data)
             except StopIteration:
@@ -63,33 +61,47 @@ class RS(object):
         self._ensure_fetched()
         return self._fetcher.facet_counts(facet_field)
 
-    def not_matched_terms(self):
+    def matched_tokens(self):
+        """@rtype: list[QueryToken]"""
+        self._ensure_fetched()
+        return self._fetcher.matched_tokens
+
+    def not_matched_tokens(self):
         """@rtype: list[unicode]"""
         self._ensure_fetched()
-        matched_terms = {t[1].lower() for t in self._fetcher.matched_terms}
+        matched_tokens = self._fetcher.matched_tokens
         original_tokens = self._fetcher.q_tokenized.tokens
         result = []
-        for token in original_tokens:
-            if token not in matched_terms:
-                result.append(token)
+        if matched_tokens:
+            pos_list = {token.position for token in matched_tokens}
+            for token in original_tokens:
+                if token.position not in pos_list:
+                    result.append(token)
         return result
 
 
 def find_products(products_query_str, limit=10, return_fields=None, facet_fields=None):
+    from ok.query.whoosh_contrib import indexes
     from ok.query.whoosh_contrib import find_products
 
     # from whoosh import scoring
     # w_model = scoring.DebugModel()
     # searcher = ix.searcher(weighting=w_model)
 
-    q = find_products.FindProductsQuery(products_query_str, return_fields=return_fields, facet_fields=facet_fields)
+    assert find_products.FindProductsQuery in indexes.index_def_dict[indexes.INDEX_PRODUCTS].queries
+
+    q = find_products.FindProductsQuery(products_query_str, return_fields=return_fields, facet_fields=facet_fields, limit=limit)
 
     # rs = RS(q, searcher, limit, on_close=lambda: log.debug(to_str(w_model.log)))
-    return RS(q, limit)
+    return RS(q)
 
 
-def find_brands(brands_query_str):
+def find_brands(brands_query_str, limit=1):
+    from ok.query.whoosh_contrib import indexes
     from ok.query.whoosh_contrib import find_brands
 
-    q = find_brands.FindBrandsQuery(brands_query_str, return_fields=['brand'])
-    return RS(q, limit=None)
+    assert find_brands.FindBrandsQuery in indexes.index_def_dict[indexes.INDEX_BRANDS].queries
+
+    q = find_brands.FindBrandsQuery(brands_query_str, return_fields=['brand'], limit=limit)
+
+    return RS(q)

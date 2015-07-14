@@ -7,7 +7,7 @@ import pytest
 from whoosh.filedb.filestore import RamStorage
 
 import ok.query.find as oq_find
-from ok.query.whoosh_contrib import find_products
+from ok.query.whoosh_contrib import find_products, find_brands
 
 app_log = logging.getLogger('ok')
 app_log.setLevel(logging.DEBUG)
@@ -15,16 +15,33 @@ app_log.addHandler(logging.StreamHandler())
 
 
 @pytest.fixture(scope='module')
-def ix_full():
+def ix_prod_full():
     from whoosh.filedb.filestore import RamStorage
     from ok.query.whoosh_contrib import indexes
 
     st = RamStorage()
+
     if indexes.INDEX_PRODUCTS in indexes.indexes:
         del indexes.indexes[indexes.INDEX_PRODUCTS]
     ix = indexes.init_index(st, one_index=indexes.INDEX_PRODUCTS)
     return ix
 
+@pytest.fixture(scope='module')
+def ix_brand_full():
+    from whoosh.filedb.filestore import RamStorage
+    from ok.query.whoosh_contrib import indexes
+
+    st = RamStorage()
+
+    if indexes.INDEX_BRANDS in indexes.indexes:
+        del indexes.indexes[indexes.INDEX_BRANDS]
+    ix = indexes.init_index(st, one_index=indexes.INDEX_BRANDS)
+    return ix
+
+
+@pytest.fixture(scope='module')
+def ix_full(ix_prod_full, ix_brand_full):
+    return ix_prod_full, ix_brand_full
 
 @pytest.fixture
 def ix_test_docs():
@@ -91,12 +108,12 @@ def test_facets(ix_test_many):
         assert sum(facet_counts.values()) == rs.size
         assert facet_counts == {'бренд1': 2, 'бренд2': 1}
 
-def test_find_products_full(ix_full):
+def test_find_products_full(ix_prod_full):
     with oq_find.find_products('масло', return_fields=['types']) as rs:
         assert rs.size > 0
         assert all('масло' in types for types in rs.data)
 
-def test_find_products_wpf_full(ix_full):
+def test_find_products_wpf_full(ix_prod_full):
     with oq_find.find_products('Масло слив 82.5% 180г', return_fields=['pfqn', 'types']) as rs:
         assert rs.size > 0
         assert all('масло' in types for pfqn, types in rs.data)
@@ -152,23 +169,23 @@ def test_feeder():
     # Check no other fields passed to writer
     assert len(fields) == 7
 
-def test_index_does_not_recreated_if_no_changes_full(ix_full):
-    """@param whoosh.index.FileIndex ix_full: test index in ram storage"""
+def test_index_does_not_recreated_if_no_changes_full(ix_prod_full):
+    """@param whoosh.index.FileIndex ix_prod_full: test index in ram storage"""
     from ok.query.whoosh_contrib import indexes
     from whoosh.fields import TEXT
 
-    assert ix_full.schema
+    assert ix_prod_full.schema
     original_schema = find_products.SCHEMA
     orig_index_def = dict(indexes.index_def_dict)
-    assert ix_full.schema == original_schema and original_schema == orig_index_def[indexes.INDEX_PRODUCTS].schema
+    assert ix_prod_full.schema == original_schema and original_schema == orig_index_def[indexes.INDEX_PRODUCTS].schema
 
-    assert isinstance(ix_full.storage, RamStorage)
-    existing_files = dict(ix_full.storage.files)
+    assert isinstance(ix_prod_full.storage, RamStorage)
+    existing_files = dict(ix_prod_full.storage.files)
 
     # Reopen index
     del indexes.indexes[indexes.INDEX_PRODUCTS]
-    ix2 = indexes.init_index(ix_full.storage, one_index=indexes.INDEX_PRODUCTS)
-    assert ix2 != ix_full
+    ix2 = indexes.init_index(ix_prod_full.storage, one_index=indexes.INDEX_PRODUCTS)
+    assert ix2 != ix_prod_full
 
     # Check index is the same
     assert ix2.storage.files == existing_files
@@ -198,3 +215,63 @@ def test_index_does_not_recreated_if_no_changes_full(ix_full):
     # Tear down
     indexes.index_def_dict.update(orig_index_def)
     del indexes.indexes[indexes.INDEX_PRODUCTS]
+
+
+def test_find_multi_token_brand_mix(ix_brand_full):
+    _test_find_multi_token_brand('домик в деревне', 'Домик в деревне', 'домик в деревне', '')
+    _test_find_multi_token_brand('домик деревне', 'Домик в деревне', 'домик деревне', '')
+    _test_find_multi_token_brand('деревне в домик', 'Домик в деревне', 'деревне в домик', '')
+    _test_find_multi_token_brand('домик деревне в', 'Домик в деревне', 'домик деревне', 'в')
+    _test_find_multi_token_brand('в домик деревне', 'Домик в деревне', 'домик деревне', 'в')
+
+    _test_find_multi_token_brand_negative('домик в большой деревне')
+
+
+def _test_find_multi_token_brand(q, brand, matched, not_matched):
+    with oq_find.find_brands(q, limit=1) as rs:
+        assert rs.size == 1
+        assert next(iter(rs.data)) == brand
+        assert rs.matched_tokens() == matched.split()
+        assert rs.not_matched_tokens() == not_matched.split()
+
+def _test_find_multi_token_brand_negative(q):
+    with oq_find.find_brands(q) as rs:
+        assert rs.size == 0
+
+def test_find_multi_token_brand_multi_match(ix_brand_full):
+    # Full exact match
+    with oq_find.find_brands('молоко рузское') as rs:
+        assert rs.size == 1
+        assert rs.data.next() == 'Рузское молоко'
+        assert rs.matched_tokens() == 'молоко рузское'.split()
+        assert rs.not_matched_tokens() == ''.split()
+
+    # Partial synonyms match
+    with oq_find.find_brands('молоко пастер Рузское') as rs:
+        assert rs.size == 1
+        assert rs.data.next() == 'Рузское молоко'
+        assert rs.matched_tokens() == 'рузское'.split()
+        assert rs.not_matched_tokens() == 'молоко пастер'.split()
+
+def test_find_multi_token_brand_start_with_prop(ix_brand_full):
+    _test_find_multi_token_brand('на зубок', 'На зубок', 'на зубок', '')
+    _test_find_multi_token_brand_negative('на большой зубок')
+    _test_find_multi_token_brand('семечки на зубок', 'На зубок', 'на зубок', 'семечки')
+    _test_find_multi_token_brand_negative('семечки зубок на')
+
+def test_find_multi_token_brand_prefix(ix_brand_full):
+    _test_find_multi_token_brand('на зуб', 'На зубок', 'на зуб', '')
+    _test_find_multi_token_brand('семечки на зуб', 'На зубок', 'на зуб', 'семечки')
+    _test_find_multi_token_brand('дом в деревн', 'Домик в деревне', 'дом в деревн', '')
+    _test_find_multi_token_brand('молоко дом в деревн', 'Домик в деревне', 'дом в деревн', 'молоко')
+    # Too Short prefix
+    _test_find_multi_token_brand_negative('молоко дом в де')
+
+def test_find_multi_token_brand_prefix_exact_match_priority(ix_brand_full):
+    _test_find_multi_token_brand('мол домик в деревне', 'Домик в деревне', 'домик в деревне', 'мол')
+
+def test_find_multi_token_brand_joined_with_non_separator(ix_brand_full):
+    # First = assert such brand in index
+    _test_find_multi_token_brand('чудо-ягода', 'Чудо-ягода', 'чудо-ягода', '')
+    # Now try to find tokenized
+    _test_find_multi_token_brand('чудо ягода', 'Чудо-ягода', 'чудо ягода', '')
