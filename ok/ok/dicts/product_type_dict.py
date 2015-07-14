@@ -45,6 +45,9 @@ class ProductTypeDict(object):
         # This is a cache of _type_tuples with filtered meaningful items only (see filter_meaningful_types())
         # It MUST be dropped always when _type_tuples is changed
         self._meaningful_type_tuples = None
+        # This is a cache of TypeTerms used in ProductTypes from _type_tuples
+        # It MUST be dropped always when _type_tuples is changed
+        self._term_set = None
 
         self._min_meaningful_type_capacity = TYPE_TUPLE_MIN_CAPACITY
 
@@ -629,13 +632,22 @@ class ProductTypeDict(object):
                     "Meet product type duplicate instance! Validate your ProductType singleton cache: %s" % to_str(t)
             self._type_tuples[t].extend(sqns)
             # TODO: Update tag types as well - new sqns may add or break old tag type relations
-        # Clear meaningful types cache
-        self._meaningful_type_tuples = None
+        self._type_tuples_on_change()
 
         # 5. Keep most meaningful synonym types only
         # TODO
 
         return self._type_tuples
+
+    def __contains__(self, item):
+        assert isinstance(item, ProductType)
+        type_tuples = self.get_root_type_tuples()
+        return item in type_tuples
+
+    def _type_tuples_on_change(self):
+        self._meaningful_type_tuples = None
+        self._term_set = None
+        self._root_types = None
 
     def get_type_tuples(self, meaningful_only=False):
         """
@@ -662,6 +674,20 @@ class ProductTypeDict(object):
             self._root_types = root_types
 
         return self._root_types[:]
+
+    def get_type_term_set(self):
+        """
+        Returns set of TypeTerm's are used in known Product Types of this dict.
+        This is useful for filter out terms that cannot be used for types lookup anyway.
+        """
+        term_set = self._term_set
+        if term_set is None:
+            term_set = set()
+            type_tuples = self.get_type_tuples()
+            for p_type in type_tuples:
+                term_set.update(p_type)
+            self._term_set = term_set
+        return term_set
 
     def _get_json_repr_dict(self):
         """@rtype: OrderedDict of (ProductType, list[unicode|ProductType.Relation])"""
@@ -877,7 +903,7 @@ class ProductTypeDict(object):
 
         self._type_tuples.clear()
         self._type_tuples.update(type_tuples)
-        self._meaningful_type_tuples = None
+        self._type_tuples_on_change()
 
         gc.enable()
         if self.VERBOSE:
