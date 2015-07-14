@@ -11,6 +11,7 @@ from ok.settings import ensure_baseline_dir
 Basic text processing utils
 """
 
+
 def add_string_combinations(patterns, *repl):
     # Collect all possible pattern combinations
     result = list(patterns)
@@ -147,10 +148,10 @@ def to_str(something, encoding='utf-8'):
         return None
     if type(something) == unicode:
         return something
-    if isinstance(something, unicode):
-        return something[:]
     if hasattr(something, '__unicode__'):
         return something.__unicode__()
+    if isinstance(something, unicode):
+        return something[:]
     s = something.decode(encoding) if isinstance(something, str) else str(something)
     try:
         s = s.decode('unicode-escape')
@@ -161,6 +162,3 @@ def to_str(something, encoding='utf-8'):
     except UnicodeEncodeError:
         pass
     return s
-
-
-
