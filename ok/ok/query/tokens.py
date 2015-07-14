@@ -72,6 +72,15 @@ class QueryItemBase(unicode):
         assert self.query
         return self.query.original_query[self.char_start:self.char_end + 1]
 
+    # Methods for copy module.
+    # Tokens are immutable like string. Do not clone them.
+    def __copy__(self):
+        return self
+
+    def __deepcopy__(self, memo):
+        return self
+
+
 
 class QueryToken(QueryItemBase):
     """
