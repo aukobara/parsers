@@ -2,7 +2,7 @@
 from __future__ import print_function, unicode_literals
 
 from ok.query import parse_query
-from ok.query.tokens import QueryToken, QuerySeparator
+from ok.query.tokens import QueryToken, QuerySeparator, Query, DefaultQuery
 
 
 def test_query_parse():
@@ -120,3 +120,54 @@ def test_replace():
     # Check original query has not been changed
     assert q1.to_str() == 'тест1 "тест2" тест3'
     assert q2.tokens[1].original == 'тест2'
+
+def test_recursive_query():
+    q = parse_query('тест1 "тест2" тест3')
+    _test_recursive_query_base(q)
+
+def _test_recursive_query_base(q1):
+    q2 = parse_query(q1)
+    assert q1 is q2
+
+    q3 = parse_query(q1.tokens)
+    assert q3 is not q1
+    assert ''.join(q3) == ''.join(q1.tokens)
+    assert [item.position for item in q3] == range(0, len(q3))
+    assert q3.original_query == q1.original_query
+    assert q3.predecessor_query is q1
+    assert all(token.query is q3 for token in q3)
+
+class _TestQuery(Query):
+    class TestToken(QueryToken):
+        regex = 'тест123'
+        group_name = 'test_group'
+
+    class TestTokenPre(QueryToken):
+        regex = '\d+\s+шт'
+        group_name = 'test_group_pre'
+        pre_condition = '\D'
+
+    class TestTokenPost(QueryToken):
+        regex = 'тест44'
+        group_name = 'test_group44'
+        post_condition = QuerySeparator.regex
+
+    token_reg = [TestToken, TestTokenPost, TestTokenPre] + DefaultQuery.token_reg
+
+def test_custom_query():
+    q = _TestQuery('тест123 тест1234')
+    assert q.tokens == ['тест123', 'тест123', '4']
+    assert q.items_of_type(_TestQuery.TestToken) == ['тест123', 'тест123']
+    assert q.words == ['4']
+
+def test_custom_query_conditions():
+    q = _TestQuery('тест1234шт "тест445" тест44.т56 шт')
+    assert q.tokens == ['тест123', '4шт', 'тест445', 'тест44', 'т', '56 шт']
+    assert q.items_of_type(_TestQuery.TestToken) == ['тест123']
+    assert q.items_of_type(_TestQuery.TestTokenPost) == ['тест44']
+    assert q.items_of_type(_TestQuery.TestTokenPre) == ['56 шт']
+    assert q.words == ['4шт', 'тест445', 'т']
+
+def test_custom_query_recursion():
+    q = _TestQuery('тест1234шт "тест445" тест44.т56 шт')
+    _test_recursive_query_base(q)
