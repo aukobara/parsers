@@ -5,6 +5,7 @@ from ok.dicts.product_type_dict import ProductTypeDict
 from ok.dicts.russian import RE_WORD_OR_NUMBER_CHAR_SET
 from ok.dicts.term import TermContext, CompoundTypeTerm, ContextRequiredTypeTermException, TypeTerm
 from ok.query import tokens
+from ok.query.tokens import RE_QUERY_SEPARATOR
 
 """
 Module for query helpers using in product query processing, data extraction, etc.
@@ -52,15 +53,7 @@ class ProductQuery(object):
 
         brand = None
         if remain:
-            from ok.query.find import find_brands
-            with find_brands(remain) as brand_rs:
-                if brand_rs.size > 0:
-                    brand = next(brand_rs.data, None)
-                    if brand:
-                        # TODO: Refactor to use Query slices instead of join/parse on each step
-                        # TODO: Redesign to filter out brand tokens sequence only, do not touch other words
-                        remain_wo_brand_terms = ' '.join(brand_rs.not_matched_terms())
-                        remain = remain_wo_brand_terms
+            brand, remain = cls.parse_brand(remain)
 
         p_types = cls.ptd.collect_sqn_type_tuples(remain, context=context) if remain else set()
         if type_filter is not None and p_types:
@@ -77,11 +70,27 @@ class ProductQuery(object):
                   }
         return cls(fields)
 
+    @classmethod
+    def parse_brand(cls, remain):
+        from ok.query.find import find_brands
+
+        brand = None
+        with find_brands(remain) as brand_rs:
+            if brand_rs.size > 0:
+                brand = next(brand_rs.data, None)
+                if brand:
+                    remain = brand_rs.not_matched_tokens()
+
+        return brand, remain
+
     def sqn_query(self):
         """Return Product's SQN in parsed Query form"""
         sqn_query = self._sqn_query
         if sqn_query is None:
-            sqn_query = self._sqn_query = tokens.DefaultQuery(self.sqn)
+            from ok.query import parse_query
+
+            sqn = self.sqn
+            sqn_query = self._sqn_query = parse_query(sqn)
         return sqn_query
 
     def term_context(self, required=None):
@@ -189,18 +198,21 @@ class ProductQuery(object):
         except KeyError:
             return default
 
-RE_TEMPLATE_PFQN_WEIGHT_FULL = ('(?:фас(?:\.|овка)?\s*)?'
-                                '(?:\d+(?:шт|пак)?\s*(?:х|\*|x|/)\s*)?'
-                                '(?:\d+(?:[\.,]\d+)?\s*)'
-                                '(?:кг|г|л|мл|гр)\.?'
-                                '(?:(?:х|\*|x|/)\d+(?:\s*шт)?)?')
-RE_TEMPLATE_PFQN_WEIGHT_SHORT = '(?:кг|г|л|мл|гр)\.?'
+RE_NUMBER_FLOAT = '\d+(?:[.,]\d+)?'
 
-RE_TEMPLATE_PFQN_FAT_MDZH = '(?:(?:с\s)?м\.?д\.?ж\.? в сух(?:ом)?\.?\s?вещ(?:-|ест)ве' + \
-                            '|массовая доля жира в сухом веществе)'
-RE_TEMPLATE_PFQN_FAT = '(?:' + RE_TEMPLATE_PFQN_FAT_MDZH + '\s*)?' + \
-                       '(?:\d+(?:[\.,]\d+)?%?\s*-\s*)?\d+(?:[\.,]\d+)?\s*%(?:\s*ж(?:\.|ирн(?:\.|ости)?)?)?' + \
-                       '(?:\s*' + RE_TEMPLATE_PFQN_FAT_MDZH + ')?'
+RE_WEIGHT_MULTIPLIER_NUMBER = '\d+\s*(?:шт|пак)?'
+RE_WEIGHT_MULTIPLIER_SEP = '(?:х|\*|x|/)'
+RE_TEMPLATE_PFQN_WEIGHT_SHORT = '(?:кг|г|л|мл|гр)\.?'
+RE_TEMPLATE_PFQN_WEIGHT_FULL = ('(?:фас(?:\.|овка)?\s*)?'
+                                '(?:{NUMBER}\s*{SEP}\s*)?'
+                                '{FLOAT}\s*{SHORT}'
+                                '(?:{SEP}{NUMBER})?').format(SHORT=RE_TEMPLATE_PFQN_WEIGHT_SHORT, FLOAT=RE_NUMBER_FLOAT,
+                                                             NUMBER=RE_WEIGHT_MULTIPLIER_NUMBER, SEP=RE_WEIGHT_MULTIPLIER_SEP)
+
+RE_TEMPLATE_PFQN_FAT_MDZH = ('(?:(?:с\s)?м\.?д\.?ж\.? в сух(?:ом)?\.?\s?вещ(?:-|ест)ве'
+                             '|массовая доля жира в сухом веществе)')
+RE_TEMPLATE_PFQN_FAT = ('(?:{MDZH}\s*)?(?:{FLOAT}%?\s*-\s*)?{FLOAT}\s*%(?:\s*ж(?:\.|ирн(?:\.|ости)?)?)?'
+                        '(?:\s*{MDZH})?').format(MDZH=RE_TEMPLATE_PFQN_FAT_MDZH, FLOAT=RE_NUMBER_FLOAT)
 
 RE_TEMPLATE_PFQN_PACK = 'т/пак|ж/б|ст/б|м/у|с/б|ст\\\б|ст/бан|ст/бут|бут|пл/б|пл/бут|пэтбутылка|пл(?:\.|$)|(?:пл.?)?кор|коробка|в\sп/к|к(?:арт)?/пач(?:ка)?' + \
                         '|(?:\d+\s*)пак|\d+\s*таб|\d+\s*саше|(?:\d+\s*)?пир(?:ам(?:идок)?)?' + \
@@ -210,6 +222,7 @@ RE_TEMPLATE_PFQN_PACK = 'т/пак|ж/б|ст/б|м/у|с/б|ст\\\б|ст/ба
                         '|фас(?:ованные)?|н/подл|ф/пакет|0[.,]5|0[.,]75|0[.,]33|0[.,]57'
 
 RE_TEMPLATE_NON_WORD = '[^%s\-]' % RE_WORD_OR_NUMBER_CHAR_SET
+RE_TEMPLATE_SEPARATOR = '[%s]' % RE_QUERY_SEPARATOR
 
 
 class ProductQueryParser(tokens.Query):
@@ -223,8 +236,8 @@ class ProductQueryParser(tokens.Query):
     class WeightShortQueryToken(tokens.QueryToken):
         regex = RE_TEMPLATE_PFQN_WEIGHT_SHORT
         group_name = 'weightshort'
-        pre_condition = tokens.QuerySeparator.regex
-        post_condition = RE_TEMPLATE_NON_WORD
+        pre_condition = RE_TEMPLATE_SEPARATOR
+        post_condition = RE_TEMPLATE_SEPARATOR
 
     class FatQueryToken(tokens.QueryToken):
         regex = RE_TEMPLATE_PFQN_FAT
@@ -251,5 +264,5 @@ class ProductQueryParser(tokens.Query):
         return ' + '.join(pack_tokens) if pack_tokens else None
 
     def remaining_tokens(self):
-        remaining_tokens = self.words
-        return ' '.join(remaining_tokens) if remaining_tokens else None
+        """@rtype: list[ok.query.tokens.QueryToken]"""
+        return self.words
