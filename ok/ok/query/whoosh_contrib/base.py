@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals, print_function, absolute_import
 
+import logging
+
 from whoosh import sorting
 
+log = logging.getLogger(__name__)
 
 class BaseFindQuery(object):
     # Class attributes to override
@@ -71,6 +74,9 @@ class BaseFindQuery(object):
         q_attempt = None
         for q_attempt in self.query_variants():
 
+            if log.isEnabledFor(logging.DEBUG):
+                log.debug("Searching for query: %s" % q_attempt)
+
             r = search(searcher, q_attempt, limit=limit, terms=terms, groupedby=facets)
             for match in r:
 
@@ -97,6 +103,8 @@ class BaseFindQuery(object):
             if match_found:
                 self._match = None
                 break
+            elif log.isEnabledFor(logging.DEBUG):
+                log.debug("No matches found for query: %s. Trying next query" % q_attempt)
 
         # For last generator iteration keep last attempted query.
         # It can be useful for analysis of empty result

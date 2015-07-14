@@ -6,9 +6,9 @@ import re
 import dawg
 import itertools
 
-from ok.dicts import to_str, main_options
+from ok.dicts import main_options
 from ok.dicts.russian import get_word_normal_form, is_known_word, is_simple_russian_word, RE_WORD_OR_NUMBER_CHAR_SET
-from ok.utils import EventfulDict
+from ok.utils import EventfulDict, to_str
 
 TYPE_TERM_PROPOSITION_LIST = (u'в', u'во', u'с', u'со', u'из', u'для', u'и', u'на', u'без', u'к', u'не', u'де', u'по', u'под')
 TYPE_TERM_PROPOSITION_AND_WORD_LIST = (u'со',)

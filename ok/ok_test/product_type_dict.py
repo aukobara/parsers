@@ -2,7 +2,8 @@
 from __future__ import print_function, unicode_literals
 from collections import defaultdict, OrderedDict
 import pytest
-from ok.dicts import build_path, to_str, main_options
+from ok.dicts import build_path, main_options
+from ok.utils import to_str
 from ok.dicts.product import Product
 from ok.dicts.product_type import ProductType, TYPE_TUPLE_RELATION_CONTAINS, TYPE_TUPLE_RELATION_EQUALS, \
     TYPE_TUPLE_RELATION_SUBSET_OF, TYPE_TUPLE_RELATION_ALMOST

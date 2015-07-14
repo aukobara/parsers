@@ -4,7 +4,8 @@ from collections import defaultdict
 from functools import wraps
 import pytest
 
-from ok.dicts import to_str, main_options
+from ok.dicts import main_options
+from ok.utils import to_str
 from ok.dicts.product import Product
 from ok.dicts.product_type import ProductType
 from ok.dicts.product_type_dict import reload_product_type_dict, ProductTypeDict

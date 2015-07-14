@@ -141,24 +141,3 @@ def build_path(baseline_dir, input_path, default_filename):
     return input_path
 
 
-def to_str(something, encoding='utf-8'):
-    """@rtype: unicode"""
-    # This is to unify conversions from any type to unicode compatible with python 2.7 and 3.3+
-    if something is None:
-        return None
-    if type(something) == unicode:
-        return something
-    if hasattr(something, '__unicode__'):
-        return something.__unicode__()
-    if isinstance(something, unicode):
-        return something[:]
-    s = something.decode(encoding) if isinstance(something, str) else str(something)
-    try:
-        s = s.decode('unicode-escape')
-    except UnicodeEncodeError:
-        pass
-    try:
-        s = s.encode('latin-1').decode('utf-8')
-    except UnicodeEncodeError:
-        pass
-    return s

@@ -13,7 +13,7 @@ import gc
 from jsmin import jsmin
 import ujson
 
-from ok.dicts import to_str
+from ok.utils import to_str
 from ok.dicts.product import Product
 from ok.dicts.product_type import ProductType,\
     TYPE_TUPLE_RELATION_CONTAINS, TYPE_TUPLE_RELATION_EQUALS, TYPE_TUPLE_RELATION_SUBSET_OF, EqWrapper, \

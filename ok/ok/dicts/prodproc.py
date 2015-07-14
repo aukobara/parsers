@@ -12,7 +12,8 @@ from ok.dicts.product_type import TYPE_TUPLE_RELATION_EQUALS, \
     TYPE_TUPLE_RELATION_SIMILAR, TYPE_TUPLE_RELATION_CONTAINS, TYPE_TUPLE_RELATION_SUBSET_OF, TYPE_TUPLE_RELATION_ALMOST, \
     TYPE_TUPLE_RELATION_IDENTICAL
 from ok.dicts.product_type_dict import ProductTypeDict
-from ok.dicts import remove_nbsp, main_options, to_str
+from ok.dicts import remove_nbsp, main_options
+from ok.utils import to_str
 from ok.query.tokens import cleanup_token_str
 from ok.dicts.brand import Brand
 from ok.dicts.cats import Cats

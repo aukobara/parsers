@@ -4,7 +4,7 @@ from collections import OrderedDict, defaultdict
 
 from flask import render_template, Blueprint, jsonify, request
 
-from ok.dicts import to_str
+from ok.utils import to_str
 from ok.dicts.term import TypeTerm
 from ok.query.find import find_products
 

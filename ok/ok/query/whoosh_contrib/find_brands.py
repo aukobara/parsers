@@ -8,7 +8,7 @@ import re
 from whoosh.fields import TEXT, ID, SchemaClass
 from whoosh import query as whoosh_query, collectors, analysis
 
-from ok.dicts import to_str
+from ok.utils import to_str
 from ok.dicts.term import TYPE_TERM_PROPOSITION_LIST, TypeTerm
 from ok.query import parse_query
 from ok.query.tokens import QueryToken
@@ -192,6 +192,9 @@ class FindBrandsQuery(BaseFindQuery):
             else:
                 brand, brand_terms, brand_terms_dawg = brand_cache[global_docnum]
             return brand, brand_terms, brand_terms_dawg
+
+        def count(self):
+            return len(self.brands_found)
 
         def token_matches(self, reader, token, global_docnum):
             """

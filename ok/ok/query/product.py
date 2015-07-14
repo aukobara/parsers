@@ -53,7 +53,8 @@ class ProductQuery(object):
 
         brand = None
         if remain:
-            brand, remain = cls.parse_brand(remain)
+            brands = cls.parse_brand(remain)
+            brand = brands[0] if brands else None
 
         p_types = cls.ptd.collect_sqn_type_tuples(remain, context=context) if remain else set()
         if type_filter is not None and p_types:
@@ -74,14 +75,13 @@ class ProductQuery(object):
     def parse_brand(cls, remain):
         from ok.query.find import find_brands
 
-        brand = None
+        brands = []
         with find_brands(remain) as brand_rs:
             if brand_rs.size > 0:
-                brand = next(brand_rs.data, None)
-                if brand:
-                    remain = brand_rs.not_matched_tokens()
+                for brand in brand_rs.data:
+                    brands.append(brand)
 
-        return brand, remain
+        return brands
 
     def sqn_query(self):
         """Return Product's SQN in parsed Query form"""
@@ -123,17 +123,29 @@ class ProductQuery(object):
     def brand(self):
         return self._fields['brand']
 
+    def brand_all(self):
+        return frozenset([self.brand])
+
     @property
     def weight(self):
         return self._fields['weight']
+
+    def weight_all(self):
+        return frozenset([self.weight])
 
     @property
     def fat(self):
         return self._fields['fat']
 
+    def fat_all(self):
+        return frozenset([self.fat])
+
     @property
     def pack(self):
         return self._fields['pack']
+
+    def pack_all(self):
+        return frozenset([self.pack])
 
     @property
     def types(self):

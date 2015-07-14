@@ -9,7 +9,7 @@ from whoosh.columns import RefBytesColumn
 from whoosh.fields import TEXT, SchemaClass, ID, KEYWORD
 from whoosh.qparser.plugins import PrefixPlugin, WildcardPlugin
 from whoosh.qparser import QueryParser, syntax
-from ok.dicts import to_str
+from ok.utils import to_str
 
 from ok.dicts.product_type import ProductType
 from ok.dicts.term import TypeTerm

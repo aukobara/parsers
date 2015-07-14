@@ -444,3 +444,26 @@ def get_subpackages(parent_pack, seen=None, debug=False, top_package=None, impli
         if debug: print("Child %s of %s added" % (mod.__name__, parent_pack.__name__))
     if debug and not child_mods: print("No children found for %s" % parent_pack.__name__)
     return r
+
+
+def to_str(something, encoding='utf-8'):
+    """@rtype: unicode"""
+    # This is to unify conversions from any type to unicode compatible with python 2.7 and 3.3+
+    if something is None:
+        return None
+    if type(something) == unicode:
+        return something
+    if hasattr(something, '__unicode__'):
+        return something.__unicode__()
+    if isinstance(something, unicode):
+        return something[:]
+    s = something.decode(encoding) if isinstance(something, str) else str(something)
+    try:
+        s = s.decode('unicode-escape')
+    except UnicodeEncodeError:
+        pass
+    try:
+        s = s.encode('latin-1').decode('utf-8')
+    except UnicodeEncodeError:
+        pass
+    return s

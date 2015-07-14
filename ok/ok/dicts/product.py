@@ -3,7 +3,7 @@ from __future__ import unicode_literals, print_function
 
 import csv
 
-from ok.dicts import to_str
+from ok.utils import to_str
 
 PRODUCT_ATTRIBUTE_RAW_ID = 'raw_id'
 

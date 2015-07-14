@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, unicode_literals
 from collections import namedtuple
-from ok.dicts import to_str
+from ok.utils import to_str
 
 from ok.dicts.term import TypeTerm, TermContext
 
