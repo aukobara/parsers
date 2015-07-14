@@ -72,10 +72,11 @@ def init_index(storage=None, index_dir=None, readonly=True, one_index=None):
             if storage.index_exists(indexname=index_name):
                 # Check index is consistent with data and schema
                 ix = storage.open_index(indexname=index_name)
-                log.info("Open '%s' index from '%s': %d documents" % (index_name, storage, ix.doc_count()))
+                doc_count = ix.doc_count()
+                log.info("Open '%s' index from '%s': %d documents" % (index_name, storage, doc_count))
                 assert ix.schema
-                if ix.schema != index_def.schema:
-                    log.info("Schema was changed for index '%s' in '%s' - have to recreate index" % (index_name, storage))
+                if ix.schema != index_def.schema or not doc_count:
+                    log.info("Schema was changed for index '%s' in '%s' or index is empty (after last fail?) - have to recreate index" % (index_name, storage))
                     ix = None
                 else:
                     if storage.file_exists(ok_meta_index_name):
