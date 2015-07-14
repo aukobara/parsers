@@ -1,0 +1,1783 @@
+шоколад: 8; шоколаде=NOUN,inan,masc sing,loct; шоколада=NOUN,inan,masc sing,gent; шоколадная=ADJF,Qual femn,sing,nomn; шоколад=NOUN,inan,masc sing,nomn; шоколадный=ADJF,Qual masc,sing,nomn; шоколадное=ADJF,Qual neut,sing,nomn; шоколадные=ADJF,Qual plur,nomn; шоколадной=ADJF,Qual femn,sing,gent
+сливки: 8; сливками=NOUN,inan,GNdr,Pltm plur,ablt; сливочный=ADJF,Qual masc,sing,nomn; сливочная=ADJF,Qual femn,sing,nomn; сливки=NOUN,inan,GNdr,Pltm plur,accs; сливочные=ADJF,Qual plur,nomn; сливках=NOUN,inan,GNdr,Pltm plur,loct; сливочное=ADJF,Qual neut,sing,nomn; сливочном=ADJF,Qual masc,sing,loct
+свинина: 7; свиной=ADJF masc,sing,nomn; свиная=ADJF femn,sing,nomn; свинины=NOUN,inan,femn sing,gent; свиное=ADJF neut,sing,nomn; свиные=ADJF plur,nomn; свинина=NOUN,inan,femn sing,nomn; свиного=ADJF masc,sing,gent
+мясо: 7; мяса=NOUN,inan,neut,Sgtm sing,gent; мясных=ADJF plur,gent; мясо=NOUN,inan,neut,Sgtm sing,nomn; мясного=ADJF masc,sing,gent; мясом=NOUN,inan,neut,Sgtm sing,ablt; мясной=ADJF masc,sing,nomn; мясу=NOUN,inan,neut,Sgtm sing,datv
+лимон: 7; лимонный=ADJF,Qual masc,sing,nomn; лимона=NOUN,inan,masc sing,gent; лимонным=ADJF,Qual masc,sing,ablt; лимоном=NOUN,inan,masc sing,ablt; лимонная=ADJF,Qual femn,sing,nomn; лимоны=NOUN,inan,masc plur,nomn; лимон=NOUN,inan,masc sing,nomn
+курица: 7; куриное=ADJF,Qual neut,sing,nomn; курицы=NOUN,anim,femn sing,gent; куриный=ADJF,Qual masc,sing,nomn; куриная=ADJF,Qual femn,sing,nomn; курица=NOUN,anim,femn sing,nomn; курицей=NOUN,anim,femn sing,ablt; куриные=ADJF,Qual plur,nomn
+говядина: 7; говяжья=ADJF,Poss femn,sing,nomn; говядина=NOUN,inan,femn sing,nomn; говяжий=ADJF,Poss masc,sing,nomn; говяжьи=ADJF,Poss plur,nomn; говяжье=ADJF,Poss neut,sing,nomn; говядиной=NOUN,inan,femn sing,ablt; говядины=NOUN,inan,femn sing,gent
+фрукт: 6; фруктовое=ADJF neut,sing,nomn; фрукт=NOUN,inan,masc sing,nomn; фруктов=NOUN,inan,masc plur,gent; фруктовый=ADJF masc,sing,nomn; фруктами=NOUN,inan,masc plur,ablt; фруктовая=ADJF femn,sing,nomn
+сыр: 6; сырный=ADJF,Qual masc,sing,nomn; сырная=ADJF,Qual femn,sing,nomn; сырные=ADJF,Qual plur,nomn; сырам=NOUN,inan,masc plur,datv; сыром=NOUN,inan,masc sing,ablt; сыра=NOUN,inan,masc sing,gent
+овощ: 6; овощами=NOUN,inan,masc plur,ablt; овощи=NOUN,inan,masc plur,accs; овощей=NOUN,inan,masc plur,gent; овощная=ADJF femn,sing,nomn; овощное=ADJF neut,sing,nomn; овощные=ADJF plur,nomn
+томат: 5; томатная=ADJF,Qual femn,sing,nomn; томат=NOUN,inan,masc sing,nomn; томатный=ADJF,Qual masc,sing,nomn; томатном=ADJF,Qual masc,sing,loct; томаты=NOUN,inan,masc plur,nomn
+творог: 5; творог=NOUN,inan,masc sing,nomn; творожная=ADJF,Qual femn,sing,nomn; творогом=NOUN,inan,masc sing,ablt; творожный=ADJF,Qual masc,sing,nomn; творожное=ADJF,Qual neut,sing,nomn
+сахар: 5; сахар=NOUN,inan,masc sing,accs; сахара=NOUN,inan,masc sing,gent; сахаром=NOUN,inan,masc sing,ablt; сахарная=ADJF,Qual femn,sing,nomn; сахарные=ADJF,Qual plur,nomn
+салат: 5; салат=NOUN,inan,masc sing,nomn; салатная=ADJF,Qual femn,sing,nomn; салатный=ADJF,Qual masc,sing,nomn; салата=NOUN,inan,masc sing,gent; салатов=NOUN,inan,masc plur,gent
+орех: 5; орех=NOUN,inan,masc sing,accs; ореховый=ADJF,Qual masc,sing,nomn; орехов=NOUN,inan,masc plur,gent; орехом=NOUN,inan,masc sing,ablt; ореха=NOUN,inan,masc sing,gent
+зерно: 5; зёрнах=NOUN,inan,neut plur,loct; зерно=NOUN,inan,neut sing,nomn; зерновой=ADJF masc,sing,nomn; зернах=NOUN,inan,neut plur,loct; зерне=NOUN,inan,neut sing,loct
+ваниль: 5; ванильные=ADJF,Qual plur,nomn; ванили=NOUN,inan,femn sing,gent; ванильный=ADJF,Qual masc,sing,nomn; ваниль=NOUN,inan,femn sing,nomn; ванильное=ADJF,Qual neut,sing,nomn
+ягода: 4; ягодное=ADJF,Qual neut,sing,nomn; ягодный=ADJF,Qual masc,sing,nomn; ягода=NOUN,inan,femn sing,nomn; ягоды=NOUN,inan,femn sing,gent
+яблоко: 4; яблоко=NOUN,inan,neut sing,nomn; яблочный=ADJF,Qual masc,sing,nomn; яблоком=NOUN,inan,neut sing,ablt; яблоки=NOUN,inan,neut plur,nomn
+чёрный: 4; чёрные=NOUN,anim,masc plur,nomn; черная=ADJF,Qual femn,sing,nomn; черный=NOUN,anim,masc sing,nomn; черные=NOUN,anim,masc plur,nomn
+традиция: 4; традиционный=ADJF masc,sing,nomn; традиционное=ADJF neut,sing,nomn; традиционные=ADJF inan,plur,accs; традиционная=ADJF femn,sing,nomn
+рассол: 4; рассоле=NOUN,inan,masc sing,loct; рассольный=ADJF,Qual masc,sing,nomn; рассол=NOUN,inan,masc sing,nomn; рассола=NOUN,inan,masc sing,gent
+печень: 4; печенью=NOUN,inan,femn sing,ablt; печени=NOUN,inan,femn sing,loct; печеночный=ADJF,Qual masc,sing,nomn; печень=NOUN,inan,femn sing,nomn
+перец: 4; перцев=NOUN,inan,masc plur,gent; перец=NOUN,inan,masc sing,nomn; перечный=ADJF,Qual masc,sing,nomn; перцем=NOUN,inan,masc sing,ablt
+молоко: 4; молочный=ADJF,Qual masc,sing,nomn; молоко=NOUN,inan,neut,Sgtm sing,nomn; молоком=NOUN,inan,neut,Sgtm sing,ablt; молочная=ADJF,Qual femn,sing,nomn
+лес: 4; лесное=ADJF neut,sing,nomn; лесные=ADJF plur,nomn; лесным=ADJF masc,sing,ablt; лесной=ADJF masc,sing,nomn
+кукуруза: 4; кукурузные=ADJF,Qual plur,nomn; кукурузное=ADJF,Qual neut,sing,nomn; кукурузная=ADJF,Qual femn,sing,nomn; кукуруза=NOUN,inan,femn sing,nomn
+красный: 4; красная=ADJF,Qual femn,sing,nomn; красном=NOUN,anim,masc sing,loct; красного=NOUN,anim,masc sing,gent; красный=NOUN,anim,masc sing,nomn
+краб: 4; крабовое=ADJF,Qual neut,sing,nomn; краб=NOUN,anim,masc sing,nomn; крабовые=ADJF,Qual plur,nomn; крабовый=ADJF,Qual masc,sing,nomn
+зелёный: 4; зеленая=ADJF,Qual femn,sing,nomn; зеленые=ADJF,Qual plur,nomn; зеленое=ADJF,Qual neut,sing,nomn; зеленый=ADJF,Qual masc,sing,nomn
+гриб: 4; грибное=ADJF neut,sing,nomn; грибами=NOUN,inan,masc plur,ablt; грибной=ADJF masc,sing,nomn; грибы=NOUN,inan,masc plur,nomn
+вафля: 4; вафельная=ADJF,Qual femn,sing,nomn; вафельном=ADJF,Qual masc,sing,loct; вафли=NOUN,inan,femn sing,gent; вафельные=ADJF,Qual plur,nomn
+апельсин: 4; апельсина=NOUN,inan,masc sing,gent; апельсины=NOUN,inan,masc plur,nomn; апельсин=NOUN,inan,masc sing,nomn; апельсиновый=ADJF masc,sing,nomn
+яйцо: 3; яичная=ADJF,Qual femn,sing,nomn; яйцо=NOUN,inan,neut sing,nomn; яйце=NOUN,inan,neut sing,loct
+шашлык: 3; шашлык=NOUN,inan,masc sing,nomn; шашлыка=NOUN,inan,masc sing,gent; шашлычный=ADJF,Qual masc,sing,nomn
+чеснок: 3; чесноком=NOUN,inan,masc sing,ablt; чеснок=NOUN,inan,masc sing,nomn; чесночный=ADJF,Qual masc,sing,nomn
+цыплёнок: 3; цыпленок=NOUN,anim,masc sing,nomn; цыплёнок=NOUN,anim,masc sing,nomn; цыпленка=NOUN,anim,masc sing,gent
+цельный: 3; цельным=ADJF,Qual masc,sing,ablt; цельное=ADJF,Qual neut,sing,nomn; цельный=ADJF,Qual masc,sing,nomn
+фисташка: 3; фисташковый=ADJF masc,sing,nomn; фисташки=NOUN,inan,femn sing,gent; фисташка=NOUN,inan,femn sing,nomn
+трава: 3; травы=NOUN,inan,femn sing,gent; травяной=ADJF masc,sing,nomn; травами=NOUN,inan,femn plur,ablt
+столица: 3; столичная=ADJF,Qual femn,sing,nomn; столичное=ADJF,Qual neut,sing,nomn; столичный=ADJF,Qual masc,sing,nomn
+соус: 3; соусом=NOUN,inan,masc sing,ablt; соусе=NOUN,inan,masc sing,loct; соус=NOUN,inan,masc sing,nomn
+солёный: 3; соленые=ADJF,Qual plur,nomn; соленый=ADJF,Qual masc,sing,nomn; соленая=ADJF,Qual femn,sing,nomn
+сладкий: 3; сладкий=ADJF,Qual masc,sing,nomn; сладко=ADJS,Qual neut,sing; сладкая=ADJF,Qual femn,sing,nomn
+рыба: 3; рыбы=NOUN,anim,femn sing,gent; рыба=NOUN,anim,femn sing,nomn; рыбные=ADJF,Qual plur,nomn
+пшеница: 3; пшеница=NOUN,inan,femn sing,nomn; пшеничные=ADJF,Qual plur,nomn; пшеничная=ADJF,Qual femn,sing,nomn
+пирожное: 3; пирожных=NOUN,inan,neut plur,gent; пирожные=NOUN,inan,neut plur,nomn; пирожное=NOUN,inan,neut sing,nomn
+персик: 3; персики=NOUN,inan,masc plur,nomn; персика=NOUN,inan,masc sing,gent; персик=NOUN,inan,masc sing,nomn
+панировка: 3; панировке=NOUN,inan,femn sing,datv; панировочные=ADJF plur,nomn; панировочная=ADJF femn,sing,nomn
+отборный: 3; отборной=ADJF,Qual femn,sing,gent; отборные=ADJF,Qual plur,nomn; отборное=ADJF,Qual neut,sing,nomn
+олива: 3; оливковый=ADJF,Qual masc,sing,nomn; оливковое=ADJF,Qual neut,sing,nomn; олив=NOUN,inan,femn plur,gent
+овёс: 3; овсяная=ADJF,Qual femn,sing,nomn; овсяные=ADJF,Qual plur,nomn; овсяный=ADJF,Qual masc,sing,nomn
+натуральный: 3; натуральный=ADJF,Qual masc,sing,nomn; натуральная=ADJF,Qual femn,sing,nomn; натуральным=ADJF,Qual masc,sing,ablt
+мор: 3; морские=ADJF plur,nomn; морской=ADJF femn,sing,gent; морская=ADJF femn,sing,nomn
+морковь: 3; морковные=ADJF,Qual plur,nomn; морковью=NOUN,inan,femn sing,ablt; морковь=NOUN,inan,femn sing,nomn
+молотый: 3; молотая=ADJF,Qual femn,sing,nomn; молотого=ADJF,Qual masc,sing,gent; молотый=ADJF,Qual masc,sing,nomn
+миндаль: 3; миндалем=NOUN,inan,masc sing,ablt; миндальный=ADJF,Qual masc,sing,nomn; миндаль=NOUN,inan,masc sing,nomn
+масло: 3; масляная=ADJF,Qual femn,sing,nomn; масле=NOUN,inan,neut sing,loct; масло=NOUN,inan,neut sing,nomn
+мармелад: 3; мармелад=NOUN,inan,masc sing,nomn; мармелада=NOUN,inan,masc sing,gent; мармеладные=ADJF plur,nomn
+майонез: 3; майонезном=ADJF masc,sing,loct; майонез=NOUN,inan,masc sing,nomn; майонезный=ADJF masc,sing,nomn
+лепёшка: 3; лепёшки=NOUN,inan,femn sing,gent; лепешка=NOUN,inan,femn sing,nomn; лепешки=NOUN,inan,femn sing,gent
+леденец: 3; леденцовый=ADJF masc,sing,nomn; леденцы=NOUN,inan,masc plur,nomn; леденцовая=ADJF femn,sing,nomn
+кусочек: 3; кусочками=NOUN,inan,masc plur,ablt; кусочках=NOUN,inan,masc plur,loct; кусочки=NOUN,inan,masc plur,accs
+конфета: 3; конфет=NOUN,inan,femn plur,gent; конфета=NOUN,inan,femn sing,nomn; конфеты=NOUN,inan,femn sing,gent
+кокос: 3; кокосовая=ADJF,Qual femn,sing,nomn; кокос=NOUN,inan,masc sing,nomn; кокоса=NOUN,inan,masc sing,gent
+клубника: 3; клубника=NOUN,inan,femn sing,nomn; клубники=NOUN,inan,femn sing,gent; клубничное=ADJF,Qual neut,sing,nomn
+классицизм: 3; классическая=ADJF femn,sing,nomn; классические=ADJF plur,nomn; классический=ADJF masc,sing,nomn
+картофель: 3; картофелем=NOUN,inan,masc sing,ablt; картофель=NOUN,inan,masc sing,nomn; картофельные=ADJF plur,nomn
+капуста: 3; капуста=NOUN,inan,femn sing,nomn; капустные=ADJF,Qual plur,nomn; капусты=NOUN,inan,femn sing,gent
+жёлтый: 3; желтая=ADJF,Qual femn,sing,nomn; жёлтый=ADJF,Qual masc,sing,nomn; желтый=ADJF,Qual masc,sing,nomn
+греческий: 3; греческая=ADJF femn,sing,nomn; греческого=ADJF neut,sing,gent; греческие=ADJF plur,nomn
+вкус: 3; вкус=NOUN,inan,masc sing,accs; вкуса=NOUN,inan,masc sing,gent; вкусом=NOUN,inan,masc sing,ablt
+вишня: 3; вишневое=ADJF,Qual neut,sing,nomn; вишня=NOUN,inan,femn sing,nomn; вишней=NOUN,inan,femn sing,ablt
+витамин: 3; витамины=NOUN,inan,masc plur,nomn; витаминный=ADJF,Qual masc,sing,nomn; витаминов=NOUN,inan,masc plur,gent
+вино: 3; вина=NOUN,inan,neut sing,gent; винный=ADJF,Qual masc,sing,nomn; вино=NOUN,inan,neut sing,nomn
+взбитый: 3; взбитыми=PRTF,perf,tran,past,pssv plur,ablt; взбитой=PRTF,perf,tran,past,pssv femn,sing,gent; взбитый=PRTF,perf,tran,past,pssv masc,sing,nomn
+в зерно: 3; в зернах=NOUN,inan,neut plur,loct?; в зёрнах=NOUN,inan,neut plur,loct?; в зерне=NOUN,inan,neut sing,loct?
+белый: 3; белыми=ADJF,Qual plur,ablt; белая=ADJF,Qual femn,sing,nomn; белый=ADJF,Qual masc,sing,nomn
+баклажан: 3; баклажан=NOUN,inan,masc sing,nomn; баклажанов=NOUN,inan,masc plur,gent; баклажаны=NOUN,inan,masc plur,nomn
+кофе: 3; Кофе=NOUN,inan,masc,Fixd sing,ablt; кофе=NOUN,inan,masc,Fixd sing,ablt; кофейный=ADJF masc,sing,nomn
+янтарь: 2; янтарная=ADJF,Qual femn,sing,nomn; янтарный=ADJF,Qual masc,sing,nomn
+элита: 2; элит=NOUN,inan,femn plur,gent; элитный=ADJF,Qual masc,sing,nomn
+штрудель: 2; штрудели=NOUN,inan,masc plur,nomn; штрудель=NOUN,inan,masc sing,nomn
+шпинат: 2; шпинат=NOUN,inan,masc sing,nomn; шпинатом=NOUN,inan,masc sing,ablt
+шампиньон: 2; шампиньон=NOUN,inan,masc sing,nomn; шампиньоны=NOUN,inan,masc plur,nomn
+чебурек: 2; чебурек=NOUN,inan,masc sing,nomn; чебуреки=NOUN,inan,masc plur,nomn
+цейлон: 2; цейлон=NOUN,inan,masc,Geox sing,nomn; цейлона=NOUN,inan,masc,Geox sing,gent
+хрен: 2; хреном=NOUN,inan,masc sing,ablt; хрен=NOUN,inan,masc sing,nomn
+холод: 2; холодный=ADJF,Qual masc,sing,nomn; холод=NOUN,inan,masc sing,nomn
+хлеб: 2; хлебные=ADJF,Qual plur,nomn; хлеб=NOUN,inan,masc sing,accs
+фундук: 2; фундук=NOUN,inan,masc sing,nomn; фундуком=NOUN,inan,masc sing,ablt
+фруктоза: 2; фруктоза=NOUN,inan,femn sing,nomn; фруктозе=NOUN,inan,femn sing,datv
+фарш: 2; фарш=NOUN,inan,masc sing,nomn; фарша=NOUN,inan,masc sing,gent
+универсальный: 2; универсальный=ADJF,Qual masc,sing,nomn; универсальная=ADJF,Qual femn,sing,nomn
+укроп: 2; укропом=NOUN,inan,masc sing,ablt; укроп=NOUN,inan,masc sing,nomn
+тыква: 2; тыквенные=ADJF,Qual plur,nomn; тыква=NOUN,inan,femn sing,nomn
+треск: 2; трески=NOUN,inan,masc plur,nomn; треска=NOUN,inan,masc sing,gent
+торт: 2; торта=NOUN,inan,masc sing,gent; торт=NOUN,inan,masc sing,nomn
+телёнок: 2; телячья=ADJF,Poss femn,sing,nomn; телячьи=ADJF,Poss plur,nomn
+телятина: 2; телятина=NOUN,inan,femn sing,nomn; телятиной=NOUN,inan,femn sing,ablt
+твёрдый: 2; тверд=ADJS,Qual masc,sing; твердый=ADJF,Qual masc,sing,nomn
+сырок: 2; сырки=NOUN,anim,masc plur,nomn; сырок=NOUN,anim,masc sing,nomn
+сушка: 2; сушка=NOUN,inan,femn sing,nomn; сушки=NOUN,inan,femn sing,gent
+сушёный: 2; сушеный=ADJF masc,sing,nomn; сушеные=ADJF plur,nomn
+стол: 2; стол=NOUN,inan,masc sing,accs; столовый=ADJF masc,sing,nomn
+стерилизованный: 2; стерилизованное=PRTF,perf,tran,past,pssv neut,sing,nomn; стерилизованные=PRTF,perf,tran,past,pssv plur,nomn
+среда: 2; среде=NOUN,inan,femn sing,loct; сред=NOUN,inan,femn plur,gent
+сосиска: 2; сосиска=NOUN,inan,femn sing,nomn; сосиски=NOUN,inan,femn sing,gent
+соль: 2; солью=NOUN,inan,femn sing,ablt; соль=NOUN,inan,femn sing,nomn
+сок: 2; соком=NOUN,inan,masc sing,ablt; соке=NOUN,inan,masc sing,loct
+сметана: 2; сметанный=ADJF,Qual masc,sing,nomn; сметана=NOUN,inan,femn sing,nomn
+слив: 2; слива=NOUN,inan,masc sing,gent; слив=NOUN,inan,masc sing,nomn
+слайс: 2; слайсы=NOUN,anim,masc,Name plur,nomn?; слайс=NOUN,anim,masc,Name sing,nomn?
+сироп: 2; сиропе=NOUN,inan,masc sing,loct; сироп=NOUN,inan,masc sing,nomn
+сердце: 2; сердце=NOUN,inan,neut sing,nomn; сердцем=NOUN,inan,neut sing,ablt
+сельдь: 2; сельдь=NOUN,inan,femn sing,nomn; сельди=NOUN,inan,femn sing,gent
+север: 2; севере=NOUN,inan,masc sing,loct; северная=ADJF,Qual femn,sing,nomn
+сгущённый: 2; сгущенное=PRTF,perf,tran,past,pssv neut,sing,nomn; сгущённое=PRTF,perf,tran,past,pssv neut,sing,nomn
+сардина: 2; сардина=NOUN,anim,femn sing,nomn; сардины=NOUN,anim,femn sing,gent
+с сахар: 2; с сахаром=NOUN,inan,masc sing,ablt?; с сахара=NOUN,inan,masc sing,gent?
+русский: 2; русская=ADJF,Subx femn,sing,nomn; русские=ADJF,Subx plur,nomn
+российский: 2; российской=ADJF femn,sing,gent; российский=ADJF masc,sing,nomn
+рожок: 2; рожок=NOUN,inan,masc sing,nomn; рожки=NOUN,inan,masc plur,nomn
+рис: 2; рисовая=ADJF,Qual femn,sing,nomn; рисом=NOUN,inan,masc sing,ablt
+рожь: 2; ржаная=ADJF femn,sing,nomn; ржаные=ADJF plur,nomn
+птица: 2; птицы=NOUN,anim,femn plur,nomn; птичье=ADJF,Poss neut,sing,nomn
+половинка: 2; половинка=NOUN,inan,femn sing,nomn; половинки=NOUN,inan,femn sing,gent
+подсолнечник: 2; подсолнечника=NOUN,inan,masc sing,gent; подсолнечная=ADJF femn,sing,nomn
+пища: 2; пищевой=ADJF femn,sing,gent; пищевая=ADJF femn,sing,nomn
+пицца: 2; пиццы=NOUN,inan,femn,Sgtm sing,gent; пицца=NOUN,inan,femn,Sgtm sing,nomn
+перепел: 2; перепелиное=ADJF neut,sing,nomn; перепел=NOUN,anim,masc sing,nomn
+паста: 2; паст=NOUN,inan,femn plur,gent; паста=NOUN,inan,femn sing,nomn
+палтус: 2; палтуса=NOUN,anim,masc sing,gent; палтус=NOUN,anim,masc sing,nomn
+палочка: 2; палочке=NOUN,inan,femn sing,loct; палочки=NOUN,inan,femn sing,gent
+пакет: 2; пакетах=NOUN,inan,masc plur,loct; пакете=NOUN,inan,masc sing,loct
+охотник: 2; охотничий=ADJF,Poss masc,sing,nomn; охотничьи=ADJF,Poss plur,nomn
+охлаждённый: 2; охлажденная=PRTF,perf,tran,past,pssv femn,sing,nomn; охлажденные=PRTF,perf,tran,past,pssv plur,nomn
+острый: 2; острая=ADJF,Qual femn,sing,nomn; острый=ADJF,Qual masc,sing,nomn
+основа: 2; основа=NOUN,inan,femn sing,nomn; основе=NOUN,inan,femn sing,loct
+осётр: 2; осетровая=ADJF,Qual femn,sing,nomn; осетр=NOUN,anim,masc sing,nomn
+оригинал: 2; оригинальная=ADJF,Qual femn,sing,nomn; оригинальный=ADJF,Qual masc,sing,nomn
+окорок: 2; окорока=NOUN,inan,masc sing,gent; окороком=NOUN,inan,masc sing,ablt
+обед: 2; обед=NOUN,inan,masc sing,accs; обеда=NOUN,inan,masc sing,gent
+нежный: 2; нежный=ADJF,Qual masc,sing,nomn; нежная=ADJF,Qual femn,sing,nomn
+мука: 2; мука=NOUN,inan,femn sing,nomn; мучная=ADJF femn,sing,nomn
+моцарелла: 2; моцареллой=NOUN,anim,femn,Name sing,ablt?; моцарелла=NOUN,inan,femn sing,nomn?
+молодые: 2; молодые=NOUN,anim,GNdr,Pltm plur,nomn; молодых=NOUN,anim,GNdr,Pltm plur,loct
+мойва: 2; мойва=NOUN,anim,femn sing,nomn; мойвы=NOUN,anim,femn sing,gent
+минтай: 2; минтая=NOUN,anim,masc sing,gent; минтай=NOUN,anim,masc sing,nomn
+мексиканский: 2; мексиканская=ADJF femn,sing,nomn; мексиканский=ADJF masc,sing,nomn
+маринованный: 2; маринованный=PRTF,impf,tran,past,pssv,Adjx masc,sing,nomn; маринованные=PRTF,impf,tran,past,pssv,Adjx plur,nomn
+маринад: 2; маринад=NOUN,inan,masc sing,nomn; маринаде=NOUN,inan,masc sing,loct
+малина: 2; малина=NOUN,inan,femn sing,nomn; малины=NOUN,inan,femn sing,gent
+макароны: 2; макароны=NOUN,inan,GNdr,Pltm plur,nomn; макаронные=ADJF,Qual plur,nomn
+лук: 2; луковый=ADJF,Qual masc,sing,nomn; луком=NOUN,inan,masc sing,ablt
+лосось: 2; лососем=NOUN,anim,masc sing,ablt; лосось=NOUN,anim,masc sing,nomn
+лосось и лосось: 2; лососевые=ADJF,Qual plur,nomn; лососевая=ADJF,Qual femn,sing,nomn
+лопатка: 2; лопатка=NOUN,inan,femn sing,nomn; лопатки=NOUN,inan,femn sing,gent
+ломтик: 2; ломтик=NOUN,inan,masc sing,nomn; ломтики=NOUN,inan,masc plur,nomn
+лист: 2; лист=NOUN,inan,masc sing,nomn; листовой=ADJF masc,sing,nomn
+лапша: 2; лапша=NOUN,inan,femn sing,nomn; лапши=NOUN,inan,femn sing,gent
+лайм: 2; лайма=NOUN,inan,masc sing,gent; лайм=NOUN,inan,masc sing,nomn
+кунжут: 2; кунжутом=NOUN,inan,masc sing,ablt; кунжут=NOUN,inan,masc sing,nomn
+круассан: 2; круассан=NOUN,inan,masc sing,nomn?; круассаны=NOUN,inan,masc plur,nomn?
+крем: 2; крем=NOUN,inan,masc sing,nomn; кремом=NOUN,inan,masc sing,ablt
+крекер: 2; крекеры=NOUN,inan,masc plur,nomn; крекер=NOUN,inan,masc sing,nomn
+креветка: 2; креветки=NOUN,anim,femn plur,nomn; креветка=NOUN,anim,femn sing,nomn
+котлета: 2; котлеты=NOUN,inan,femn sing,gent; котлета=NOUN,inan,femn sing,nomn
+корж: 2; корж=NOUN,inan,masc sing,nomn; коржи=NOUN,inan,masc plur,nomn
+копчёный: 2; копченым=ADJF masc,sing,ablt; копченый=ADJF masc,sing,nomn
+колбаска: 2; колбаски=NOUN,inan,femn sing,gent; колбаска=NOUN,inan,femn sing,nomn
+колбаса: 2; колбаса=NOUN,inan,femn sing,nomn; колбасу=NOUN,inan,femn sing,accs
+коктейль: 2; коктейльные=ADJF plur,nomn; коктейль=NOUN,inan,masc sing,accs
+клюква: 2; клюквенный=ADJF,Qual masc,sing,nomn; клюква=NOUN,inan,femn sing,nomn
+кефир: 2; кефир=NOUN,inan,masc sing,nomn; кефирный=ADJF,Qual masc,sing,nomn
+кедр: 2; кедровые=ADJF,Qual plur,nomn; кедровый=ADJF,Qual masc,sing,nomn
+капсула: 2; капсулы=NOUN,inan,femn sing,gent; капсулах=NOUN,inan,femn plur,loct
+кабачок: 2; кабачки=NOUN,inan,masc plur,nomn; кабачков=NOUN,inan,masc plur,gent
+йогурт: 2; йогуртовый=ADJF masc,sing,nomn?; йогурт=NOUN,inan,masc sing,nomn
+итальянский: 2; итальянские=ADJF plur,nomn; итальянская=ADJF femn,sing,nomn
+индейка: 2; индейки=NOUN,anim,femn sing,gent; индейка=NOUN,anim,femn sing,nomn
+икра: 2; икорное=ADJF,Qual neut,sing,nomn; икра=NOUN,inan,femn sing,nomn
+изюм: 2; изюмом=NOUN,inan,masc sing,ablt; изюм=NOUN,inan,masc sing,nomn
+изделие: 2; изделия=NOUN,inan,neut sing,gent; изделие=NOUN,inan,neut sing,nomn
+золото: 2; золотая=ADJF femn,sing,nomn; золото=NOUN,inan,neut,Sgtm sing,nomn
+злак: 2; злаки=NOUN,inan,masc plur,nomn; злака=NOUN,inan,masc sing,gent
+зернистый: 2; зернистая=ADJF,Qual femn,sing,nomn; зернистый=ADJF,Qual masc,sing,nomn
+зелень: 2; зелень=NOUN,inan,femn sing,nomn; зеленью=NOUN,inan,femn sing,ablt
+завтрак: 2; завтрак=NOUN,inan,masc sing,nomn; завтрака=NOUN,inan,masc sing,gent
+жемчужина: 2; жемчужины=NOUN,inan,femn sing,gent; жемчужина=NOUN,inan,femn sing,nomn
+желе: 2; желейный=ADJF,Qual masc,sing,nomn; желе=NOUN,inan,neut,Fixd sing,nomn
+жевательный: 2; жевательные=ADJF plur,nomn; жевательный=ADJF masc,sing,nomn
+жасмин: 2; жасмином=NOUN,inan,masc sing,ablt; жасмин=NOUN,inan,masc sing,nomn
+дрожжи: 2; дрожжи=NOUN,inan,GNdr,Pltm plur,accs; дрожжевое=ADJF neut,sing,nomn
+дом: 2; домашний=ADJF masc,sing,nomn; домашнему=ADJF masc,sing,datv
+долька: 2; долек=NOUN,inan,femn plur,gent; дольки=NOUN,inan,femn sing,gent
+доктор: 2; докторская=ADJF femn,sing,nomn; докторские=ADJF plur,nomn
+десерт: 2; десертная=ADJF,Qual femn,sing,nomn; десерт=NOUN,inan,masc sing,nomn
+деревня: 2; деревенское=ADJF neut,sing,nomn; деревенский=ADJF masc,sing,nomn
+деликатес: 2; деликатесная=ADJF femn,sing,nomn; деликатесный=ADJF masc,sing,nomn
+дальневосточный: 2; дальневосточные=ADJF plur,nomn; дальневосточный=ADJF masc,sing,nomn
+густой: 2; густо=ADJS,Qual neut,sing; густой=ADJF,Qual masc,sing,nomn
+гусь: 2; гусь=NOUN,anim,masc sing,nomn; гусиной=ADJF,Qual femn,sing,gent
+гречневый: 2; гречневые=ADJF,Qual plur,nomn; гречневая=ADJF,Qual femn,sing,nomn
+грецкий: 2; грецкий=ADJF masc,sing,nomn; грецким=ADJF masc,sing,ablt
+грейпфрут: 2; грейпфрут=NOUN,inan,masc sing,nomn; грейпфруты=NOUN,inan,masc plur,nomn
+гранат: 2; гранат=NOUN,inan,masc sing,nomn; гранаты=NOUN,inan,masc plur,nomn
+горошек: 2; горошек=NOUN,inan,masc sing,nomn; горошком=NOUN,inan,masc sing,ablt
+горох: 2; гороховый=ADJF,Qual masc,sing,nomn; горох=NOUN,inan,masc sing,nomn
+глазурь: 2; глазури=NOUN,inan,femn sing,gent; глазурь=NOUN,inan,femn sing,nomn
+водоросль: 2; водоросль=NOUN,inan,femn sing,nomn; водоросли=NOUN,inan,femn sing,gent
+ветчина: 2; ветчиной=NOUN,inan,femn sing,ablt; ветчина=NOUN,inan,femn sing,nomn
+вермишель: 2; вермишелью=NOUN,inan,femn sing,ablt; вермишель=NOUN,inan,femn sing,accs
+венский: 2; венский=ADJF masc,sing,nomn; венские=ADJF plur,nomn
+варёный: 2; вареная=ADJF femn,sing,nomn; вареные=ADJF plur,nomn
+ванилин: 2; ванилином=NOUN,inan,masc sing,ablt; ванилин=NOUN,inan,masc sing,nomn
+в пакет: 2; в пакете=NOUN,inan,masc sing,loct?; в пакетах=NOUN,inan,masc plur,loct?
+в кусочки: 2; в кусочках=NOUN,inan,GNdr,Pltm plur,loct?; в кусочки=NOUN,inan,GNdr,Pltm plur,accs?
+бычок: 2; бычки=NOUN,anim,masc plur,nomn; бычков=NOUN,anim,masc plur,gent
+булочка: 2; булочка=NOUN,inan,femn sing,nomn; булочки=NOUN,inan,femn sing,gent
+батончик: 2; батончик=NOUN,inan,masc sing,nomn; батончики=NOUN,inan,masc plur,nomn
+барбарис: 2; барбарис=NOUN,inan,masc sing,nomn; барбарисовый=ADJF masc,sing,nomn
+баранина: 2; баранина=NOUN,inan,femn sing,nomn; бараниной=NOUN,inan,femn sing,ablt
+банан: 2; банан=NOUN,inan,masc sing,nomn; бананы=NOUN,inan,masc plur,nomn
+бальзам: 2; бальзам=NOUN,inan,masc sing,nomn; бальзамический=ADJF masc,sing,nomn
+балык: 2; балык=NOUN,inan,masc sing,nomn; балыковая=ADJF,Qual femn,sing,nomn
+аромат: 2; ароматом=NOUN,inan,masc sing,ablt; аромат=NOUN,inan,masc sing,nomn
+арахис: 2; арахисом=NOUN,inan,masc sing,ablt; арахис=NOUN,inan,masc sing,nomn
+анчоус: 2; анчоусом=NOUN,inan,masc sing,ablt; анчоус=NOUN,inan,masc sing,nomn
+ананас: 2; ананас=NOUN,inan,masc sing,nomn; ананасы=NOUN,inan,masc plur,nomn
+аджика: 2; аджике=NOUN,inan,femn sing,datv; аджика=NOUN,inan,femn sing,nomn
+абрикос: 2; абрикос=NOUN,inan,masc sing,nomn; абрикосы=NOUN,inan,masc plur,nomn
+хлебец: 2; хлебцы=NOUN,inan,masc plur,nomn; Хлебцы=NOUN,inan,masc plur,nomn
+ячневый: 1; ячневая=ADJF,Qual femn,sing,nomn
+якобс: 1; якобс=NOUN,inan,masc sing,nomn?
+язык: 1; язык=NOUN,inan,masc sing,accs
+ядрица: 1; ядрица=NOUN,inan,femn sing,nomn
+ядрёный: 1; ядреный=ADJF,Qual masc,sing,nomn
+ягодник: 1; ягодник=NOUN,anim,masc sing,nomn
+ягнятина: 1; ягнятина=NOUN,inan,femn sing,nomn
+яблоко груш: 1; яблоко груша=NOUN,anim,masc,Name sing,gent?
+ябл/гранат/черноплый: 1; ябл/гранат/чернопл=ADJS,Qual masc,sing?
+ябл/виноград: 1; ябл/виноград=NOUN,inan,masc sing,nomn?
+ябл гранат черноплый: 1; ябл гранат чернопл=ADJS,Qual masc,sing?
+ябл виноград: 1; ябл виноград=NOUN,inan,masc sing,nomn?
+юна-наня: 1; юн-нань=NOUN,anim,femn,Name plur,gent?
+юн наня: 1; юн нань=NOUN,anim,femn,Name plur,gent?
+эффект: 1; эффективный=ADJF,Qual masc,sing,nomn
+эспрессо: 1; эспрессо=NOUN,inan,neut,Fixd sing,nomn?
+эскимо: 1; эскимо=NOUN,inan,neut,Fixd sing,nomn
+эскалоп: 1; эскалоп=NOUN,inan,masc sing,nomn
+энергия: 1; энергетический=ADJF masc,sing,nomn
+эмменталь: 1; эмменталь=NOUN,inan,femn sing,nomn?
+эмменталер: 1; эмменталер=NOUN,inan,masc sing,nomn?
+экстра: 1; экстра=NOUN,inan,femn sing,nomn
+эклер: 1; эклеры=NOUN,inan,masc plur,nomn
+эда: 1; эдам=NOUN,anim,femn,Name plur,datv
+щука: 1; щука=NOUN,anim,femn sing,nomn
+щербета: 1; щербет=NOUN,inan,femn plur,gent?
+щавель: 1; щавель=NOUN,inan,masc sing,nomn
+шпроты: 1; шпроты=NOUN,inan,GNdr,Pltm plur,accs
+шпикачка: 1; шпикачки=NOUN,inan,femn sing,gent?
+шоколадка: 1; шоколадка=NOUN,inan,femn sing,nomn
+шоколад/лесный: 1; шоколад/лесной=ADJF,Qual femn,sing,gent?
+шоколад лесный: 1; шоколад лесной=ADJF,Qual femn,sing,gent?
+шницель: 1; шницель=NOUN,inan,masc sing,nomn
+шлиф: 1; шлиф=NOUN,inan,masc sing,nomn
+шиповник: 1; шиповник=NOUN,inan,masc sing,nomn
+шербет: 1; шербет=NOUN,inan,masc sing,nomn
+шейкер: 1; шейкер=NOUN,inan,masc sing,nomn
+швейцар: 1; швейцарский=ADJF masc,sing,nomn
+шведский: 1; шведские=ADJF plur,nomn
+шарик: 1; шарики=NOUN,inan,masc plur,nomn
+шампанское: 1; шампанское=NOUN,inan,neut sing,nomn
+чудо: 1; чудо=NOUN,inan,neut sing,nomn
+чильеджин: 1; чильеджина=NOUN,inan,masc sing,gent?
+чили: 1; чили=NOUN,inan,neut,Sgtm,Fixd,Geox sing,gent
+чизкейк: 1; чизкейк=NOUN,inan,masc sing,nomn?
+чиз-кейк: 1; чиз-кейк=NOUN,inan,masc sing,nomn?
+чиз кейк: 1; чиз кейк=NOUN,inan,masc sing,nomn?
+чечил-спагетти: 1; чечил-спагетти=NOUN,inan,neut,Sgtm,Fixd sing,nomn?
+чечил спагетти: 1; чечил спагетти=NOUN,inan,neut,Sgtm,Fixd sing,nomn?
+чечивший: 1; чечил=VERB,perf,tran masc,sing,past,indc?
+чечевица: 1; чечевица=NOUN,inan,femn sing,nomn
+черри: 1; черри=NOUN,anim,masc,Fixd,Name sing,nomn?
+чернослив: 1; чернослив=NOUN,inan,masc sing,nomn
+черноплый: 1; чернопл=ADJS,Qual masc,sing?
+черноголовка: 1; черноголовки=NOUN,inan,femn,Sgtm,Geox sing,gent
+черника: 1; черника=NOUN,inan,femn sing,nomn
+черна: 1; черн=NOUN,inan,femn plur,gent?
+черешня: 1; черешня=NOUN,inan,femn sing,nomn
+червячок: 1; червячки=NOUN,anim,masc plur,nomn
+чебуречка: 1; чебуречки=NOUN,inan,femn sing,gent?
+чашка: 1; чашке=NOUN,inan,femn sing,loct
+чахохбили: 1; чахохбили=NOUN,inan,neut,Fixd sing,nomn
+часть: 1; часть=NOUN,inan,femn sing,nomn
+часар: 1; часар=NOUN,anim,masc,Name sing,nomn?
+чай: 1; чайный=ADJF,Qual masc,sing,nomn
+чабрец: 1; чабрецом=NOUN,inan,masc sing,ablt
+цыпленок-по: 1; цыпленок-по=PREP?
+цыпленок пый: 1; цыпленок по=ADJS,Qual neut,sing?
+цитрус: 1; цитрус=NOUN,inan,masc sing,nomn
+циновка: 1; циновка=NOUN,inan,femn sing,nomn
+цикорий: 1; цикорий=NOUN,inan,masc sing,nomn
+цельнозерновый: 1; цельнозерновой=ADJF femn,sing,gent?
+целое: 1; целые=NOUN,inan,neut plur,nomn
+цейлонский: 1; цейлонский=ADJF masc,sing,nomn
+цезарь: 1; цезарь=NOUN,anim,masc sing,nomn
+цвета: 1; цветочный=ADJF,Qual masc,sing,nomn
+цветной: 1; цветная=ADJF femn,sing,nomn
+хурма: 1; хурма=NOUN,inan,femn sing,nomn
+хрустящий: 1; хрустящ=ADJS masc,sing?
+хруст: 1; хруст=NOUN,inan,masc sing,nomn
+холодец: 1; холодец=NOUN,inan,masc sing,nomn
+хмель-сунель: 1; хмели-сунели=NOUN,inan,masc plur,nomn?
+хмели сунеля: 1; хмели сунели=NOUN,anim,femn,Name sing,gent?
+хмель: 1; хмели=NOUN,inan,masc plur,nomn
+хлопья: 1; хлопья=NOUN,inan,GNdr,Pltm plur,accs
+хлебушек: 1; хлебушки=NOUN,inan,masc plur,nomn
+хинкали: 1; хинкали=NOUN,inan,neut,Fixd sing,nomn?
+харчо: 1; харчо=NOUN,inan,neut,Fixd sing,nomn
+халяль: 1; халяль=NOUN,anim,femn,Sgtm,Fixd,Name sing,nomn?
+халва: 1; халва=NOUN,inan,femn,Sgtm sing,nomn
+фэнтэзь: 1; фэнтэзи=NOUN,inan,femn sing,gent?
+фусилль: 1; фусилли=NOUN,inan,masc plur,nomn?
+фусиль: 1; фусили=NOUN,inan,femn sing,gent?
+фундук/изюм: 1; фундук/изюм=NOUN,inan,masc sing,nomn?
+фундук изюм: 1; фундук изюм=NOUN,inan,masc sing,nomn?
+фрута: 1; фрут=NOUN,inan,femn plur,gent?
+фрустайл: 1; фрустайл=NOUN,inan,masc sing,nomn?
+фрикаделька: 1; фрикадельки=NOUN,inan,femn sing,gent
+форма: 1; форме=NOUN,inan,femn sing,loct
+форель: 1; форель=NOUN,anim,femn sing,nomn
+фондь: 1; фондю=NOUN,anim,masc sing,datv?
+флоупак: 1; флоупак=NOUN,inan,masc sing,nomn?
+флаинг: 1; флаинг=NOUN,inan,masc sing,nomn?
+фито-мёд: 1; фито-мед=NOUN,inan,neut,Fixd sing,nomn?
+фито мёд: 1; фито мед=NOUN,inan,masc sing,nomn?
+фито: 1; фито=NOUN,inan,neut,Fixd sing,nomn?
+фитнесса: 1; фитнесс=NOUN,anim,femn,Name plur,gent?
+фитнес-линия: 1; фитнес-линия=NOUN,inan,masc sing,nomn?
+фитнес линия: 1; фитнес линия=NOUN,inan,femn sing,nomn?
+фитнес: 1; фитнес=NOUN,inan,masc sing,nomn
+финский: 1; финский=ADJF masc,sing,nomn
+финик: 1; финики=NOUN,inan,masc plur,nomn
+фильтр-пакет: 1; фильтр-пакете=NOUN,inan,masc sing,loct?
+фильтр пакет: 1; фильтр пакете=NOUN,inan,masc sing,loct?
+фильтр: 1; фильтр=NOUN,inan,masc sing,nomn
+филе-кусочек: 1; филе-кусочки=NOUN,inan,neut,Fixd plur,nomn?
+филе-кусок: 1; филе-кусок=NOUN,inan,neut,Fixd sing,nomn?
+филе-кус: 1; филе-кус=NOUN,inan,neut,Fixd sing,nomn?
+филе кусочек: 1; филе кусочки=NOUN,inan,masc plur,nomn?
+филе кусок: 1; филе кусок=NOUN,inan,masc sing,nomn?
+филе кус: 1; филе кус=NOUN,inan,masc sing,nomn?
+филе: 1; филе=NOUN,inan,neut,Fixd sing,nomn
+физалис: 1; физалис=NOUN,inan,masc sing,nomn
+фигурка: 1; фигурки=NOUN,inan,femn sing,gent
+феттучинивший: 1; феттучини=VERB,perf,tran sing,impr,excl?
+фетакса: 1; фетакса=NOUN,anim,femn sing,nomn?
+фестина: 1; фестино=NOUN,inan,masc sing,accs?
+фенхель: 1; фенхель=NOUN,inan,masc sing,nomn
+фасоль: 1; фасоль=NOUN,inan,femn sing,nomn
+фасованный: 1; фасованный=PRTF,impf,tran,past,pssv masc,sing,nomn
+фаршированный: 1; фаршированные=ADJF plur,nomn
+фарфалл: 1; фарфалле=NOUN,inan,masc sing,loct?
+фаланга: 1; фаланги=NOUN,inan,femn sing,gent
+ф/уп: 1; ф/уп=NOUN,inan,masc sing,nomn?
+ф уп: 1; ф уп=NOUN,inan,masc sing,nomn?
+утка: 1; утиный=ADJF,Qual masc,sing,nomn
+упаковка: 1; упаковка=NOUN,inan,femn sing,nomn
+ультрапастериза: 1; ультрапастериз=NOUN,inan,femn plur,gent?
+ультрапаста: 1; ультрапаст=NOUN,inan,femn plur,gent?
+улитка: 1; улитка=NOUN,inan,femn sing,nomn
+уксус: 1; уксус=NOUN,inan,masc sing,nomn
+удовольствие: 1; удовольствие=NOUN,inan,neut sing,accs
+тушка: 1; тушка=NOUN,inan,femn sing,nomn
+тушёный: 1; тушеная=ADJF femn,sing,nomn
+турок: 1; турки=NOUN,anim,masc plur,nomn
+тунец: 1; тунец=NOUN,anim,masc sing,nomn
+тудэй: 1; тудэй=NOUN,inan,masc,Sgtm,Geox sing,nomn?
+трюфель: 1; трюфели=NOUN,inan,masc plur,nomn
+трубочка: 1; трубочка=NOUN,inan,femn sing,nomn
+трубач: 1; трубач=NOUN,anim,masc sing,nomn
+тростник: 1; тростниковый=ADJF masc,sing,nomn
+трост: 1; трост=NOUN,inan,masc sing,nomn?
+триумф: 1; триумф=NOUN,inan,masc sing,nomn
+тостовыя: 1; тостовый=NOUN,inan,femn plur,gent?
+тортилья: 1; тортилья=NOUN,inan,femn sing,nomn?
+торт-рулет: 1; торт-рулет=NOUN,inan,masc sing,nomn?
+торт рулет: 1; торт рулет=NOUN,inan,masc sing,nomn?
+топлый: 1; топл=ADJS,Qual masc,sing?
+тоник: 1; тоник=NOUN,inan,masc sing,nomn
+томилинский: 1; томилинская=ADJF femn,sing,nomn?
+томат/соль: 1; томат/соль=NOUN,inan,femn sing,nomn?
+томат/сахар/соль: 1; томат/сахар/соль=NOUN,inan,femn sing,nomn?
+томат соль: 1; томат соль=NOUN,inan,femn sing,nomn?
+томат сахар соль: 1; томат сахар соль=NOUN,inan,femn sing,nomn?
+толстый: 1; толстый=ADJF,Qual masc,sing,nomn
+ткемали: 1; ткемали=NOUN,inan,neut,Fixd sing,nomn
+тихвинский: 1; тихвинский=ADJF masc,sing,nomn
+тирольский: 1; тирольский=ADJF masc,sing,nomn
+тирамис: 1; тирамису=NOUN,anim,masc,Name sing,datv?
+тимьян: 1; тимьян=NOUN,inan,masc sing,nomn
+тильзитер: 1; тильзитер=NOUN,inan,masc sing,nomn?
+тилапия: 1; тилапия=NOUN,inan,femn sing,nomn?
+тигр: 1; тигровые=ADJF,Qual plur,nomn
+тибоны: 1; тибон=NOUN,inan,GNdr,Pltm plur,gent?
+тесто: 1; тесто=NOUN,inan,neut sing,nomn
+тест: 1; теста=NOUN,inan,masc sing,gent
+террина: 1; террин=NOUN,anim,femn,Name plur,gent?
+термостат: 1; термостатный=ADJF masc,sing,nomn
+термы: 1; терм=NOUN,inan,GNdr,Pltm plur,gent
+терияк: 1; терияки=NOUN,anim,masc plur,nomn?
+тёмный: 1; темный=ADJF,Qual masc,sing,nomn
+творожок: 1; творожок=NOUN,inan,masc sing,nomn
+творож-йогуртный: 1; творож-йогуртный=ADJF masc,sing,nomn?
+творож йогуртный: 1; творож йогуртный=ADJF masc,sing,nomn?
+творожа: 1; творож=NOUN,inan,femn plur,gent?
+твор: 1; твор=NOUN,anim,masc sing,nomn?
+тархун: 1; тархун=NOUN,inan,masc sing,nomn
+тарелка: 1; тарелка=NOUN,inan,femn sing,nomn
+тазобедренный: 1; тазобедренная=ADJF femn,sing,nomn
+тайга: 1; таежный=ADJF,Qual masc,sing,nomn
+табак: 1; табака=NOUN,inan,masc sing,gent
+тrest: 1; тrest=UNKN?
+т/ст: 1; т/ст=NOUN,anim,masc sing,nomn?
+т ст: 1; т ст=NOUN,anim,masc sing,nomn?
+сюрприз: 1; сюрприз=NOUN,inan,masc sing,nomn
+сытный: 1; сытный=ADJF,Qual masc,sing,nomn
+сырок-суфле: 1; сырок-суфле=NOUN,anim,masc sing,nomn?
+сырок суфле: 1; сырок суфле=NOUN,inan,neut,Fixd sing,nomn?
+сырник: 1; сырники=NOUN,inan,masc plur,nomn
+сыворотка: 1; сыворотка=NOUN,inan,femn sing,nomn
+сыворот-мол: 1; сыворот-мол=NOUN,inan,masc sing,nomn?
+сыворот мол: 1; сыворот мол=NOUN,inan,masc sing,nomn?
+сыворота: 1; сыворот=NOUN,inan,GNdr,Pltm plur,gent?
+сушка-минь: 1; сушки-мини=NOUN,inan,femn plur,nomn?
+сушки минь: 1; сушки мини=NOUN,anim,masc,Name plur,nomn?
+суша-норь: 1; суши-нори=NOUN,inan,femn sing,gent?
+суши нори: 1; суши нори=NOUN,inan,masc,Sgtm,Fixd,Geox sing,nomn?
+суши: 1; суши=NOUN,inan,GNdr,Pltm,Fixd plur,ablt
+сухофрукты: 1; сухофруктов=NOUN,inan,GNdr,Pltm plur,gent
+сухарик: 1; сухарики=NOUN,inan,masc plur,nomn
+сухарь: 1; сухари=NOUN,inan,masc plur,nomn
+сухара: 1; сухар=NOUN,inan,femn plur,gent?
+суфле: 1; суфле=NOUN,inan,neut,Fixd sing,nomn
+суринявший: 1; сурими=VERB,perf,tran sing,impr,excl?
+суп: 1; суповой=ADJF masc,sing,nomn
+супергигант: 1; супергигант=NOUN,inan,masc sing,nomn?
+супер: 1; супер=ADJF,Fixd masc,sing,nomn
+суп-пюре: 1; суп-пюре=NOUN,inan,masc sing,nomn?
+суп пюре: 1; суп пюре=NOUN,inan,neut,Fixd sing,nomn?
+сунель: 1; сунели=NOUN,inan,femn sing,gent?
+сулугуни: 1; сулугуни=NOUN,inan,neut,Fixd sing,nomn
+судак: 1; судак=NOUN,anim,masc sing,nomn
+сублимированный: 1; сублимированный=PRTF,perf,tran,past,pssv masc,sing,nomn
+суаре: 1; суаре=NOUN,inan,neut,Fixd sing,nomn
+студень: 1; студень=NOUN,inan,masc sing,nomn
+стручковый: 1; стручковая=ADJF,Qual femn,sing,nomn
+стружка: 1; стружка=NOUN,inan,femn sing,nomn
+стрипс: 1; стрипсы=NOUN,inan,masc plur,nomn?
+стриплоин: 1; стриплоин=NOUN,inan,masc sing,nomn?
+стилл: 1; стилл=NOUN,anim,masc,Name sing,nomn?
+стерлядь: 1; стерлядь=NOUN,anim,femn sing,nomn
+стерилиз: 1; стерилиз=NOUN,inan,masc sing,nomn?
+стерил: 1; стерил=NOUN,inan,masc sing,nomn?
+стер: 1; стер=NOUN,inan,masc sing,nomn
+стекло: 1; стекло=NOUN,inan,neut sing,nomn
+стейк: 1; стейк=NOUN,inan,masc sing,nomn?
+стевий: 1; стевии=NOUN,anim,masc,Name sing,loct?
+стебель: 1; стебель=NOUN,inan,masc sing,nomn
+старорусский: 1; старорусский=ADJF masc,sing,nomn
+стаканчик: 1; стаканчике=NOUN,inan,masc sing,loct
+стакан: 1; стакане=NOUN,inan,masc sing,loct
+стак: 1; стак=NOUN,anim,masc sing,nomn?
+ставридка: 1; ставридка=NOUN,anim,femn sing,nomn
+ставрида: 1; ставрида=NOUN,anim,femn sing,nomn
+среднеплодный: 1; среднеплодные=ADJF,Qual plur,nomn?
+среднегазир: 1; среднегазир=NOUN,anim,masc,Name sing,nomn?
+среднегаз: 1; среднегаз=NOUN,inan,masc,Orgn sing,nomn?
+спря: 1; спрей=NOUN,inan,femn,Sgtm,Arch sing,ablt?
+спред: 1; спред=NOUN,inan,masc,Orgn sing,nomn?
+спираль: 1; спираль=NOUN,inan,femn sing,nomn
+спаржа: 1; спаржа=NOUN,inan,femn sing,nomn
+спагетти: 1; спагетти=NOUN,inan,neut,Sgtm,Fixd sing,nomn
+сп/пос: 1; сп/пос=NOUN,inan,masc,Fixd sing,nomn?
+сп пос: 1; сп пос=NOUN,inan,masc,Fixd sing,nomn?
+сочный: 1; сочные=ADJF,Qual plur,nomn
+сочник: 1; сочник=NOUN,inan,masc sing,nomn
+сочень: 1; сочни=NOUN,inan,masc plur,nomn
+сочн: 1; сочн=NOUN,inan,masc sing,nomn?
+соус/кусочек: 1; соус/кусочки=NOUN,inan,masc plur,nomn?
+соус-маринад: 1; соус-маринад=NOUN,inan,masc sing,nomn?
+соус-глазурь: 1; соус-глазурь=NOUN,inan,masc sing,nomn?
+соус маринад: 1; соус маринад=NOUN,inan,masc sing,nomn?
+соус кусочек: 1; соус кусочки=NOUN,inan,masc plur,nomn?
+соус глазурь: 1; соус глазурь=NOUN,inan,femn sing,nomn?
+сотэ: 1; сотэ=NOUN,inan,neut,Sgtm,Fixd sing,nomn?
+сост: 1; сост=NOUN,inan,masc sing,nomn?
+сорт: 1; сорт=NOUN,inan,masc sing,nomn
+сорбит: 1; сорбит=NOUN,inan,masc sing,nomn
+солянка: 1; солянка=NOUN,inan,femn sing,nomn
+сол/сушёный: 1; сол/сушеный=ADJF masc,sing,nomn?
+сол сушёный: 1; сол сушеный=ADJF masc,sing,nomn?
+сокосодерж: 1; сокосодерж=NOUN,inan,masc sing,nomn?
+сокосодёр: 1; сокосодер=NOUN,anim,masc sing,nomn?
+сокосода: 1; сокосод=NOUN,inan,femn plur,gent?
+сок/сода: 1; сок/сод=NOUN,inan,femn plur,gent?
+сок сода: 1; сок сод=NOUN,inan,femn plur,gent?
+соя: 1; соевый=ADJF,Qual masc,sing,nomn
+содёр: 1; содер=NOUN,anim,masc sing,nomn?
+сода: 1; сода=NOUN,inan,femn sing,nomn
+собственный: 1; собственная=ADJF femn,sing,nomn
+со экстра: 1; со экстра=NOUN,inan,femn sing,nomn?
+со шпинат: 1; со шпинатом=NOUN,inan,masc sing,ablt?
+со сливки: 1; со сливками=NOUN,inan,GNdr,Pltm plur,ablt?
+со персик: 1; со персика=NOUN,inan,masc sing,gent?
+со малина: 1; со малины=NOUN,inan,femn sing,gent?
+со лимон: 1; со лимона=NOUN,inan,masc sing,gent?
+со вкус: 1; со вкусом=NOUN,inan,masc sing,ablt?
+со взбитый: 1; со взбитыми=PRTF,perf,tran,past,pssv plur,ablt?
+снэк: 1; снэк=NOUN,inan,masc sing,nomn?
+снег: 1; снежный=ADJF,Qual masc,sing,nomn
+смородина: 1; смородина=NOUN,inan,femn sing,nomn
+смит: 1; смит=NOUN,anim,masc,Name sing,nomn
+сметанковый: 1; сметанковый=ADJF masc,sing,nomn?
+смесь: 1; смесь=NOUN,inan,femn sing,nomn
+слойка: 1; слойка=NOUN,inan,femn sing,nomn
+слоёный: 1; слоеное=ADJF neut,sing,nomn
+слиток: 1; слиток=NOUN,inan,masc sing,nomn
+сливочий: 1; сливоч=ADJS masc,sing?
+сладкослив: 1; сладкослив=NOUN,inan,masc sing,nomn?
+сладкое: 1; сладкое=NOUN,inan,neut sing,nomn
+сладко-сливочный: 1; сладко-сливочное=ADJF,Qual neut,sing,nomn?
+сладко сливочный: 1; сладко сливочное=ADJF neut,sing,nomn?
+слабый: 1; слаб=ADJS,Qual masc,sing
+сл/газ: 1; сл/газ=NOUN,inan,masc sing,nomn?
+сл газ: 1; сл газ=NOUN,inan,masc sing,nomn?
+скумбрия: 1; скумбрия=NOUN,anim,femn sing,nomn
+сказка: 1; сказка=NOUN,inan,femn sing,nomn
+ситро: 1; ситро=NOUN,inan,neut,Fixd sing,nomn
+синюг: 1; синюге=NOUN,inan,masc sing,loct?
+сильногазированный: 1; сильногазированный=PRTF,perf,tran,past,pssv masc,sing,nomn?
+сильногазир: 1; сильногазир=NOUN,anim,masc,Name sing,nomn?
+сильногаз: 1; сильногаз=NOUN,inan,masc,Orgn sing,nomn?
+сильна: 1; сильн=NOUN,anim,femn,Name plur,gent?
+сибирский: 1; сибирские=ADJF plur,nomn
+сервелат: 1; сервелат=NOUN,inan,masc sing,nomn
+серв: 1; серв=NOUN,inan,masc,Orgn sing,nomn?
+сербский: 1; сербский=ADJF masc,sing,nomn
+сербия: 1; сербия=NOUN,inan,femn,Sgtm,Geox sing,nomn
+семечко: 1; семечки=NOUN,inan,neut plur,nomn
+семя: 1; семена=NOUN,inan,neut plur,nomn
+семейный: 1; семейное=ADJF,Qual neut,sing,nomn
+семга/форель: 1; семга/форель=NOUN,inan,femn sing,nomn?
+семга форель: 1; семга форель=NOUN,inan,femn sing,nomn?
+сёмга: 1; семга=NOUN,anim,femn sing,nomn
+селёдка: 1; селедка=NOUN,anim,femn,Inmx sing,nomn
+секца: 1; секц=NOUN,anim,femn plur,gent?
+сдоба: 1; сдоба=NOUN,inan,femn sing,nomn
+сгущёнка: 1; сгущенка=NOUN,inan,femn sing,nomn
+сгуща: 1; сгущ=NOUN,inan,femn plur,gent?
+свиссадлер: 1; свиссадлер=NOUN,inan,masc,Geox sing,nomn?
+свердловский: 1; свердловская=ADJF femn,sing,nomn
+свёкла: 1; свекла=NOUN,inan,femn sing,nomn
+свежий: 1; свежий=ADJF,Qual inan,masc,sing,accs
+сбрынц: 1; сбрынц=NOUN,anim,masc,Sgtm,Surn sing,nomn?
+сбор: 1; сбор=NOUN,inan,masc sing,nomn
+сашет: 1; сашет=NOUN,anim,masc,Name sing,nomn?
+сацебели: 1; сацебели=NOUN,inan,GNdr,Pltm plur,accs?
+сахар-рафинад: 1; сахар-рафинад=NOUN,inan,masc sing,accs?
+сахар-пресс: 1; сахар-прессов=NOUN,inan,masc plur,gent?
+сахар-песок: 1; сахар-песок=NOUN,inan,masc sing,accs?
+сахар рафинад: 1; сахар рафинад=NOUN,inan,masc sing,nomn?
+сахар пресс: 1; сахар прессов=NOUN,inan,masc plur,gent?
+сахар песок: 1; сахар песок=NOUN,inan,masc sing,nomn?
+сардинелла: 1; сардинелла=NOUN,inan,femn sing,nomn
+сарделька: 1; сардельки=NOUN,inan,femn sing,gent
+сантос: 1; сантос=NOUN,inan,masc sing,nomn?
+санрайза: 1; санрайз=NOUN,anim,femn,Name plur,gent?
+самса: 1; самса=NOUN,anim,femn,Sgtm sing,nomn?
+салями: 1; салями=NOUN,inan,femn,Fixd sing,nomn
+сальтисон: 1; сальтисон=NOUN,anim,masc,Name sing,nomn?
+салакиса: 1; салакис=NOUN,anim,femn plur,gent?
+салака: 1; салака=NOUN,anim,femn sing,nomn
+сайра: 1; сайра=NOUN,anim,femn sing,nomn
+с/содёр: 1; с/содер=NOUN,anim,masc sing,nomn?
+с яблоко: 1; с яблоком=NOUN,inan,neut sing,ablt?
+с шоколад: 1; с шоколада=NOUN,inan,masc sing,gent?
+с шок: 1; с шок=NOUN,inan,masc sing,nomn?
+с чеснок: 1; с чесноком=NOUN,inan,masc sing,ablt?
+с чабрец: 1; с чабрецом=NOUN,inan,masc sing,ablt?
+с цельный: 1; с цельным=ADJF,Qual masc,sing,ablt?
+с целый: 1; с цел=ADJS,Qual masc,sing?
+с хрен: 1; с хреном=NOUN,inan,masc sing,ablt?
+с фундук: 1; с фундуком=NOUN,inan,masc sing,ablt?
+с фрукт: 1; с фруктами=NOUN,inan,masc plur,ablt?
+с укроп: 1; с укропом=NOUN,inan,masc sing,ablt?
+с трава: 1; с травами=NOUN,inan,femn plur,ablt?
+с телятина: 1; с телятиной=NOUN,inan,femn sing,ablt?
+с творог: 1; с творогом=NOUN,inan,masc sing,ablt?
+с т/ст: 1; с т/ст=NOUN,anim,masc sing,nomn?
+с т ст: 1; с т ст=NOUN,anim,masc sing,nomn?
+с сыр: 1; с сыром=NOUN,inan,masc sing,ablt?
+с сухара: 1; с сухар=NOUN,inan,femn plur,gent?
+с суфле: 1; с суфле=NOUN,inan,neut,Fixd sing,nomn?
+с соль: 1; с солью=NOUN,inan,femn sing,ablt?
+с сокосодерж: 1; с сокосодерж=NOUN,inan,masc sing,nomn?
+с сок: 1; с соком=NOUN,inan,masc sing,ablt?
+с сердце: 1; с сердцем=NOUN,inan,neut sing,ablt?
+с сгущёнка: 1; с сгущенка=NOUN,inan,femn sing,nomn?
+с с: 1; с сах=NOUN,inan,masc plur,loct?
+с рис: 1; с рисом=NOUN,inan,masc sing,ablt?
+с печень: 1; с печенью=NOUN,inan,femn sing,ablt?
+с охлый: 1; с охл=ADJS masc,sing?
+с орех: 1; с орехом=NOUN,inan,masc sing,ablt?
+с окорок: 1; с окороком=NOUN,inan,masc sing,ablt?
+с овощи: 1; с овощами=NOUN,inan,GNdr,Pltm plur,ablt?
+с начинка: 1; с начинкой=NOUN,inan,femn sing,ablt?
+с начин: 1; с начин=NOUN,inan,masc sing,nomn?
+с нач: 1; с нач=NOUN,anim,masc sing,nomn?
+с натуральный: 1; с натуральным=ADJF,Qual masc,sing,ablt?
+с мясо: 1; с мясом=NOUN,inan,neut,Sgtm sing,ablt?
+с мякоть: 1; с мякотью=NOUN,inan,femn sing,ablt?
+с моцарелла: 1; с моцареллой=NOUN,anim,femn,Name sing,ablt?
+с морковь: 1; с морковью=NOUN,inan,femn sing,ablt?
+с молотый: 1; с молотого=ADJF,Qual masc,sing,gent?
+с молоко: 1; с молоком=NOUN,inan,neut,Sgtm sing,ablt?
+с миндаль: 1; с миндалем=NOUN,inan,masc sing,ablt?
+с матья: 1; с матье=NOUN,inan,femn sing,datv?
+с мармелад: 1; с мармелада=NOUN,inan,masc sing,gent?
+с манго: 1; с манго=NOUN,inan,neut,Fixd sing,nomn?
+с мак: 1; с маком=NOUN,inan,masc sing,ablt?
+с лук: 1; с луком=NOUN,inan,masc sing,ablt?
+с лосось: 1; с лососем=NOUN,anim,masc sing,ablt?
+с лимон: 1; с лимоном=NOUN,inan,masc sing,ablt?
+с лимонный: 1; с лимонным=ADJF,Qual masc,sing,ablt?
+с лесной: 1; с лесным=ADJF masc,sing,ablt?
+с кусочки: 1; с кусочками=NOUN,inan,GNdr,Pltm plur,ablt?
+с кус: 1; с кус=NOUN,inan,masc sing,nomn?
+с курица: 1; с курицей=NOUN,anim,femn sing,ablt?
+с кунжут: 1; с кунжутом=NOUN,inan,masc sing,ablt?
+с крем: 1; с кремом=NOUN,inan,masc sing,ablt?
+с кост: 1; с кост=NOUN,inan,masc sing,nomn?
+с копчёный: 1; с копченым=ADJF masc,sing,ablt?
+с кокос: 1; с кокоса=NOUN,inan,masc sing,gent?
+с картофель: 1; с картофелем=NOUN,inan,masc sing,ablt?
+с изюм: 1; с изюмом=NOUN,inan,masc sing,ablt?
+с зелень: 1; с зеленью=NOUN,inan,femn sing,ablt?
+с замена: 1; с замен=NOUN,inan,femn plur,gent?
+с жасмин: 1; с жасмином=NOUN,inan,masc sing,ablt?
+с жар: 1; с жар=NOUN,inan,masc,Sgtm sing,nomn?
+с дымок: 1; с дымком=NOUN,inan,masc sing,ablt?
+с дроблёный: 1; с дробленым=ADJF masc,sing,ablt?
+с дозатор: 1; с дозатором=NOUN,inan,masc sing,ablt?
+с добавление: 1; с добавлением=NOUN,inan,neut sing,ablt?
+с доба: 1; с доб=NOUN,inan,femn plur,gent?
+с дженовез: 1; с дженовезе=NOUN,anim,masc,Name sing,loct?
+с гриб: 1; с грибами=NOUN,inan,masc plur,ablt?
+с грецкий: 1; с грецким=ADJF masc,sing,ablt?
+с говядина: 1; с говядиной=NOUN,inan,femn sing,ablt?
+с воздушный: 1; с воздушным=ADJF,Qual masc,sing,ablt?
+с вишня: 1; с вишней=NOUN,inan,femn sing,ablt?
+с вит: 1; с витам=NOUN,inan,masc plur,datv?
+с ветчина: 1; с ветчиной=NOUN,inan,femn sing,ablt?
+с вермишель: 1; с вермишелью=NOUN,inan,femn sing,ablt?
+с ванилин: 1; с ванилином=NOUN,inan,masc sing,ablt?
+с ваниль: 1; с ванили=NOUN,inan,femn sing,gent?
+с в/с: 1; с в/с=NOUN,inan,masc sing,nomn?
+с в с: 1; с в с=NOUN,inan,masc sing,nomn?
+с бергамот: 1; с бергамотом=NOUN,inan,masc sing,ablt?
+с белые: 1; с белыми=NOUN,anim,GNdr,Pltm plur,ablt?
+с баранина: 1; с бараниной=NOUN,inan,femn sing,ablt?
+с базилик: 1; с базиликом=NOUN,inan,masc sing,ablt?
+с аромат: 1; с ароматом=NOUN,inan,masc sing,ablt?
+с ар: 1; с аром=NOUN,inan,masc sing,ablt?
+с арахис: 1; с арахисом=NOUN,inan,masc sing,ablt?
+с апельсин/манго: 1; с апельсин/манго=NOUN,inan,neut,Fixd sing,nomn?
+с апельсин манго: 1; с апельсин манго=NOUN,inan,neut,Fixd sing,nomn?
+с апельсин: 1; с апельсин=NOUN,inan,masc sing,nomn?
+с анчоус: 1; с анчоусом=NOUN,inan,masc sing,ablt?
+с kids: 1; с kids=UNKN?
+с for: 1; с for=UNKN?
+ряпушка: 1; ряпушка=NOUN,anim,femn sing,nomn
+рябина: 1; рябина=NOUN,inan,femn sing,nomn
+рыбка: 1; рыбка=NOUN,anim,femn sing,nomn
+рулька: 1; рулька=NOUN,inan,femn sing,nomn
+рулет: 1; рулет=NOUN,inan,masc sing,nomn
+рукол: 1; рукола=NOUN,inan,masc sing,gent?
+рубленый: 1; рубленый=ADJF masc,sing,nomn
+рубленный: 1; рубленный=PRTF,impf,tran,past,pssv masc,sing,nomn
+роялый: 1; роял=ADJS,Qual masc,sing?
+роскар: 1; роскар=NOUN,inan,masc sing,nomn?
+ром: 1; ромовая=ADJF,Qual femn,sing,nomn
+ролл: 1; ролл=NOUN,inan,masc sing,nomn
+розмарин: 1; розмарин=NOUN,inan,masc sing,nomn
+рифля: 1; рифленые=ADJF,Qual plur,nomn
+ризотто: 1; ризотто=NOUN,inan,neut,Fixd sing,nomn
+ригата: 1; ригате=NOUN,inan,femn,Sgtm,Geox sing,datv?
+ржанный: 1; ржан=PRTS,perf,past,pssv masc,sing?
+рж/пш: 1; рж/пш=NOUN,inan,masc,Sgtm,Orgn sing,nomn?
+рж пш: 1; рж пш=NOUN,inan,masc,Sgtm,Orgn sing,nomn?
+репчатый: 1; репчатый=ADJF,Qual masc,sing,nomn
+резаный: 1; резаные=ADJF plur,nomn
+редька: 1; редька=NOUN,inan,femn sing,nomn
+редис: 1; редис=NOUN,inan,masc sing,nomn
+рёбрышко: 1; ребрышки=NOUN,inan,neut plur,nomn
+рахат-лукум: 1; рахат-лукум=NOUN,inan,masc sing,nomn
+рахат лукум: 1; рахат лукум=NOUN,inan,masc sing,nomn?
+рахат: 1; рахат=NOUN,anim,masc,Name sing,nomn
+рафинированный: 1; рафинированное=PRTF,perf,tran,past,pssv neut,sing,nomn
+рафинад: 1; рафинад=NOUN,inan,masc sing,nomn
+рататуя: 1; рататуй=NOUN,inan,femn plur,gent?
+растворимый: 1; растворимый=ADJF masc,sing,nomn
+раствор: 1; раствор=NOUN,inan,masc sing,nomn
+раство: 1; раств=NOUN,inan,neut plur,gent?
+раст-твор: 1; раст-твор=NOUN,inan,masc sing,nomn?
+раст твор: 1; раст твор=NOUN,inan,masc sing,nomn?
+раст: 1; раст=NOUN,inan,masc sing,nomn?
+рассыпчатый: 1; рассыпчатый=ADJF masc,sing,nomn
+рак: 1; раковые=ADJF plur,nomn
+разрыхлитель: 1; разрыхлитель=NOUN,inan,masc sing,nomn
+разновес: 1; разновес=NOUN,inan,masc sing,nomn
+радуга: 1; радужный=ADJF,Qual masc,sing,nomn
+радужная: 1; радужная=NOUN,inan,femn sing,nomn
+раделла: 1; раделла=NOUN,inan,femn sing,nomn?
+рагу: 1; рагу=NOUN,inan,neut,Fixd sing,nomn
+пюре: 1; пюре=NOUN,inan,neut,Fixd sing,nomn
+пьюра: 1; пьюр=NOUN,inan,femn plur,gent?
+пшено: 1; пшено=NOUN,inan,neut,Sgtm sing,nomn
+путасс: 1; путассу=NOUN,inan,masc,Orgn sing,datv?
+пудра: 1; пудра=NOUN,inan,femn sing,nomn
+пудинг: 1; пудинг=NOUN,inan,masc sing,nomn
+пряность: 1; пряностей=NOUN,inan,femn plur,gent
+простой: 1; простая=ADJF,Qual femn,sing,nomn
+пророща: 1; пророщ=NOUN,inan,femn plur,gent?
+пропаренный: 1; пропаренный=PRTF,perf,tran,past,pssv masc,sing,nomn
+промонабор: 1; промонабор=NOUN,inan,masc sing,nomn?
+продукт: 1; продукт=NOUN,inan,masc sing,nomn
+продомый: 1; продомо=ADJS,Qual neut,sing?
+прод: 1; прод=NOUN,inan,masc sing,nomn?
+программа: 1; программа=NOUN,inan,femn sing,nomn
+провансаль: 1; провансаль=NOUN,inan,masc sing,nomn
+проба: 1; пробойная=ADJF,Qual femn,sing,nomn
+природа: 1; природ=NOUN,inan,femn plur,gent
+приправа: 1; приправа=NOUN,inan,femn sing,nomn
+приготовление: 1; приготовления=NOUN,inan,neut sing,gent
+пригот: 1; пригот=NOUN,anim,masc sing,nomn?
+пресс: 1; прессов=NOUN,inan,masc plur,gent
+премиум: 1; премиум=NOUN,inan,masc sing,nomn?
+прага: 1; прага=NOUN,inan,femn,Sgtm,Geox sing,nomn
+похудин: 1; похудин=NOUN,anim,masc sing,nomn?
+похудение: 1; похудения=NOUN,inan,neut sing,gent
+похлёбка: 1; похлебка=NOUN,inan,femn sing,nomn
+потр: 1; потр=NOUN,inan,masc sing,nomn?
+посыпка: 1; посыпка=NOUN,inan,femn sing,nomn
+порция: 1; порционный=ADJF,Qual masc,sing,nomn
+португальский: 1; португальская=ADJF femn,sing,nomn
+пористый: 1; пористый=ADJF,Qual masc,sing,nomn
+помол: 1; помол=NOUN,inan,masc sing,nomn
+помидор: 1; помидоры=NOUN,inan,masc plur,nomn
+помело: 1; помело=NOUN,inan,neut sing,nomn
+полутвёрдый: 1; полутвердый=ADJF,Qual masc,sing,nomn?
+полоска: 1; полоски=NOUN,inan,femn sing,gent
+полосатик: 1; полосатик=NOUN,anim,masc sing,nomn
+полиамид: 1; полиамид=NOUN,inan,masc sing,nomn
+подушечка: 1; подушечки=NOUN,inan,femn sing,gent
+подсолна: 1; подсолн=NOUN,inan,femn plur,gent?
+подсол: 1; подсол=NOUN,inan,masc sing,nomn
+подсластитель: 1; подсластитель=NOUN,inan,masc sing,nomn
+подкопчёный: 1; подкопченая=ADJF femn,sing,nomn?
+подкопча: 1; подкопч=NOUN,inan,femn plur,gent?
+поджарка: 1; поджарка=NOUN,inan,femn sing,nomn
+подбедёрок: 1; подбедерок=NOUN,inan,masc sing,nomn
+повидло: 1; повидло=NOUN,inan,neut sing,nomn
+по-корейски: 1; по-корейски=ADVB?
+по-киевск: 1; по-киевски=NOUN,inan,masc,Geox plur,nomn?
+по-домашнему: 1; по-домашнему=ADVB
+по-деревенски: 1; по-деревенски=ADVB
+по-восточному: 1; по-восточному=ADVB?
+плюшка: 1; плюшка=NOUN,inan,femn sing,nomn
+пломбир: 1; пломбир=NOUN,inan,masc sing,nomn
+плов: 1; плов=NOUN,inan,masc sing,nomn
+плитка: 1; плитка=NOUN,inan,femn sing,nomn
+плёнка: 1; пленка=NOUN,inan,femn sing,nomn
+плей: 1; плей=NOUN,inan,masc sing,nomn?
+планет: 1; планета=NOUN,inan,masc sing,gent
+плавление: 1; плавленый=ADJF masc,sing,nomn
+плавленный: 1; плавленный=PRTF,impf,tran,past,pssv masc,sing,nomn
+плавл: 1; плавл=NOUN,inan,masc sing,nomn?
+плав: 1; плав=NOUN,inan,masc sing,nomn
+питьевой: 1; питьевой=ADJF masc,sing,nomn
+питьевый: 1; питьев=ADJS,Qual masc,sing?
+питахайя: 1; питахайя=NOUN,anim,femn,Name sing,nomn?
+пирожок: 1; пирожки=NOUN,inan,masc plur,accs
+пирог: 1; пирог=NOUN,inan,masc sing,nomn
+пипа: 1; пипе=NOUN,inan,femn,Sgtm,Geox sing,datv?
+пинджур: 1; пинджур=NOUN,inan,masc sing,nomn?
+пингвин: 1; пингвин=NOUN,anim,masc sing,nomn
+пикша: 1; пикша=NOUN,anim,femn sing,nomn
+пиколинь: 1; пиколини=NOUN,inan,masc plur,nomn?
+пикантный: 1; пикантная=ADJF,Qual femn,sing,nomn
+печенье: 1; печенье=NOUN,inan,neut sing,nomn,V-be
+печёный: 1; печеные=ADJF plur,nomn
+петрушка: 1; петрушка=NOUN,inan,femn sing,nomn
+песто: 1; песто=NOUN,inan,femn,Fixd,Abbr sing,nomn?
+песок: 1; песок=NOUN,inan,masc sing,nomn
+перо: 1; перья=NOUN,inan,neut plur,nomn
+персик/яблый: 1; персик/ябл=ADJS,Qual masc,sing?
+персик яблый: 1; персик ябл=ADJS,Qual masc,sing?
+перс: 1; перс=NOUN,anim,masc sing,nomn
+перл: 1; перловая=ADJF femn,sing,nomn
+перец-пеперонь: 1; перец-пеперони=NOUN,inan,femn sing,gent?
+перец пеперонь: 1; перец пеперони=NOUN,inan,femn sing,gent?
+первый: 1; первый=ADJF,Anum masc,sing,nomn
+пеперонь: 1; пеперони=NOUN,inan,femn sing,gent?
+пенний: 1; пенне=ADJS neut,sing?
+пельмешек: 1; пельмешки=NOUN,inan,masc plur,nomn
+пельмень: 1; пельмени=NOUN,inan,masc plur,nomn
+пекан: 1; пекан=NOUN,inan,masc sing,nomn
+паэлье: 1; паэлья=NOUN,inan,neut sing,gent,V-be?
+паштет: 1; паштет=NOUN,inan,masc sing,nomn
+пахлава: 1; пахлава=NOUN,inan,femn,Sgtm sing,nomn
+патиссон: 1; патиссоны=NOUN,inan,masc plur,nomn
+пастила: 1; пастила=NOUN,inan,femn sing,nomn
+пастер: 1; пастер=NOUN,anim,masc,Sgtm,Surn sing,nomn
+паром: 1; паром=NOUN,inan,masc sing,nomn
+пармезан: 1; пармезан=NOUN,inan,masc sing,nomn
+парижский: 1; парижская=ADJF femn,sing,nomn
+панчо: 1; панчо=NOUN,inan,neut,Fixd sing,nomn?
+панира: 1; панир=NOUN,anim,femn,Name plur,gent?
+пангасиус: 1; пангасиус=NOUN,inan,masc sing,nomn?
+пальмира: 1; пальмира=NOUN,inan,femn sing,nomn
+палпи: 1; палпи=NOUN,anim,masc,Sgtm,Fixd sing,nomn?
+пакетированный: 1; пакетированный=PRTF,impf,tran,past,pssv masc,sing,nomn
+очищенный: 1; очищенные=PRTF,perf,tran,past,pssv plur,nomn
+очище: 1; очищ=NOUN,anim,masc plur,gent?
+отбивной: 1; отбивная=ADJF femn,sing,nomn
+осьминог: 1; осьминоги=NOUN,anim,masc plur,nomn
+особый: 1; особая=ADJF femn,sing,nomn
+осветл: 1; осветл=NOUN,inan,masc sing,nomn?
+оригиналный: 1; оригиналный=ADJF masc,sing,nomn?
+орешек: 1; орешки=NOUN,inan,masc plur,nomn
+опёнок: 1; опята=NOUN,inan,masc plur,nomn,Infr
+оолонг: 1; оолонг=NOUN,inan,masc sing,nomn?
+оливка: 1; оливки=NOUN,inan,femn sing,gent
+оленина: 1; оленины=NOUN,inan,femn sing,gent
+оладья: 1; оладьи=NOUN,inan,femn sing,gent
+оладушка: 1; оладушки=NOUN,inan,femn sing,gent
+окунь: 1; окунь=NOUN,anim,masc sing,nomn
+окорочок: 1; окорочок=NOUN,inan,masc sing,nomn?
+окорка: 1; окорок=NOUN,inan,femn plur,gent
+океан: 1; океан=NOUN,inan,masc sing,nomn
+огурчик: 1; огурчики=NOUN,inan,masc plur,nomn
+огурец: 1; огурцы=NOUN,inan,masc plur,nomn
+огузок: 1; огузок=NOUN,inan,masc sing,nomn
+обраб: 1; обраб=NOUN,anim,masc sing,nomn?
+обогащий: 1; обогащ=ADJS masc,sing?
+обог: 1; обог=NOUN,anim,masc sing,nomn?
+облепиха: 1; облепиха=NOUN,inan,femn sing,nomn
+обжарка: 1; обжарки=NOUN,inan,femn sing,gent
+обдирный: 1; обдирная=ADJF,Qual femn,sing,nomn
+обвалка: 1; обвалка=NOUN,inan,femn sing,nomn
+нуга: 1; нуга=NOUN,inan,femn,Sgtm sing,nomn
+нуар: 1; нуар=NOUN,inan,masc sing,nomn?
+нототения: 1; нототения=NOUN,anim,femn sing,nomn
+норь: 1; нори=NOUN,inan,femn,Sgtm,Geox sing,gent?
+ножка: 1; ножки=NOUN,inan,femn sing,gent
+ногинский: 1; ногинский=ADJF masc,sing,nomn
+низкокалорийный: 1; низкокалорийный=ADJF masc,sing,nomn
+низкокалорийна: 1; низкокалорийн=NOUN,anim,femn,Name plur,gent?
+нерка: 1; нерка=NOUN,anim,femn sing,nomn
+нераф: 1; нераф=NOUN,anim,masc,Name sing,nomn?
+нераздел: 1; нераздел=NOUN,inan,masc sing,nomn?
+непотр: 1; непотр=NOUN,inan,masc sing,nomn?
+нектар: 1; нектар=NOUN,inan,masc sing,nomn
+негаз: 1; негаз=NOUN,inan,masc sing,accs?
+не раф: 1; не раф=NOUN,inan,masc sing,nomn?
+начинка: 1; начинкой=NOUN,inan,femn sing,ablt
+начин: 1; начин=NOUN,inan,masc sing,nomn
+натура: 1; натур=NOUN,inan,femn plur,gent
+наслаждение: 1; наслаждение=NOUN,inan,neut sing,nomn
+нарезной: 1; нарезной=ADJF masc,sing,nomn
+нарезка: 1; нарезке=NOUN,inan,femn sing,datv
+нарезанный: 1; нарезанные=PRTF,perf,tran,past,pssv plur,nomn
+нарез: 1; нарез=NOUN,inan,masc sing,nomn
+наполеон: 1; наполеон=NOUN,inan,masc sing,nomn
+напиток: 1; напиток=NOUN,inan,masc sing,nomn
+наня: 1; нань=NOUN,anim,femn,Name plur,gent
+назн: 1; назн=NOUN,inan,masc sing,nomn?
+нагетс: 1; нагетсы=NOUN,inan,masc,Geox plur,nomn?
+наггетс: 1; наггетсы=NOUN,inan,masc,Geox plur,nomn?
+набор: 1; набор=NOUN,inan,masc sing,nomn
+на яйцо: 1; на яйце=NOUN,inan,neut sing,loct?
+на хв: 1; на хв=NOUN,anim,masc sing,nomn?
+на фруктоза: 1; на фруктозе=NOUN,inan,femn sing,datv?
+на стевий: 1; на стевии=NOUN,anim,masc,Name sing,loct?
+на сливки: 1; на сливках=NOUN,inan,GNdr,Pltm plur,loct?
+на север: 1; на севере=NOUN,inan,masc sing,loct?
+на перепел: 1; на перепел=NOUN,anim,masc sing,nomn?
+на палочка: 1; на палочке=NOUN,inan,femn sing,datv?
+на основа: 1; на основе=NOUN,inan,femn sing,datv?
+на натура: 1; на натур=NOUN,anim,femn plur,gent?
+на кость: 1; на кости=NOUN,inan,femn sing,gent?
+на второе: 1; на второе=NOUN,inan,neut sing,nomn?
+мята: 1; мята=NOUN,inan,femn sing,nomn
+мясна: 1; мясн=NOUN,anim,femn,Name plur,gent?
+мякоть: 1; мякотью=NOUN,inan,femn sing,ablt
+мягкий: 1; мягкий=ADJF,Qual masc,sing,nomn
+мюсли: 1; мюсли=NOUN,inan,neut,Sgtm,Fixd sing,nomn
+мусульманин: 1; мусульманская=ADJF femn,sing,nomn
+мусс: 1; мусс=NOUN,inan,masc sing,nomn
+мускат: 1; мускатный=ADJF,Qual masc,sing,nomn
+мультифрукт: 1; мультифрукт=NOUN,inan,masc sing,nomn?
+мультиовощ: 1; мультиовощи=NOUN,inan,masc plur,accs?
+мулинелли: 1; мулинелли=NOUN,anim,femn,Fixd,Name sing,nomn?
+муан: 1; муан=NOUN,anim,masc,Name sing,nomn?
+мрамор: 1; мраморный=ADJF,Qual masc,sing,nomn
+мохитый: 1; мохито=ADJS,Qual neut,sing?
+московский: 1; московская=ADJF femn,sing,nomn
+морск: 1; морск=NOUN,inan,masc,Geox sing,nomn?
+морс: 1; морс=NOUN,inan,masc sing,nomn
+мороженое: 1; мороженое=NOUN,inan,neut sing,nomn
+мороженный: 1; мороженное=ADJF,Qual neut,sing,nomn
+морк: 1; морк=NOUN,inan,masc sing,nomn?
+морепродукт: 1; морепродуктов=NOUN,inan,masc plur,gent
+моороженый: 1; моороженое=ADJF neut,sing,nomn?
+монт: 1; монте=NOUN,inan,masc,Orgn sing,loct?
+монарх: 1; монарх=NOUN,anim,masc sing,nomn
+момент: 1; момент=NOUN,inan,masc sing,accs
+молсода: 1; молсод=NOUN,inan,femn plur,gent?
+молочная: 1; молочные=NOUN,inan,femn plur,nomn
+молочий: 1; молоч=ADJS masc,sing?
+молокосодержащий: 1; молокосодержащий=ADJF masc,sing,nomn?
+молокосода: 1; молокосод=NOUN,inan,femn plur,gent?
+мокк: 1; мокка=NOUN,anim,masc,Inmx sing,gent?
+модена: 1; модена=NOUN,inan,femn,Sgtm,Geox sing,nomn
+многозерновой: 1; многозерновой=ADJF masc,sing,nomn?
+мишка: 1; мишка=NOUN,anim,masc sing,nomn
+мисо: 1; мисо=NOUN,anim,masc,Sgtm,Fixd,Name sing,nomn?
+минога: 1; минога=NOUN,anim,femn sing,nomn
+миннеол: 1; миннеола=NOUN,inan,masc sing,gent?
+мини-филе: 1; мини-филе=NOUN,inan,neut,Fixd sing,nomn?
+мини-сушка: 1; мини-сушки=NOUN,inan,femn sing,gent?
+мини-карамель: 1; мини-карамель=NOUN,inan,femn sing,nomn?
+мини филе: 1; мини филе=NOUN,inan,neut,Fixd sing,nomn?
+мини сушка: 1; мини сушки=NOUN,inan,femn sing,gent?
+мини карамель: 1; мини карамель=NOUN,inan,femn sing,nomn?
+минь: 1; мини=NOUN,anim,masc,Name plur,nomn
+минд: 1; минд=NOUN,inan,masc,Geox sing,nomn?
+милликанный: 1; милликано=PRTS,perf,past,pssv neut,sing?
+миланеза: 1; миланезе=NOUN,anim,femn,Name sing,datv?
+микс: 1; микс=NOUN,inan,masc sing,nomn?
+мидия: 1; мидии=NOUN,anim,femn sing,gent
+мертингер: 1; мертингер=NOUN,anim,masc,Sgtm,Surn sing,nomn?
+меню: 1; меню=NOUN,inan,neut,Fixd sing,nomn
+мельница: 1; мельница=NOUN,inan,femn sing,nomn
+мелкий: 1; мелкая=ADJF,Qual femn,sing,nomn
+мелисса: 1; мелисса=NOUN,inan,femn sing,nomn
+мёд: 1; медовые=ADJF,Qual plur,nomn
+меделлин: 1; меделлин=NOUN,inan,masc sing,nomn?
+медведь: 1; медведь=NOUN,anim,masc sing,nomn
+медведковский: 1; медведковская=ADJF femn,sing,nomn?
+медальон: 1; медальоны=NOUN,inan,masc plur,nomn
+мега-филе: 1; мега-филе=NOUN,inan,neut,Fixd sing,nomn?
+мега филе: 1; мега филе=NOUN,inan,neut,Fixd sing,nomn?
+мег: 1; мега=NOUN,inan,masc sing,gent?
+маша: 1; маша=NOUN,anim,femn,Name sing,nomn
+маца: 1; маца=NOUN,inan,femn sing,nomn
+маффиный: 1; маффины=ADJS,Qual plur?
+маунтина: 1; маунтин=NOUN,inan,femn plur,gent?
+матья: 1; матье=NOUN,inan,femn sing,datv?
+матнакаша: 1; матнакаш=NOUN,inan,femn plur,gent?
+мастер: 1; мастер=NOUN,anim,masc sing,nomn
+масса: 1; масса=NOUN,inan,femn sing,nomn
+маслёнок: 1; маслята=NOUN,inan,masc plur,nomn
+маслина: 1; маслины=NOUN,inan,femn sing,gent
+маскарпон: 1; маскарпоне=NOUN,inan,masc sing,loct?
+маргарин: 1; маргарин=NOUN,inan,masc sing,nomn
+маракуйя: 1; маракуйя=NOUN,anim,femn,Name sing,nomn?
+мант: 1; манты=NOUN,anim,masc plur,nomn?
+манный: 1; манная=ADJF,Qual femn,sing,nomn
+мандарин: 1; мандарины=NOUN,inan,masc plur,nomn
+мангольд: 1; мангольд=NOUN,inan,masc sing,nomn
+манго: 1; манго=NOUN,inan,neut,Fixd sing,nomn
+малышок: 1; малышка=NOUN,anim,masc sing,gent
+малосольный: 1; малосольные=ADJF plur,nomn
+макса: 1; макс=NOUN,inan,femn plur,gent
+мак: 1; маком=NOUN,inan,masc sing,ablt
+майоран: 1; майоран=NOUN,inan,masc sing,nomn
+маасдама: 1; маасдам=NOUN,anim,femn plur,gent?
+мааздама: 1; мааздам=NOUN,anim,femn plur,gent?
+м/фрукт: 1; м/фрукт=NOUN,inan,masc sing,nomn?
+метр-кекс: 1; м-кекс=NOUN,inan,masc,Fixd,Abbr sing,nomn?
+м фрукт: 1; м фрукт=NOUN,inan,masc sing,nomn?
+м кекс: 1; м кекс=NOUN,inan,masc sing,nomn?
+лютеница: 1; лютеница=NOUN,anim,femn sing,nomn?
+люля-кебаб: 1; люля-кебаб=NOUN,inan,masc sing,nomn
+люля кебаб: 1; люля кебаб=NOUN,inan,masc sing,nomn?
+люль: 1; люля=NOUN,inan,masc sing,gent?
+любитель: 1; любительская=ADJF femn,sing,nomn
+лён: 1; льняная=ADJF femn,sing,nomn
+наихороший: 1; лучшая=ADJF,Supr,Qual femn,sing,nomn
+лукума: 1; лукум=NOUN,anim,femn plur,gent?
+лукошко: 1; лукошко=NOUN,inan,neut sing,nomn
+луковка: 1; луковки=NOUN,inan,femn sing,gent
+липа: 1; липовый=ADJF,Qual masc,sing,nomn
+линия: 1; линия=NOUN,inan,femn sing,nomn
+лимонад: 1; лимонад=NOUN,inan,masc sing,nomn
+ливер: 1; ливерная=ADJF,Qual femn,sing,nomn
+лечо: 1; лечо=NOUN,inan,neut,Fixd sing,nomn
+лечеб-стол: 1; лечеб-стол=NOUN,inan,masc,Orgn sing,nomn?
+лечеб стола: 1; лечеб стол=NOUN,inan,femn plur,gent?
+лечеб: 1; лечеб=NOUN,inan,masc,Orgn sing,nomn?
+леч-стол: 1; леч-стол=NOUN,inan,masc sing,accs?
+леч стол: 1; леч стол=NOUN,inan,masc sing,nomn?
+лесна: 1; лесн=NOUN,anim,femn,Name plur,gent?
+лемона: 1; лемон=NOUN,anim,femn,Name plur,gent?
+лейбниц: 1; лейбниц=NOUN,anim,masc,Sgtm,Surn sing,nomn
+лёд: 1; ледяная=ADJF femn,sing,nomn
+лёгкий: 1; легкий=ADJF,Qual masc,sing,nomn
+латта: 1; латте=NOUN,inan,femn,Sgtm sing,datv?
+лакомство: 1; лакомство=NOUN,inan,neut sing,nomn
+лакомка: 1; лакомка=NOUN,anim,femn,Ms-f sing,nomn
+лакедра: 1; лакедра=NOUN,anim,femn sing,nomn
+лайт: 1; лайт=NOUN,inan,masc sing,nomn?
+лазанье: 1; лазанья=NOUN,inan,neut sing,gent,V-be
+лавр: 1; лавровый=ADJF masc,sing,nomn
+лаваш: 1; лаваш=NOUN,inan,masc sing,nomn
+кусок: 1; кусок=NOUN,inan,masc sing,nomn
+кусковой: 1; кусковой=ADJF masc,sing,nomn
+куркума: 1; куркума=NOUN,inan,femn sing,nomn
+курица/лук: 1; курица/лук=NOUN,inan,masc sing,nomn?
+курица лук: 1; курица лук=NOUN,inan,masc sing,nomn?
+курага: 1; курага=NOUN,inan,femn,Sgtm sing,nomn
+купат: 1; купаты=NOUN,inan,masc plur,nomn?
+кунаф: 1; кунафа=NOUN,anim,masc,Name sing,gent?
+кумквата: 1; кумкват=NOUN,inan,femn plur,gent?
+кумина: 1; кумин=NOUN,inan,femn plur,gent?
+кувшин: 1; кувшин=NOUN,inan,masc sing,nomn
+кубик: 1; кубики=NOUN,inan,masc plur,nomn
+кубань: 1; кубань=NOUN,inan,femn,Sgtm,Geox sing,nomn
+крылышко: 1; крылышки=NOUN,inan,neut plur,nomn
+крыло: 1; крыло=NOUN,inan,neut sing,nomn
+крупнолистовый: 1; крупнолистовой=ADJF femn,sing,gent?
+крупный: 1; крупная=ADJF,Qual femn,sing,nomn
+крупн: 1; крупн=NOUN,inan,masc sing,nomn?
+круп: 1; крупа=NOUN,inan,masc sing,gent
+круглозёрный: 1; круглозерный=ADJF,Qual masc,sing,nomn?
+кролл: 1; кроллы=NOUN,inan,masc plur,nomn?
+кролик: 1; кролик=NOUN,anim,masc sing,nomn
+крокет: 1; крокеты=NOUN,inan,masc plur,nomn
+крисп: 1; крисп=NOUN,inan,masc sing,nomn?
+крио: 1; крио=NOUN,anim,masc,Sgtm,Fixd,Name sing,nomn?
+крестьянин: 1; крестьянское=ADJF neut,sing,nomn
+кренделёк: 1; крендельки=NOUN,inan,masc plur,nomn
+кремль: 1; кремлевская=ADJF femn,sing,nomn
+крем-суп: 1; крем-суп=NOUN,inan,masc sing,nomn?
+крем-соус: 1; крем-соус=NOUN,inan,masc sing,nomn?
+крем-брюле: 1; крем-брюле=NOUN,inan,neut,Fixd sing,nomn
+крем суп: 1; крем суп=NOUN,inan,masc sing,nomn?
+крем соус: 1; крем соус=NOUN,inan,masc sing,nomn?
+крем брюле: 1; крем брюле=NOUN,inan,neut,Fixd sing,nomn?
+краюшка: 1; краюшки=NOUN,inan,femn sing,gent
+краснопёрка: 1; красноперка=NOUN,anim,femn sing,nomn
+красное: 1; красное=NOUN,inan,neut,Geox sing,nomn
+краснодарский: 1; краснодарский=ADJF masc,sing,nomn
+краковский: 1; краковская=ADJF femn,sing,nomn
+край: 1; край=NOUN,inan,masc sing,nomn
+косточка: 1; косточки=NOUN,inan,femn sing,gent
+кость: 1; кости=NOUN,inan,femn sing,gent
+коста: 1; кост=NOUN,anim,masc,Name plur,gent
+корюшка: 1; корюшка=NOUN,anim,femn sing,nomn
+корона: 1; корона=NOUN,inan,femn sing,nomn
+король: 1; королевские=ADJF plur,nomn
+корнишон: 1; корнишоны=NOUN,inan,masc plur,nomn
+коричневый: 1; коричневый=ADJF,Qual masc,sing,nomn
+корица: 1; корица=NOUN,inan,femn sing,nomn
+корзинка: 1; корзинка=NOUN,inan,femn sing,nomn
+коржик: 1; коржик=NOUN,inan,masc sing,nomn
+корень: 1; корень=NOUN,inan,masc sing,nomn
+корейски: 1; корейски=ADVB
+корейский: 1; корейская=ADJF femn,sing,nomn
+корейка: 1; корейка=NOUN,inan,femn sing,nomn
+кордон: 1; кордон=NOUN,inan,masc sing,nomn
+коньяк: 1; коньячный=ADJF,Qual masc,sing,nomn
+конц: 1; конц=NOUN,anim,masc,Sgtm,Surn sing,nomn?
+конфитюр: 1; конфитюр=NOUN,inan,masc sing,nomn
+консервированный: 1; консервированные=ADJF plur,nomn
+конина: 1; конина=NOUN,inan,femn sing,nomn
+кондитерский: 1; кондитерская=ADJF femn,sing,nomn
+конверт: 1; конвертах=NOUN,inan,masc plur,loct
+конвый: 1; конв=ADJS,Qual masc,sing?
+компот: 1; компот=NOUN,inan,masc sing,accs
+композишн: 1; композишн=NOUN,inan,masc,Geox sing,nomn?
+комплекс: 1; комплекс=NOUN,inan,masc sing,nomn
+командор: 1; командорский=ADJF masc,sing,nomn
+кольцо: 1; кольца=NOUN,inan,neut sing,gent
+колумбия: 1; колумбия=NOUN,inan,femn,Sgtm,Geox sing,nomn
+колотый: 1; колотый=ADJF,Qual masc,sing,nomn
+коломбо: 1; коломбо=NOUN,inan,masc,Sgtm,Fixd,Geox sing,nomn
+колобок: 1; колобки=NOUN,inan,masc plur,nomn
+коллекция: 1; коллекция=NOUN,inan,femn sing,nomn
+колечко: 1; колечки=NOUN,inan,neut plur,nomn
+колбасье: 1; колбасье=NOUN,inan,neut sing,nomn,V-be?
+колад: 1; колада=NOUN,inan,masc sing,gent?
+кол: 1; кола=NOUN,inan,masc sing,gent
+коктель: 1; коктель=NOUN,inan,femn sing,nomn?
+коза: 1; козье=ADJF,Poss neut,sing,nomn
+козинак: 1; козинак=NOUN,inan,masc sing,nomn
+ковис: 1; ковис=NOUN,inan,masc sing,nomn?
+ключ: 1; ключ=NOUN,inan,masc sing,nomn
+клубника/земляник: 1; клубника/земляника=NOUN,anim,masc sing,gent?
+клубника земляник: 1; клубника земляника=NOUN,anim,masc sing,gent?
+клубн: 1; клубн=NOUN,inan,masc sing,nomn?
+клуб: 1; клуб=NOUN,inan,masc sing,nomn
+клён: 1; кленовый=ADJF,Qual masc,sing,nomn
+классика: 1; классика=NOUN,inan,femn sing,nomn
+классик: 1; классик=NOUN,anim,masc sing,nomn
+кишмиш: 1; кишмиш=NOUN,inan,masc sing,nomn
+китайский: 1; китайский=ADJF masc,sing,nomn
+кислота: 1; кислота=NOUN,inan,femn sing,nomn
+кисломол: 1; кисломол=NOUN,inan,masc sing,nomn?
+кисло-сладкий: 1; кисло-сладкий=ADJF masc,sing,nomn
+кисло сладкий: 1; кисло сладкий=ADJF masc,sing,nomn?
+кислый: 1; кисло=ADJS,Qual neut,sing
+кисель: 1; кисель=NOUN,inan,masc sing,nomn
+кинза: 1; кинза=NOUN,inan,femn,Sgtm,Geox sing,nomn?
+килька: 1; килька=NOUN,inan,femn sing,nomn
+кижучий: 1; кижуч=ADJS,Qual masc,sing?
+киевский: 1; киевский=ADJF masc,sing,nomn
+киевск: 1; киевски=NOUN,inan,masc,Geox plur,nomn?
+кидень: 1; кидни=NOUN,inan,masc plur,nomn?
+киви: 1; киви=NOUN,inan,neut,Fixd sing,nomn
+кешью: 1; кешью=NOUN,inan,masc,Fixd sing,nomn
+кетчуп: 1; кетчуп=NOUN,inan,masc sing,nomn
+кета: 1; кета=NOUN,anim,femn sing,nomn
+кения: 1; кения=NOUN,inan,femn,Sgtm,Geox sing,nomn
+кекс: 1; кекс=NOUN,inan,masc sing,nomn
+кейс: 1; кейс=NOUN,inan,masc sing,nomn
+кейк: 1; кейк=NOUN,inan,masc sing,nomn?
+кебапи: 1; кебапи=NOUN,anim,femn,Fixd sing,nomn?
+кебаб: 1; кебаб=NOUN,inan,masc sing,nomn
+квисть: 1; квисти=NOUN,inan,femn sing,gent?
+квашеный: 1; квашеная=ADJF femn,sing,nomn
+квас: 1; квас=NOUN,inan,masc sing,nomn
+каша: 1; каша=NOUN,inan,femn sing,nomn
+картошка: 1; картошка=NOUN,inan,femn sing,nomn
+картоф: 1; картоф=NOUN,anim,masc,Name sing,nomn?
+карта: 1; карт=NOUN,inan,femn plur,gent
+карри: 1; карри=NOUN,inan,neut,Sgtm,Fixd sing,nomn
+карпаччо: 1; карпаччо=NOUN,inan,neut,Fixd sing,nomn?
+карельский: 1; карельская=ADJF femn,sing,nomn
+карбонад: 1; карбонад=NOUN,inan,masc sing,nomn
+карандаш: 1; карандаши=NOUN,inan,masc plur,nomn
+карамель: 1; карамель=NOUN,inan,femn sing,nomn
+капуччиный: 1; капуччино=ADJS,Qual neut,sing?
+каперс: 1; каперсы=NOUN,inan,masc plur,nomn
+капелька: 1; капелька=NOUN,inan,femn sing,nomn
+камень: 1; каменная=ADJF,Qual femn,sing,nomn
+кальцон: 1; кальцоне=NOUN,inan,masc sing,loct?
+кальмар: 1; кальмар=NOUN,anim,masc sing,nomn
+калин: 1; калинов=NOUN,inan,masc plur,gent
+каламат: 1; каламата=NOUN,inan,masc sing,gent?
+какао-напиток: 1; какао-напиток=NOUN,inan,neut,Fixd sing,nomn?
+какао напитка: 1; какао напиток=NOUN,inan,femn plur,gent?
+какао: 1; какао=NOUN,inan,neut,Fixd sing,nomn
+к сыр: 1; к сырам=NOUN,inan,masc plur,datv?
+к мясо: 1; к мясу=NOUN,inan,neut,Sgtm sing,datv?
+йодированный: 1; йодированная=ADJF femn,sing,nomn
+йодир: 1; йодир=NOUN,anim,masc,Name sing,nomn?
+йогуртный: 1; йогуртный=ADJF masc,sing,nomn?
+йогурт/творожий: 1; йогурт/творож=ADJS masc,sing?
+йогурт творожий: 1; йогурт творож=ADJS masc,sing?
+йогур: 1; йогур=NOUN,anim,masc sing,nomn?
+итальян: 1; итальян=NOUN,inan,masc sing,nomn?
+исландка: 1; исландка=NOUN,anim,femn sing,nomn
+ирис: 1; ирис=NOUN,inan,masc sing,nomn
+иранский: 1; иранская=ADJF femn,sing,nomn
+инмаркий: 1; инмарко=ADJS,Qual neut,sing?
+инжир: 1; инжир=NOUN,inan,masc sing,nomn
+империя: 1; империи=NOUN,inan,femn sing,gent
+имитир: 1; имитир=NOUN,inan,masc sing,nomn?
+имитация: 1; имитация=NOUN,inan,femn sing,nomn
+имбирь: 1; имбирь=NOUN,inan,masc sing,nomn
+избранный: 1; избранное=ADJF,Qual neut,sing,nomn
+из черноголовка: 1; из черноголовки=NOUN,inan,femn,Sgtm,Geox sing,gent?
+из филе: 1; из филе=NOUN,inan,neut,Fixd sing,nomn?
+из сухофрукты: 1; из сухофруктов=NOUN,inan,GNdr,Pltm plur,gent?
+из свина: 1; из свиной=NOUN,inan,femn sing,ablt?
+из свиной: 1; из свиного=ADJF masc,sing,gent?
+из свинина: 1; из свинины=NOUN,inan,femn sing,gent?
+из птица: 1; из птицы=NOUN,anim,femn sing,gent?
+из печень: 1; из печени=NOUN,inan,femn sing,gent?
+из охлый: 1; из охл=ADJS masc,sing?
+из отборный: 1; из отборной=ADJF,Qual femn,sing,gent?
+из орех: 1; из орехов=NOUN,inan,masc plur,gent?
+из оленина: 1; из оленины=NOUN,inan,femn sing,gent?
+из окорок: 1; из окорока=NOUN,inan,masc sing,gent?
+из мясо: 1; из мяса=NOUN,inan,neut,Sgtm sing,gent?
+из морской: 1; из морской=ADJF masc,sing,nomn?
+из морепродукт: 1; из морепродуктов=NOUN,inan,masc plur,gent?
+из молодые: 1; из молодых=NOUN,anim,GNdr,Pltm plur,loct?
+из лопатка: 1; из лопатки=NOUN,inan,femn sing,gent?
+из красный: 1; из красного=NOUN,anim,masc sing,gent?
+из капуста: 1; из капусты=NOUN,inan,femn sing,gent?
+из кабачок: 1; из кабачков=NOUN,inan,masc plur,gent?
+из индейка: 1; из индейки=NOUN,anim,femn sing,gent?
+из гусиный: 1; из гусиной=ADJF,Qual femn,sing,gent?
+из говядина: 1; из говядины=NOUN,inan,femn sing,gent?
+из вино: 1; из вина=NOUN,inan,neut sing,gent?
+из баклажан: 1; из баклажанов=NOUN,inan,masc plur,gent?
+из б/алк: 1; из б/алк=NOUN,inan,masc sing,nomn?
+из б алк: 1; из б алк=NOUN,inan,masc sing,nomn?
+из апельсин: 1; из апельсина=NOUN,inan,masc sing,gent?
+из алк: 1; из алк=NOUN,inan,masc sing,nomn?
+и телятина: 1; и телятина=NOUN,inan,femn sing,nomn?
+и мельница: 1; и мельница=NOUN,inan,femn sing,nomn?
+и медведь: 1; и медведь=NOUN,anim,masc sing,nomn?
+и лайм: 1; и лайма=NOUN,inan,masc sing,gent?
+зубчик: 1; зубчики=NOUN,inan,masc plur,nomn
+зраза: 1; зразы=NOUN,inan,femn sing,gent
+золот: 1; золот=NOUN,inan,masc sing,nomn?
+зира: 1; зира=NOUN,anim,femn,Name sing,nomn
+зефир: 1; зефир=NOUN,inan,masc sing,nomn
+зерненый: 1; зерненый=ADJF masc,sing,nomn
+зернённый: 1; зернен=PRTS,impf,past,pssv masc,sing
+земляника: 1; земляника=NOUN,inan,femn sing,nomn
+зельц: 1; зельц=NOUN,inan,masc sing,nomn
+зачищенный: 1; зачищен=PRTS,perf,past,pssv masc,sing
+заправка: 1; заправка=NOUN,inan,femn sing,nomn
+запечёный: 1; запеченая=ADJF femn,sing,nomn?
+запеканка: 1; запеканка=NOUN,inan,femn sing,nomn
+запекание: 1; запекания=NOUN,inan,neut,Sgtm sing,gent
+занино: 1; занино=NOUN,anim,masc,Sgtm,Fixd,Name sing,nomn?
+замороженный: 1; замороженный=PRTF,perf,tran,past,pssv masc,sing,nomn
+заменитель: 1; заменитель=NOUN,inan,masc sing,nomn
+замена: 1; замен=NOUN,inan,femn plur,gent
+закуска: 1; закуска=NOUN,inan,femn sing,nomn
+заварной: 1; заварные=ADJF plur,nomn
+заваривание: 1; заваривания=NOUN,inan,neut sing,gent
+жульен: 1; жульен=NOUN,inan,masc sing,nomn
+живой: 1; живое=ADJF,Qual neut,sing,nomn
+желудок: 1; желудки=NOUN,inan,masc plur,nomn
+железо: 1; железо=NOUN,inan,neut sing,accs
+желатина: 1; желатин=NOUN,inan,femn plur,gent
+жаркое: 1; жаркое=NOUN,inan,neut sing,nomn
+жарка: 1; жарки=NOUN,inan,femn sing,gent
+жареный: 1; жареные=ADJF plur,nomn
+ежевика: 1; ежевика=NOUN,inan,femn sing,nomn
+евроогурчик: 1; евроогурчики=NOUN,inan,masc plur,nomn?
+дюшес: 1; дюшес=NOUN,inan,masc sing,nomn
+дыня: 1; дыня=NOUN,inan,femn sing,nomn
+дымок: 1; дымком=NOUN,inan,masc sing,ablt
+душистый: 1; душистый=ADJF,Qual masc,sing,nomn
+душа: 1; душа=NOUN,inan,femn sing,nomn
+духовой: 1; духовая=ADJF femn,sing,nomn
+дроблёный: 1; дробленым=ADJF masc,sing,ablt
+драгон: 1; драгон=NOUN,inan,masc sing,nomn?
+дорада: 1; дорада=NOUN,inan,femn sing,nomn?
+домашние: 1; домашние=NOUN,anim,GNdr,Pltm plur,nomn
+дольче: 1; дольче=ADJF,Fixd,Subx,Qual masc,sing,nomn
+дозатор: 1; дозатором=NOUN,inan,masc sing,ablt
+добавление: 1; добавлением=NOUN,inan,neut sing,ablt
+для шашлык: 1; для шашлыка=NOUN,inan,masc sing,gent?
+для турок: 1; для турки=NOUN,anim,masc plur,nomn?
+для суши: 1; для суши=NOUN,inan,GNdr,Pltm,Fixd plur,loct?
+для салат: 1; для салата=NOUN,inan,masc sing,gent?
+для с/с: 1; для с/с=NOUN,inan,masc sing,nomn?
+для с с: 1; для с с=NOUN,inan,masc sing,nomn?
+для похудение: 1; для похудения=NOUN,inan,neut sing,gent?
+для пицца: 1; для пиццы=NOUN,inan,femn,Sgtm sing,gent?
+для курица: 1; для курицы=NOUN,anim,femn sing,gent?
+для кофе: 1; для кофе=NOUN,inan,masc,Fixd sing,nomn?
+для запекание: 1; для запекания=NOUN,inan,neut,Sgtm sing,gent?
+для завтрак: 1; для завтрака=NOUN,inan,masc sing,gent?
+для заваривание: 1; для заваривания=NOUN,inan,neut sing,gent?
+для жарка: 1; для жарки=NOUN,inan,femn sing,gent?
+для ж/ж: 1; для ж/ж=NOUN,inan,masc,Orgn sing,nomn?
+для ж ж: 1; для ж ж=NOUN,inan,masc,Orgn sing,nomn?
+для гриль: 1; для гриля=NOUN,inan,masc sing,gent?
+для греческий: 1; для греческого=ADJF masc,sing,gent?
+для выпечка: 1; для выпечки=NOUN,inan,femn sing,gent?
+для взбивание: 1; для взбивания=NOUN,inan,neut sing,gent?
+для bbq: 1; для bbq=UNKN?
+длинноплодный: 1; длинноплодные=ADJF plur,nomn?
+длиннозерный: 1; длиннозерный=ADJF masc,sing,nomn
+дип-соус: 1; дип-соус=NOUN,inan,masc sing,nomn?
+дип соус: 1; дип соус=NOUN,inan,masc sing,nomn?
+диабет: 1; диабетическая=ADJF femn,sing,nomn
+джузеппе: 1; джузеппе=NOUN,anim,masc,Sgtm,Fixd,Name sing,gent
+дженовез: 1; дженовезе=NOUN,anim,masc,Name sing,loct?
+джем: 1; джем=NOUN,inan,masc sing,nomn
+ребёнок: 1; детское=ADJF neut,sing,nomn
+детская: 1; детская=NOUN,inan,femn sing,nomn
+деревенски: 1; деревенски=ADVB?
+демерар: 1; демерара=NOUN,inan,masc sing,gent?
+деликат: 1; деликат=NOUN,inan,masc sing,nomn?
+де муан: 1; де муан=NOUN,anim,masc,Name sing,nomn?
+двухслойный: 1; двухслойный=ADJF masc,sing,nomn?
+двухсл: 1; двухсл=UNKN?
+двойной: 1; двойной=ADJF masc,sing,nomn
+дарницкий: 1; дарницкий=ADJF masc,sing,nomn?
+д`оро: 1; д`оро=NOUN,inan,masc,Sgtm,Fixd,Geox sing,nomn?
+д/торт: 1; д/торта=NOUN,inan,masc sing,gent?
+д/тест: 1; д/теста=NOUN,inan,masc sing,gent?
+д/сочн: 1; д/сочн=NOUN,inan,masc sing,nomn?
+д/салат: 1; д/салатов=NOUN,inan,masc plur,gent?
+д/рыба: 1; д/рыбы=NOUN,anim,femn sing,gent?
+д/пригот: 1; д/пригот=NOUN,anim,masc sing,nomn?
+д/обжа: 1; д/обж=NOUN,inan,femn plur,gent,Infr?
+д/мясной: 1; д/мясного=ADJF masc,sing,gent?
+д/мясо: 1; д/мяса=NOUN,inan,neut,Sgtm sing,gent?
+д/курица: 1; д/курицы=NOUN,anim,femn sing,gent?
+д/выпечка: 1; д/выпечки=NOUN,inan,femn sing,gent?
+д торт: 1; д торта=NOUN,inan,masc sing,gent?
+д тест: 1; д теста=NOUN,inan,masc sing,gent?
+д сочн: 1; д сочн=NOUN,inan,masc sing,nomn?
+д салат: 1; д салатов=NOUN,inan,masc plur,gent?
+д рыба: 1; д рыбы=NOUN,anim,femn sing,gent?
+д пригот: 1; д пригот=NOUN,anim,masc sing,nomn?
+д оро: 1; д оро=NOUN,inan,masc,Sgtm,Fixd,Geox sing,nomn?
+д обжа: 1; д обж=NOUN,inan,femn plur,gent,Infr?
+д мясной: 1; д мясного=ADJF masc,sing,gent?
+д мясо: 1; д мяса=NOUN,inan,neut,Sgtm sing,gent?
+д курица: 1; д курицы=NOUN,anim,femn sing,gent?
+д выпечка: 1; д выпечки=NOUN,inan,femn sing,gent?
+гуляш: 1; гуляш=NOUN,inan,masc sing,nomn
+грюйер: 1; грюйер=NOUN,inan,masc,Geox sing,nomn?
+грэй: 1; грэй=NOUN,inan,masc,Sgtm,Geox sing,nomn?
+груша: 1; груша=NOUN,inan,femn sing,nomn
+груздь: 1; грузди=NOUN,inan,masc plur,nomn
+грудка: 1; грудка=NOUN,inan,femn sing,nomn
+грудинка: 1; грудинка=NOUN,inan,femn sing,nomn
+грине: 1; гринми=NOUN,inan,GNdr,Pltm plur,ablt?
+гринайса: 1; гринайс=NOUN,anim,femn,Name plur,gent?
+гриль: 1; гриля=NOUN,inan,masc sing,gent
+грильяж: 1; грильяж=NOUN,inan,masc sing,nomn
+грибочек: 1; грибочки=NOUN,inan,masc plur,nomn
+греча: 1; греча=NOUN,inan,femn sing,nomn
+грени: 1; грени=NOUN,inan,masc,Sgtm,Fixd,Geox sing,nomn?
+грёкий: 1; греко=ADJS neut,sing?
+грейпфрут/лимон: 1; грейпфрут/лимон=NOUN,anim,masc,Name sing,nomn?
+грейпфрут лимон: 1; грейпфрут лимон=NOUN,anim,masc,Name sing,nomn?
+гревший: 1; грей=VERB,impf,tran sing,impr,excl
+гребешок: 1; гребешка=NOUN,inan,masc sing,gent
+грасс: 1; грасс=NOUN,inan,masc sing,nomn?
+гранулированный: 1; гранулированный=ADJF masc,sing,nomn
+гран: 1; грана=NOUN,inan,masc sing,gent
+готовый: 1; готовый=ADJF,Qual masc,sing,nomn
+гост: 1; гост=NOUN,inan,masc sing,nomn
+горячий: 1; горячий=ADJF,Qual masc,sing,nomn
+горький: 1; горький=ADJF,Qual masc,sing,nomn
+горшочек: 1; горшочке=NOUN,inan,masc sing,loct
+горчица: 1; горчица=NOUN,inan,femn sing,nomn
+гора: 1; горный=ADJF,Qual masc,sing,nomn
+горлохват: 1; горлохват=NOUN,anim,masc sing,nomn
+горбушечка: 1; горбушечки=NOUN,inan,femn sing,gent?
+горбуша: 1; горбуша=NOUN,inan,femn sing,nomn
+голяшка: 1; голяшка=NOUN,inan,femn sing,nomn
+гольден: 1; гольден=NOUN,inan,masc sing,nomn?
+голубец: 1; голубцы=NOUN,inan,masc plur,nomn
+голубика: 1; голубика=NOUN,inan,femn sing,nomn
+голландский: 1; голландский=ADJF masc,sing,nomn
+голень: 1; голень=NOUN,inan,femn sing,nomn
+голдный: 1; голден=ADJS,Qual masc,sing?
+голд: 1; голд=NOUN,inan,masc sing,nomn?
+говядина/грибы/зелень: 1; говядина/грибы/зелень=NOUN,inan,femn sing,nomn?
+говядина грибы зелень: 1; говядина грибы зелень=NOUN,inan,femn sing,nomn?
+гнездо: 1; гнезда=NOUN,inan,neut sing,gent
+глютен: 1; глютена=NOUN,inan,masc sing,gent
+глазированный: 1; глазированный=PRTF,perf,tran,past,pssv masc,sing,nomn
+глазир: 1; глазир=NOUN,anim,masc,Name sing,nomn?
+глаз: 1; глаз=NOUN,inan,masc plur,gent
+гигант: 1; гигант=NOUN,inan,masc sing,nomn
+геркулес: 1; геркулес=NOUN,inan,masc sing,nomn
+гейша: 1; гейша=NOUN,anim,femn sing,nomn
+гвоздик: 1; гвоздика=NOUN,inan,masc sing,gent
+гватемала: 1; гватемала=NOUN,inan,femn,Sgtm,Geox sing,nomn
+гауд: 1; гауда=NOUN,inan,masc sing,gent?
+гармония: 1; гармония=NOUN,inan,femn sing,nomn
+гавайский: 1; гавайская=ADJF femn,sing,nomn
+вязкий: 1; вязкий=ADJF,Qual masc,sing,nomn
+высокогорный: 1; высокогорный=ADJF masc,sing,nomn
+выпечка: 1; выпечки=NOUN,inan,femn sing,gent
+выварочный: 1; выварочная=ADJF,Qual femn,sing,nomn
+второй: 1; второе=ADJF,Anum neut,sing,nomn
+восток: 1; восточному=ADJF,Qual masc,sing,datv
+вок-соус: 1; вок-соус=NOUN,inan,masc sing,nomn?
+вок соус: 1; вок соус=NOUN,inan,masc sing,nomn?
+воздух: 1; воздушным=ADJF,Qual masc,sing,ablt
+вод: 1; вода=NOUN,inan,masc sing,gent
+вишня/черешня: 1; вишня/черешня=NOUN,inan,femn sing,nomn?
+вишня черешня: 1; вишня черешня=NOUN,inan,femn sing,nomn?
+витамины/железо: 1; витамины/железо=NOUN,inan,neut sing,nomn?
+витамины железо: 1; витамины железо=NOUN,inan,neut sing,nomn?
+вит: 1; витам=NOUN,anim,masc,Name plur,datv
+виноград: 1; виноград=NOUN,inan,masc sing,nomn
+винегрет: 1; винегрет=NOUN,inan,masc sing,nomn
+вина: 1; вине=NOUN,inan,femn sing,datv
+вид: 1; видов=NOUN,inan,masc plur,gent
+взбивание: 1; взбивания=NOUN,inan,neut sing,gent
+ветчинка: 1; ветчинка=NOUN,inan,femn sing,nomn
+ватрушка: 1; ватрушка=NOUN,inan,femn sing,nomn
+васаби: 1; васаби=NOUN,anim,masc,Sgtm,Fixd,Name sing,nomn?
+варочный: 1; варочных=ADJF,Qual plur,gent
+варенье: 1; варенье=NOUN,inan,neut sing,nomn,V-be
+вареник: 1; вареники=NOUN,inan,masc plur,nomn
+варенец: 1; варенец=NOUN,inan,masc sing,nomn
+ванна: 1; ванна=NOUN,inan,femn sing,nomn
+в эспрессо: 1; в эспрессо=NOUN,inan,neut,Fixd sing,nomn?
+в шоколадный: 1; в шоколадной=ADJF,Qual femn,sing,gent?
+в шоколад: 1; в шоколаде=NOUN,inan,masc sing,loct?
+в шок: 1; в шок=NOUN,inan,masc sing,nomn?
+в чашка: 1; в чашке=NOUN,inan,femn sing,datv?
+в часар: 1; в часар=NOUN,anim,masc,Name sing,nomn?
+в форма: 1; в форме=NOUN,inan,femn sing,datv?
+в фильтр-пакет: 1; в фильтр-пакете=NOUN,inan,masc sing,loct?
+в фильтр пакет: 1; в фильтр пакете=NOUN,inan,masc sing,loct?
+в фильтр: 1; в фильтр=NOUN,inan,masc sing,nomn?
+в томатный: 1; в томатном=ADJF,Qual masc,sing,loct?
+в т/с: 1; в т/с=NOUN,inan,masc sing,nomn?
+в т с: 1; в т с=NOUN,inan,masc sing,nomn?
+в стаканчик: 1; в стаканчике=NOUN,inan,masc sing,loct?
+в стакан: 1; в стакане=NOUN,inan,masc sing,loct?
+в среда: 1; в среде=NOUN,inan,femn sing,datv?
+в соус: 1; в соусе=NOUN,inan,masc sing,loct?
+в сок: 1; в соке=NOUN,inan,masc sing,loct?
+в сливочный: 1; в сливочном=ADJF,Qual masc,sing,loct?
+в сироп: 1; в сиропе=NOUN,inan,masc sing,loct?
+в синюг: 1; в синюге=NOUN,inan,masc sing,loct?
+в с/с: 1; в с/с=NOUN,inan,masc sing,nomn?
+в с с: 1; в с с=NOUN,inan,masc sing,nomn?
+в рио: 1; в рио=NOUN,anim,masc,Sgtm,Fixd,Name sing,nomn?
+в рассол: 1; в рассоле=NOUN,inan,masc sing,loct?
+в половинка: 1; в половинки=NOUN,inan,femn sing,gent?
+в панировка: 1; в панировке=NOUN,inan,femn sing,datv?
+в охлый: 1; в охл=ADJS masc,sing?
+в нарезка: 1; в нарезке=NOUN,inan,femn sing,datv?
+в нарез: 1; в нарез=NOUN,inan,masc sing,nomn?
+в миланеза: 1; в миланезе=NOUN,anim,femn,Name sing,datv?
+в масло: 1; в масле=NOUN,inan,neut sing,loct?
+в маринад: 1; в маринаде=NOUN,inan,masc sing,loct?
+в майонезный: 1; в майонезном=ADJF masc,sing,loct?
+в красный: 1; в красном=NOUN,anim,masc sing,loct?
+в конфета: 1; в конфет=NOUN,inan,femn plur,gent?
+в конверт: 1; в конвертах=NOUN,inan,masc plur,loct?
+в конвый: 1; в конв=ADJS,Qual masc,sing?
+в капсула: 1; в капсулах=NOUN,inan,femn plur,loct?
+в защий: 1; в защ=ADJS masc,sing?
+в дольче: 1; в дольче=ADJF,Fixd,Subx,Qual masc,sing,nomn?
+в горшочек: 1; в горшочке=NOUN,inan,masc sing,loct?
+в гора: 1; в гор=NOUN,inan,femn plur,gent?
+в глазурь: 1; в глазури=NOUN,inan,femn sing,gent?
+в глаз: 1; в глаз=NOUN,inan,masc sing,nomn?
+в вино: 1; в вине=NOUN,inan,neut sing,loct?
+в вафельный: 1; в вафельном=ADJF,Qual masc,sing,loct?
+в варочный: 1; в варочных=ADJF,Qual plur,gent?
+в бел: 1; в белом=NOUN,inan,masc sing,ablt?
+в атлантический: 1; в атлантическая=ADJF femn,sing,nomn?
+в аджика: 1; в аджике=NOUN,inan,femn sing,datv?
+в presidentti: 1; в presidentti=UNKN?
+в espresso: 1; в espresso=UNKN?
+быстросуп-пюре: 1; быстросуп-пюре=NOUN,inan,masc sing,nomn?
+быстросуп пюре: 1; быстросуп пюре=NOUN,inan,neut,Fixd sing,nomn?
+быстросуп: 1; быстросуп=NOUN,inan,masc sing,nomn?
+быстрорастворимый: 1; быстрорастворимый=ADJF masc,sing,nomn
+быстродействующий: 1; быстродействующие=ADJF plur,nomn
+быстрый: 1; быстрого=ADJF,Qual neut,sing,gent
+бутылка: 1; бутылка=NOUN,inan,femn sing,nomn
+бутерброд: 1; бутерброда=NOUN,inan,masc sing,gent
+буржа: 1; бурже=NOUN,inan,femn sing,datv?
+бурёнка: 1; буренка=NOUN,anim,femn sing,nomn
+буратино: 1; буратино=NOUN,anim,masc,Fixd,Name sing,nomn
+бумага: 1; бумага=NOUN,inan,femn sing,nomn
+бульон: 1; бульон=NOUN,inan,masc sing,nomn
+буженина: 1; буженина=NOUN,inan,femn sing,nomn
+брюссельский: 1; брюссельская=ADJF femn,sing,nomn
+брюла: 1; брюле=NOUN,anim,femn sing,datv?
+брынза: 1; брынза=NOUN,inan,femn sing,nomn
+брусника: 1; брусника=NOUN,inan,femn sing,nomn
+брокколи: 1; брокколи=ADJF,Fixd,Subx,Qual masc,sing,nomn
+брикет: 1; брикет=NOUN,inan,masc sing,nomn
+брезаол: 1; брезаола=NOUN,inan,masc sing,gent?
+брауншвейгский: 1; брауншвейгская=ADJF femn,sing,nomn
+бочка: 1; бочковая=ADJF,Qual femn,sing,nomn
+борщ: 1; борщ=NOUN,inan,masc sing,accs
+бородинский: 1; бородинский=ADJF,Geox masc,sing,nomn
+бонжур: 1; бонжур=INTJ
+бодрость: 1; бодрость=NOUN,inan,femn sing,nomn
+боб: 1; бобы=NOUN,inan,masc plur,nomn
+блин: 1; блины=NOUN,inan,masc plur,nomn
+блинчик: 1; блинчики=NOUN,inan,masc plur,nomn
+бифштекс: 1; бифштекс=NOUN,inan,masc sing,nomn
+бифилайф: 1; бифилайф=NOUN,inan,masc sing,nomn?
+бифидокефир: 1; бифидокефир=NOUN,inan,masc sing,nomn?
+биттер: 1; биттер=NOUN,inan,masc sing,nomn?
+биточек: 1; биточки=NOUN,inan,masc plur,nomn
+бисквит: 1; бисквитное=ADJF,Qual neut,sing,nomn
+биотворог: 1; биотворог=NOUN,inan,masc sing,nomn?
+биопродукт: 1; биопродукт=NOUN,inan,masc sing,nomn?
+биопрод: 1; биопрод=NOUN,inan,masc sing,nomn?
+биокефир: 1; биокефир=NOUN,inan,masc sing,nomn?
+биойогурт: 1; биойогурт=NOUN,inan,masc sing,nomn?
+био-овсяный: 1; био-овсяный=ADJF,Qual masc,sing,nomn?
+био овсяный: 1; био овсяный=ADJF,Qual masc,sing,nomn?
+бефстроганов: 1; бефстроганов=NOUN,inan,masc sing,nomn
+берн: 1; берн=NOUN,inan,masc,Geox sing,nomn
+берег: 1; береговая=ADJF femn,sing,nomn
+бергамот: 1; бергамотом=NOUN,inan,masc sing,ablt
+белые: 1; белые=NOUN,anim,GNdr,Pltm plur,nomn
+бел: 1; белом=NOUN,inan,masc sing,ablt
+бёлк: 1; белк=NOUN,inan,masc sing,nomn?
+бекон: 1; бекон=NOUN,inan,masc sing,nomn
+безлактозный: 1; безлактозный=ADJF masc,sing,nomn?
+безлактозной: 1; безлактозное=NOUN,inan,masc sing,loct?
+бездрожжевой: 1; бездрожжевое=ADJF neut,sing,nomn
+безалкогольный: 1; безалкогольное=ADJF neut,sing,nomn
+безалк: 1; безалк=UNKN?
+без сахар: 1; без сахара=NOUN,inan,masc sing,gent?
+без рассол: 1; без рассола=NOUN,inan,masc sing,gent?
+без косточки: 1; без косточки=NOUN,inan,GNdr,Pltm plur,accs?
+бедро: 1; бедро=NOUN,inan,neut sing,nomn
+батончик-мюсли: 1; батончик-мюсли=NOUN,inan,masc sing,nomn?
+батончик мюсли: 1; батончик мюсли=NOUN,inan,neut,Sgtm,Fixd sing,nomn?
+батон: 1; батон=NOUN,inan,masc sing,nomn
+бастурм: 1; бастурма=NOUN,inan,masc sing,gent?
+басмати: 1; басмати=NOUN,anim,masc,Sgtm,Fixd,Name sing,nomn?
+барбекю: 1; барбекю=NOUN,inan,masc,Fixd sing,nomn
+баранка: 1; баранки=NOUN,inan,femn sing,gent
+бантик: 1; бантики=NOUN,inan,masc plur,nomn
+банан печенье: 1; банан печенье=NOUN,inan,neut sing,nomn,V-be?
+бальзамич: 1; бальзамич=NOUN,anim,masc sing,nomn?
+балтийский: 1; балтийская=ADJF femn,sing,nomn
+байховый: 1; байховый=ADJF,Qual masc,sing,nomn
+байкал: 1; байкал=NOUN,inan,masc,Geox sing,nomn
+базилик: 1; базиликом=NOUN,inan,masc sing,ablt
+баварский: 1; баварские=ADJF plur,nomn
+б/сахар: 1; б/сахара=NOUN,inan,masc sing,gent?
+б/с: 1; б/сах=NOUN,inan,masc plur,loct?
+б/пригот: 1; б/пригот=NOUN,anim,masc sing,nomn?
+б/кость: 1; б/кости=NOUN,inan,femn sing,gent?
+б/глютен: 1; б/глютена=NOUN,inan,masc sing,gent?
+б/алк: 1; б/алк=NOUN,inan,masc sing,nomn?
+б сахар: 1; б сахара=NOUN,inan,masc sing,gent?
+б с: 1; б сах=NOUN,inan,masc plur,loct?
+б пригот: 1; б пригот=NOUN,anim,masc sing,nomn?
+б кость: 1; б кости=NOUN,inan,femn sing,gent?
+б глютен: 1; б глютена=NOUN,inan,masc sing,gent?
+б алк: 1; б алк=NOUN,inan,masc sing,nomn?
+ацидофилин: 1; ацидофилин=NOUN,inan,masc sing,nomn
+атлантический: 1; атлантическая=ADJF femn,sing,nomn
+ассорти: 1; ассорти=NOUN,inan,neut,Fixd sing,nomn
+артишок: 1; артишоки=NOUN,inan,masc plur,nomn
+ароматный: 1; ароматная=ADJF,Qual femn,sing,nomn
+ароматизир: 1; ароматизир=NOUN,inan,masc sing,nomn?
+аром: 1; аром=NOUN,inan,masc sing,ablt
+армянский: 1; армянский=ADJF masc,sing,nomn
+аргентина: 1; аргентина=NOUN,inan,femn,Sgtm,Geox sing,nomn
+арбуз: 1; арбуз=NOUN,inan,masc sing,nomn
+арабика: 1; арабика=NOUN,inan,femn,Sgtm sing,nomn
+аппетитный: 1; аппетитные=ADJF,Qual plur,nomn
+апельсин/манго: 1; апельсин/манго=NOUN,inan,neut,Fixd sing,nomn?
+апельсин манго: 1; апельсин манго=NOUN,inan,neut,Fixd sing,nomn?
+антрекот: 1; антрекот=NOUN,inan,masc sing,nomn
+альпы: 1; альп=NOUN,inan,GNdr,Pltm,Geox plur,gent
+алтайский: 1; алтайский=ADJF masc,sing,nomn
+алый: 1; алое=ADJF,Qual neut,sing,nomn
+алёнка: 1; аленка=NOUN,anim,femn sing,nomn
+актив: 1; актив=NOUN,inan,masc sing,accs
+акватик: 1; акватика=NOUN,inan,masc sing,gent?
+айсберг: 1; айсберг=NOUN,inan,masc sing,nomn
+айран: 1; айран=NOUN,inan,masc sing,nomn
+айвар: 1; айвар=NOUN,anim,masc,Name sing,nomn
+адреналин: 1; адреналин=NOUN,inan,masc sing,nomn
+адмирал: 1; адмирал=NOUN,anim,masc sing,nomn
+аглиадиновый: 1; аглиадиновый=ADJF masc,sing,nomn?
+авокадо: 1; авокадо=NOUN,inan,neut,Fixd sing,nomn
+абхазия: 1; абхазии=NOUN,inan,femn,Sgtm,Geox sing,gent
+чупа: 1; Чупа=NOUN,inan,femn,Sgtm,Geox sing,nomn?
+киндёр: 1; Киндер=NOUN,inan,masc sing,nomn?
+долмио: 1; Долмио=ADJF,Fixd,Subx,Qual masc,sing,nomn?
+zdravo: 1; zdravo=LATN?
+vitao: 1; vitao=LATN?
+virgin: 1; virgin=LATN?
+rimuss: 1; rimuss=LATN?
+reine: 1; reine=LATN?
+reber: 1; reber=LATN?
+produkt: 1; produkt=LATN?
+presidentti: 1; presidentti=LATN?
+premi: 1; premi=LATN?
+pops: 1; pops=LATN?
+pomace: 1; pomace=LATN?
+pellegrino: 1; pellegrino=LATN?
+paulig: 1; paulig=LATN?
+panna: 1; panna=LATN?
+original: 1; original=LATN?
+organic: 1; organic=LATN?
+nature: 1; nature=LATN?
+mulino: 1; mulino=LATN?
+mivela: 1; mivela=LATN?
+minis: 1; minis=LATN?
+miel: 1; miel=LATN?
+magic: 1; magic=LATN?
+luxe: 1; luxe=LATN?
+light: 1; light=LATN?
+lemon: 1; lemon=LATN?
+kiss: 1; kiss=LATN?
+kids: 1; kids=LATN?
+grey: 1; grey=LATN?
+green: 1; green=LATN?
+gourmet: 1; gourmet=LATN?
+gold: 1; gold=LATN?
+fresh: 1; fresh=LATN?
+extra: 1; extra=LATN?
+excellence: 1; excellence=LATN?
+espresso: 1; espresso=LATN?
+especialisimo: 1; especialisimo=LATN?
+english: 1; english=LATN?
+ehrmann: 1; ehrmann=LATN?
+earl: 1; earl=LATN?
+down: 1; down=LATN?
+delice: 1; delice=LATN?
+d'or: 1; d'or=LATN?
+d or: 1; d or=LATN?
+cухарик: 1; cухарики=NOUN,anim,masc,Name plur,nomn?
+cмесь: 1; cмесь=NOUN,inan,femn sing,nomn?
+cream: 1; cream=LATN?
+crab&cream: 1; crab&cream=LATN?
+crab cream: 1; crab cream=LATN?
+crab: 1; crab=LATN?
+coco: 1; coco=LATN?
+classic: 1; classic=LATN?
+chocolife: 1; chocolife=LATN?
+carte: 1; carte=LATN?
+breakfast: 1; breakfast=LATN?
+black: 1; black=LATN?
+bioмюсли: 1; bioмюсли=NOUN,inan,neut,Sgtm,Fixd sing,nomn?
+bioкаша: 1; bioкаша=NOUN,inan,femn sing,nomn?
+bicottini: 1; bicottini=LATN?
+bianco: 1; bianco=LATN?
+bembery: 1; bembery=LATN?
+bellacrema: 1; bellacrema=LATN?
+arla: 1; arla=LATN?
+aqua: 1; aqua=LATN?
+active: 1; active=LATN?
+90/120: 1; 90/120=UNKN?
+90 120: 1; 90 120=UNKN?
+70/90: 1; 70/90=UNKN?
+70 90: 1; 70 90=UNKN?
+2014: 1; 2014=NUMB,intg?
+200/300: 1; 200/300=UNKN?
+200 300: 1; 200 300=UNKN?
+2-секца: 1; 2-секц=NOUN,anim,femn plur,gent?
+2 секца: 1; 2 секц=NOUN,anim,femn plur,gent?
+1кат: 1; 1кат=NOUN,inan,masc sing,nomn?
+16/20: 1; 16/20=UNKN?
+16 20: 1; 16 20=UNKN?
+10*10: 1; 10*10=UNKN?
+10 10: 1; 10 10=UNKN?
+#яйцо: 1; #яйцо=NOUN,inan,neut sing,nomn?
+#энергетические напитка: 1; #энергетические напитки=NOUN,inan,femn sing,gent?
+#шоколад: 1; #шоколад=NOUN,inan,masc sing,nomn?
+#чай, кофе, какао: 1; #чай, кофе, какао=NOUN,inan,neut,Fixd sing,nomn?
+#чай чёрный: 1; #чай черный=NOUN,anim,masc sing,nomn?
+#чай травяной: 1; #чай травяной=ADJF masc,sing,nomn?
+#чай зелёный: 1; #чай зеленый=ADJF,Qual masc,sing,nomn?
+#хрен, горчица, маринада: 1; #хрен, горчица, маринад=NOUN,anim,femn,Name plur,gent?
+#хлебец: 1; #хлебцы=NOUN,inan,masc plur,nomn?
+#хлебобулочные изделие: 1; #хлебобулочные изделия=NOUN,inan,neut sing,gent?
+#хлеб, батон, лепешки, лаваш: 1; #хлеб, батон, лепешки, лаваш=NOUN,inan,masc sing,nomn?
+#фрукты, ягода: 1; #фрукты, ягоды=NOUN,inan,femn sing,gent?
+#фруктово-ягодная консервация: 1; #фруктово-ягодная консервация=NOUN,inan,femn sing,nomn?
+#фасоль: 1; #фасоль=NOUN,inan,femn sing,nomn?
+#уксус: 1; #уксус=NOUN,inan,masc sing,nomn?
+#торты и пирожные свежий: 1; #торты и пирожные свежие=ADJF plur,nomn?
+#томатная паста, томаты консервированный: 1; #томатная паста, томаты консервированные=PRTF,perf,tran,past,pssv plur,nomn?
+#томат: 1; #томат=NOUN,inan,masc sing,nomn?
+#тесто: 1; #тесто=NOUN,inan,neut sing,nomn?
+#творожные изделие: 1; #творожные изделия=NOUN,inan,neut sing,gent?
+#творожистые и рассольные сыр: 1; #творожистые и рассольные сыры=NOUN,inan,masc plur,nomn?
+#твердые сыр: 1; #твердые сыры=NOUN,inan,masc plur,nomn?
+#сыр: 1; #сыры=NOUN,inan,masc plur,nomn?
+#сухие завтрак: 1; #сухие завтраки=NOUN,inan,masc plur,nomn?
+#сухарики, баранки, сушка: 1; #сухарики, баранки, сушки=NOUN,inan,femn sing,gent?
+#супы и блюда быстрого приготовление: 1; #супы и блюда быстрого приготовления=NOUN,inan,neut sing,gent?
+#специи, приправа: 1; #специи, приправы=NOUN,inan,femn sing,gent?
+#соус: 1; #соусы=NOUN,inan,masc plur,nomn?
+#сосиски, сардельки, колбаска: 1; #сосиски, сардельки, колбаски=NOUN,inan,femn sing,gent?
+#соль: 1; #соль=NOUN,inan,femn sing,nomn?
+#соленые и квашенные овощи и плод: 1; #соленые и квашенные овощи и плоды=NOUN,inan,masc plur,nomn?
+#соки, нектары, морс: 1; #соки, нектары, морсы=NOUN,inan,masc plur,nomn?
+#сметана: 1; #сметана=NOUN,inan,femn sing,nomn?
+#сахар: 1; #сахар=NOUN,inan,masc sing,nomn?
+#рыбные консервы: 1; #рыбные консервы=NOUN,inan,GNdr,Pltm plur,accs?
+#рыбная гастрономия: 1; #рыбная гастрономия=NOUN,inan,femn sing,nomn?
+#рыба, морепродукты и икра: 1; #рыба, морепродукты и икра=NOUN,inan,femn sing,nomn?
+#рыба соленая и копченый: 1; #рыба соленая и копченая=ADJF femn,sing,nomn?
+#рыба охлажденная и замороженный: 1; #рыба охлажденная и замороженная=ADJF femn,sing,nomn?
+#рыба вяленая, сушеная, снэки рыбный: 1; #рыба вяленая, сушеная, снэки рыбные=ADJF,Qual plur,nomn?
+#рис: 1; #рис=NOUN,inan,masc sing,nomn?
+#растительные масла, соусы и приправа: 1; #растительные масла, соусы и приправы=NOUN,inan,femn sing,gent?
+#птица охлажденный: 1; #птица охлажденная=ADJF femn,sing,nomn?
+#птица замороженный: 1; #птица замороженная=ADJF femn,sing,nomn?
+#продукты соевой: 1; #продукты соевые=ADJF plur,nomn?
+#продукты молочные для детей и кормящих м: 1; #продукты молочные для детей и кормящих мам=NOUN,inan,masc plur,datv?
+#продукты для похудение: 1; #продукты для похудения=NOUN,inan,neut sing,gent?
+#пресервы: 1; #пресервы=NOUN,inan,GNdr,Pltm plur,accs?
+#полуфабрикаты замороженный: 1; #полуфабрикаты замороженные=ADJF plur,nomn?
+#плавленные, копченые, колбасные сыр: 1; #плавленные, копченые, колбасные сыры=NOUN,inan,masc plur,nomn?
+#пицца: 1; #пицца=NOUN,inan,femn,Sgtm sing,nomn?
+#перец: 1; #перец=NOUN,inan,masc sing,nomn?
+#пельмени, вареники, хинкаль: 1; #пельмени, вареники, хинкали=NOUN,inan,femn sing,gent?
+#паштеты, ливер: 1; #паштеты, ливер=NOUN,anim,masc,Name sing,nomn?
+#орехи, сухофрукт: 1; #орехи, сухофрукты=NOUN,inan,masc plur,nomn?
+#оливка: 1; #оливки=NOUN,inan,femn sing,gent?
+#огурцы соленые и маринованный: 1; #огурцы соленые и маринованные=PRTF,perf,tran,past,pssv plur,nomn?
+#огурец: 1; #огурец=NOUN,inan,masc sing,nomn?
+#овощные консервы: 1; #овощные консервы=NOUN,inan,GNdr,Pltm plur,accs?
+#овощи, ягоды, грибы замороженный: 1; #овощи, ягоды, грибы замороженные=ADJF plur,nomn?
+#овощи, фрукты, грибы, ягода: 1; #овощи, фрукты, грибы, ягоды=NOUN,inan,femn sing,gent?
+#овощи другий: 1; #овощи другие=ADJF plur,nomn?
+#овощ: 1; #овощи=NOUN,inan,masc plur,nomn?
+#напитки, сокий: 1; #напитки, соки=ADJS plur?
+#мясо охлажденный: 1; #мясо охлажденное=ADJF neut,sing,nomn?
+#мясо и птица: 1; #мясо и птица=NOUN,anim,femn sing,nomn?
+#мясо замороженный: 1; #мясо замороженное=ADJF neut,sing,nomn?
+#мясные консервы: 1; #мясные консервы=NOUN,inan,GNdr,Pltm plur,accs?
+#мясные деликатес: 1; #мясные деликатесы=NOUN,inan,masc plur,nomn?
+#мясная гастрономия: 1; #мясная гастрономия=NOUN,inan,femn sing,nomn?
+#мучные кондитерские изделие: 1; #мучные кондитерские изделия=NOUN,inan,neut sing,gent?
+#мука: 1; #мука=NOUN,inan,femn sing,nomn?
+#мороженое: 1; #мороженое=NOUN,inan,neut sing,nomn?
+#морепродукт: 1; #морепродукты=NOUN,inan,masc plur,nomn?
+#молочные продукты, сыры, яйцо: 1; #молочные продукты, сыры, яйцо=NOUN,inan,neut,Sgtm sing,nomn?
+#молочные продукт: 1; #молочные продукты=NOUN,inan,masc,Orgn plur,nomn?
+#молочные консервы: 1; #молочные консервы=NOUN,inan,GNdr,Pltm plur,accs?
+#молоко и сливка: 1; #молоко и сливки=NOUN,inan,femn sing,gent?
+#мёд: 1; #мед=NOUN,inan,masc sing,nomn?
+#масло сливочное и маргарина: 1; #масло сливочное и маргарин=NOUN,inan,femn plur,gent?
+#масло растительный: 1; #масло растительное=ADJF neut,sing,nomn?
+#маслина: 1; #маслины=NOUN,inan,femn sing,gent?
+#мармелад, суфле, зефир, пастил: 1; #мармелад, суфле, зефир, пастила=NOUN,inan,masc sing,gent?
+#макаронные изделие: 1; #макаронные изделия=NOUN,inan,neut sing,gent?
+#майонез: 1; #майонез=NOUN,inan,masc sing,nomn?
+#лимонады, газированные напитка: 1; #лимонады, газированные напитки=NOUN,inan,femn sing,gent?
+#кукуруза: 1; #кукуруза=NOUN,inan,femn sing,nomn?
+#круп: 1; #крупы=NOUN,inan,masc plur,nomn?
+#крупа гречневый: 1; #крупа гречневая=ADJF femn,sing,nomn?
+#крабовое мясо и палочка: 1; #крабовое мясо и палочки=NOUN,inan,femn sing,gent?
+#кофе: 1; #кофе=NOUN,inan,masc,Fixd sing,nomn?
+#котлеты, нагетсы, галет: 1; #котлеты, нагетсы, галеты=NOUN,inan,masc plur,nomn?
+#корнеплод: 1; #корнеплоды=NOUN,inan,masc plur,nomn?
+#конфета: 1; #конфеты=NOUN,inan,femn sing,gent?
+#консервация: 1; #консервация=NOUN,inan,femn sing,nomn?
+#кондитерские изделие: 1; #кондитерские изделия=NOUN,inan,neut sing,gent?
+#колбасы копченый: 1; #колбасы копченые=ADJF plur,nomn?
+#колбасы вареный: 1; #колбасы вареные=ADJF plur,nomn?
+#кисломолочные продукт: 1; #кисломолочные продукты=NOUN,inan,masc,Orgn plur,nomn?
+#кетчуп: 1; #кетчупы=NOUN,inan,masc plur,nomn?
+#квас, холодный чай: 1; #квас, холодный чай=NOUN,inan,masc,Sgtm,Geox sing,nomn?
+#капуста: 1; #капуста=NOUN,inan,GNdr,Pltm plur,accs?
+#какао, цикорий: 1; #какао, цикорий=NOUN,inan,masc sing,nomn?
+#йогурты и творожка: 1; #йогурты и творожки=NOUN,inan,femn sing,gent?
+#ингредиенты для выпечка: 1; #ингредиенты для выпечки=NOUN,inan,femn sing,gent?
+#икра овощной: 1; #икра овощная=ADJF femn,sing,nomn?
+#икра: 1; #икра=NOUN,inan,femn sing,nomn?
+#зелень: 1; #зелень=NOUN,inan,femn sing,nomn?
+#замороженные продукт: 1; #замороженные продукты=NOUN,inan,masc,Orgn plur,nomn?
+#другие овощные консервы: 1; #другие овощные консервы=NOUN,inan,GNdr,Pltm plur,accs?
+#другие круп: 1; #другие крупы=NOUN,inan,masc plur,nomn?
+#десерты, каши молочный: 1; #десерты, каши молочные=ADJF plur,nomn?
+#грибы свежий: 1; #грибы свежие=ADJF plur,nomn?
+#грибные консервы: 1; #грибные консервы=NOUN,inan,GNdr,Pltm plur,accs?
+#готовые блюда консервированный: 1; #готовые блюда консервированные=PRTF,perf,tran,past,pssv plur,nomn?
+#готовые блюда замороженный: 1; #готовые блюда замороженные=ADJF plur,nomn?
+#горошек: 1; #горошек=NOUN,inan,masc sing,nomn?
+#горох, фасоль, чечевица: 1; #горох, фасоль, чечевица=NOUN,inan,femn sing,nomn?
+#выпечка, изделия сдобный: 1; #выпечка, изделия сдобные=ADJF plur,nomn?
+#вод: 1; #вода=NOUN,inan,masc sing,gent?
+#блинчики, мучные изделие: 1; #блинчики, мучные изделия=NOUN,inan,neut sing,gent?
+#безглютеновые продукт: 1; #безглютеновые продукты=NOUN,inan,masc,Orgn plur,nomn?
+#бакалея: 1; #бакалея=NOUN,inan,femn sing,nomn?

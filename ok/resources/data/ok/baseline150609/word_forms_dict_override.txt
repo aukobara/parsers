@@ -20,3 +20,4 @@
 сметанковый~noun:сметана # unknown form
 грудка~pet:грудь # ambiguity ~pet:груда
 мясо~same:мясо # was говядина - too narrow and confuse with other types of meet
+сказка~same:сказка # ambiguity in ozhegov ~same:сказка|чудо
