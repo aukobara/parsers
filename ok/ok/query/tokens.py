@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals, print_function
-from collections import defaultdict
 
+from collections import defaultdict
+import logging
 import re
 
 from ok.utils import ImmutableListMixin
 
 RE_QUERY_SEPARATOR = '\s|"|,|\.|«|»|“|”|\(|\)|\?|!|\+|:'
+
+log = logging.getLogger(__name__)
 
 
 def cleanup_token_str(s):
@@ -21,8 +24,11 @@ def cleanup_token_str(s):
 
 class QueryItemBase(unicode):
 
+    # Mandatory attributes for token implementation classes (if they want to be parsed)
     regex = None
     group_name = None
+
+    # Optional attributes
     pre_condition = None
     post_condition = None
 
@@ -46,6 +52,9 @@ class QueryItemBase(unicode):
 
     def __repr__(self):
         return '%d:%s:%s' % (self.position, super(QueryItemBase, self).__repr__(), type(self).__name__)
+
+    def __unicode__(self):
+        return self[:]
 
     def pre_item(self):
         assert self.query
@@ -102,13 +111,54 @@ class Query(ImmutableListMixin, list):
     """@type: list"""
 
     def __init__(self, q_str, predecessor_query=None, lowercase=True):
-        self.original_query = q_str
-        self.predecessor_query = predecessor_query
-        """@type: Query"""
-        super(Query, self).__init__(self.split(q_str, parent_query=self, lowercase=lowercase))
+        if isinstance(q_str, list):
+            # Initialize from list of pre-parsed tokens of another query
+            assert q_str and all(self.is_compatible_with_token(item) for item in q_str), \
+                    "Query class '{query_type}' is not compatible with specified token list: {q}".format(
+                        query_type=self.__class__, q=''.join(q_str))
+
+            producer_query = q_str[0].query
+            """@type: Query"""
+            self.original_query = producer_query.original_query if producer_query else ''.join(q_str)
+
+            self.predecessor_query = predecessor_query or producer_query
+            """@type: Query"""
+
+            super(Query, self).__init__(self.copy_items(q_str, parent_query=self, lowercase=lowercase))
+
+        else:
+            self.original_query = q_str
+
+            self.predecessor_query = predecessor_query
+            """@type: Query"""
+
+            super(Query, self).__init__(self.split(q_str, parent_query=self, lowercase=lowercase))
 
     _regex = None
     _regex_ic = None
+
+    @classmethod
+    def is_compatible_with_token(cls, token):
+        token_type = token if isinstance(token, type) else token.__class__
+        return token_type == QueryWord or token_type in cls.token_reg
+
+    @staticmethod
+    def validate_token_class(token_cls):
+        if issubclass(token_cls, QueryItemBase) and token_cls.group_name and token_cls.regex:
+            regex = '(?P<%s>%s)' % (token_cls.group_name, token_cls.regex)
+            try:
+                re.compile(regex, re.U)
+                if token_cls.pre_condition:
+                    regex = token_cls.pre_condition
+                    re.compile('(?<=%s)' % regex, re.U)
+                if token_cls.post_condition:
+                    regex = token_cls.post_condition
+                    re.compile(regex, re.U)
+                return True
+            except Exception as e:
+                log.error("Failed parsing regexp for token: %s. Error: %r. Regexp:\r\n%s", token_cls.__name__, e, regex)
+                raise
+        return False
 
     @classmethod
     def regex(cls, ignore_case=False):
@@ -117,14 +167,25 @@ class Query(ImmutableListMixin, list):
             regex = ''
             flags = re.UNICODE | re.IGNORECASE if ignore_case else re.UNICODE
             for i, token_cls in enumerate(cls.token_reg):
-                assert issubclass(token_cls, QueryItemBase) and token_cls.group_name and token_cls.regex
+                assert cls.validate_token_class(token_cls), \
+                    "Invalid token type class '{token_type!r}' is defined in query type '{query_type!r}'".format(token_type=token_cls, query_type=cls)
                 if i > 0:
                     regex += '|'
+
+                if token_cls.pre_condition:
+                    regex += '(?:^|(?<=%s))' % token_cls.pre_condition
+
                 regex += '(?P<%s>%s)' % (token_cls.group_name, token_cls.regex)
+
                 if token_cls.post_condition:
                     regex += '(?=%s|$)' % token_cls.post_condition
 
-            regex = re.compile(regex, flags)
+            try:
+                regex = re.compile(regex, flags)
+            except Exception as e:
+                log.error("Failed parsing regexp for query: %s. Error: %r. Regex:\r\n%s", cls.__name__, e, regex)
+                raise
+
             if ignore_case:
                 cls._regex_ic = regex
             else:
@@ -141,6 +202,17 @@ class Query(ImmutableListMixin, list):
         return group_to_type
 
     @classmethod
+    def copy_items(cls, items, parent_query=None, lowercase=True):
+        # Recreate all query items from another query with specified attributes
+        new_items = []
+        for pos, token in enumerate(items):
+            token_type = token.__class__
+            assert cls.is_compatible_with_token(token_type)
+            token_str = token.lower() if lowercase else token[:]
+            new_items.append(token_type(pos, token_str, slice(token.char_start, token.char_end + 1), parent_query))
+        return new_items
+
+    @classmethod
     def split(cls, q_str, parent_query=None, lowercase=True):
         """
         Split q_str to sequence of query items, where each one is either QueryToken or TokenSeparator.
@@ -154,6 +226,7 @@ class Query(ImmutableListMixin, list):
         @param bool lowercase: if False, keep characters in items as is, call .lower() otherwise.
                 Please note, characters in original query keeps as is and can be accessed by position if required.
         """
+        assert cls.token_reg, "Query implementation class must define Token Types list in 'token_reg' attribute"
         result = []
         if q_str:
             if lowercase:
@@ -179,6 +252,7 @@ class Query(ImmutableListMixin, list):
 
                     match_char_at = token_match.start() + start_iter_at
 
+                    """
                     if token_cls.pre_condition and match_char_at > 0:
                         pre_match = re.match('^.*%s$' % token_cls.pre_condition, q_str[:match_char_at], re_pattern.flags)
                         if pre_match is None:
@@ -186,6 +260,7 @@ class Query(ImmutableListMixin, list):
                             # Current char will join to previous word
                             start_iter_at = match_char_at + 1
                             break
+                    """
 
                     if prev_char_at < match_char_at:
                         prev_word = q_str[prev_char_at:match_char_at]
@@ -210,14 +285,14 @@ class Query(ImmutableListMixin, list):
 
     _to_str_cache = None
 
-    def to_str(self):
+    def to_str(self, sep=''):
         if self._to_str_cache is not None:
             return self._to_str_cache
-        rv = self._to_str_cache = ''.join(self)
+        rv = self._to_str_cache = sep.join(self)
         return rv
 
     def __unicode__(self):
-        return self.to_str()
+        return self.to_str(' + ')
 
     _items_type_cache = None
 
@@ -332,3 +407,5 @@ class Query(ImmutableListMixin, list):
 class DefaultQuery(Query):
 
     token_reg = [QuerySeparator]
+
+EmptyQuery = DefaultQuery("")
