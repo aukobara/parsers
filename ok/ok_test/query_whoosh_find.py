@@ -163,9 +163,9 @@ def test_feeder():
     assert fields['types'] == ['тест1 + тест2']
     assert fields['tail'] == ['хвост']
     assert fields['brand'] == 'бренд'
-    assert fields['fat'] == '3,5%'
-    assert fields['pack'] == '10 шт'
-    assert fields['weight'] == '0,125 г'
+    assert fields['fat'] == ['3,5%']
+    assert fields['pack'] == ['10 шт']
+    assert fields['weight'] == ['0,125 г']
     # Check no other fields passed to writer
     assert len(fields) == 7
 
@@ -228,11 +228,15 @@ def test_find_multi_token_brand_mix(ix_brand_full):
 
 
 def _test_find_multi_token_brand(q, brand, matched, not_matched):
-    with oq_find.find_brands(q, limit=1) as rs:
-        assert rs.size == 1
-        assert next(iter(rs.data)) == brand
-        assert rs.matched_tokens() == matched.split()
-        assert rs.not_matched_tokens() == not_matched.split()
+    with oq_find.find_brands(q, group_limit=1) as rs:
+        assert rs.size > 0
+        for m_brand in rs.data:
+            if m_brand == brand:
+                assert rs.matched_tokens() == matched.split()
+                assert rs.not_matched_tokens() == not_matched.split()
+                break
+        else:
+            raise AssertionError("Cannot find brand '%s' in result set" % brand)
 
 def _test_find_multi_token_brand_negative(q):
     with oq_find.find_brands(q) as rs:
@@ -248,7 +252,7 @@ def test_find_multi_token_brand_multi_match(ix_brand_full):
 
     # Partial synonyms match
     with oq_find.find_brands('молоко пастер Рузское') as rs:
-        assert rs.size == 1
+        assert rs.size > 0
         assert rs.data.next() == 'Рузское молоко'
         assert rs.matched_tokens() == 'рузское'.split()
         assert rs.not_matched_tokens() == 'молоко пастер'.split()
@@ -269,6 +273,9 @@ def test_find_multi_token_brand_prefix(ix_brand_full):
 
 def test_find_multi_token_brand_prefix_exact_match_priority(ix_brand_full):
     _test_find_multi_token_brand('мол домик в деревне', 'Домик в деревне', 'домик в деревне', 'мол')
+
+def test_find_multi_token_brand_false_prefix(ix_brand_full):
+    _test_find_multi_token_brand_negative('дер в  дерев')
 
 def test_find_multi_token_brand_joined_with_non_separator(ix_brand_full):
     # First = assert such brand in index

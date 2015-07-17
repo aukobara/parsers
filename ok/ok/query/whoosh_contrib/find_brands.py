@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals, print_function
+from collections import namedtuple
 
 import logging
 import itertools
 import re
 
 from whoosh.fields import TEXT, ID, SchemaClass
-from whoosh import query as whoosh_query, collectors, analysis
+from whoosh import query as whoosh_query, collectors, analysis, sorting
+from whoosh.idsets import BitSet
+from ok.query.whoosh_contrib.utils import ResultsPreCachedStoredFields
 
 from ok.utils import to_str
 from ok.dicts.term import TYPE_TERM_PROPOSITION_LIST, TypeTerm
@@ -17,6 +20,8 @@ from ok.query.whoosh_contrib.base import BaseFindQuery
 from ok.query.whoosh_contrib import utils
 
 log = logging.getLogger(__name__)
+
+""""""""""""""""""""""""""" INDEX PART """""""""""""""""""""""""""""
 
 INDEX_NAME = 'Brands.idx'
 
@@ -117,12 +122,16 @@ def data_checksum():
     config = main_options([])
     return utils.text_data_file_checksum(config.brands_in_csvname)
 
+""""""""""""""""""""""""""" SEARCH PART """""""""""""""""""""""""""""
+
 MIN_BRAND_PREFIX_LEN = 3
+MatchedPos = namedtuple('MatchedPos', 'start_pos end_pos brand_terms_set docnum')
 
 
 class FindBrandsQuery(BaseFindQuery):
     index_name = INDEX_NAME
     need_matched_terms = False
+    schema = SCHEMA
 
     def query_variants(self):
         tokens = self.q_tokenized
@@ -152,73 +161,90 @@ class FindBrandsQuery(BaseFindQuery):
                                 boost = 2.0 if prefix == token else 1.0 + (token_len - min_len)*0.1
                                 prefix_queries.append(whoosh_query.Term('brand', prefix, boost=boost))
 
-                        if prefix_queries:
-                            if len(prefix_queries) == 1:
-                                token_queries.append(prefix_queries[0])
-                            else:
-                                token_queries.append(whoosh_query.Or(prefix_queries))
+                        token_queries += utils.and_or_query(prefix_queries, And=None, Or=whoosh_query.DisjunctionMax)
 
-        queries = []
-        if token_queries:
-            if len(token_queries) == 1:
-                queries.append(token_queries[0])
-            else:
-                queries.append(whoosh_query.And(token_queries))
-                queries.append(whoosh_query.Or(token_queries))
-        return queries
+        return utils.and_or_query(token_queries, Or=whoosh_query.DisjunctionMax)
 
-    class BrandsCollector(collectors.WrappingCollector):
+    class BrandsCollector(collectors.ScoredCollector):
 
-        def __init__(self, child, original_query_tokens, brands_limit, seen_docset=None):
-            super(FindBrandsQuery.BrandsCollector, self).__init__(child)
+        def __init__(self, original_query_tokens, group_limit, sort_brands=False, seen_docset=None, stored_fields=None):
+            super(FindBrandsQuery.BrandsCollector, self).__init__()
             self.original_query_tokens = original_query_tokens
-            self.brands_limit = brands_limit
-            self.matched_brand_pos = dict()
-            self.seen_docset = seen_docset
-            self._brand_cache = dict()
-            self.brands_found = dict()
 
-        def _stored_brand(self, reader, global_docnum):
-            brand_cache = self._brand_cache
-            if global_docnum not in brand_cache:
-                brand = reader.stored_fields(global_docnum)['brand']
+            self.group_limit = group_limit
+            self.sort_brands = sort_brands
+
+            self.items = None
+            self.seen_docset = seen_docset
+
+            self._terms_cache = dict()
+            self.brands_found = dict()
+            """@type: dict of (unicode, list[list[MatchedPos]])"""
+            self._stored_fields = stored_fields if stored_fields is not None else dict()
+            """@type: dict of (int, dict of (unicode, unicode))"""
+
+        def _terms(self, reader, global_docnum):
+            terms_cache = self._terms_cache
+            if global_docnum not in terms_cache:
                 brand_terms = set(reader.vector(global_docnum, 'brand').all_ids())
 
-                from dawg import CompletionDAWG
-                brand_terms_dawg = CompletionDAWG(brand_terms)
+                from dawg import BytesDAWG
+                brand_terms_dawg = BytesDAWG(zip(brand_terms, map(chr, range(len(brand_terms)))))
 
-                brand_cache[global_docnum] = (brand, brand_terms, brand_terms_dawg)
+                terms_cache[global_docnum] = (brand_terms, brand_terms_dawg)
             else:
-                brand, brand_terms, brand_terms_dawg = brand_cache[global_docnum]
-            return brand, brand_terms, brand_terms_dawg
+                brand_terms, brand_terms_dawg = terms_cache[global_docnum]
+            return brand_terms, brand_terms_dawg
+
+        def stored_fields(self, reader, global_docnum):
+            stored_fields = self._stored_fields
+            fields = stored_fields.get(global_docnum)
+            if fields is None:
+                fields = reader.stored_fields(global_docnum) or {}
+                stored_fields[global_docnum] = fields
+            return fields
 
         def count(self):
-            return len(self.brands_found)
+            return len(self.items)
 
-        def token_matches(self, reader, token, global_docnum):
+        def token_matches(self, reader, token, global_docnum, terms_prefix_dict=None):
             """
             Check if one original query token matches brand terms in specified document.
             Original token can be prefix or another term transformation
+            If matches found returns BitSet object with indexes of potential matches in prefix_dict
+            Later this bitset can be used for intersection with other matches
             @param reader: IndexReader
             @param ok.query.tokens.QueryToken token: original query token
             @param int global_docnum: document in Brands index
-            @rtype: bool
+            @rtype: BitSet|None
             """
-            brand_terms_dawg = self._stored_brand(reader, global_docnum)[2]
+            if terms_prefix_dict is None:
+                _, terms_prefix_dict = self._terms(reader, global_docnum)
             token_len = len(token)
 
-            return (token_len >= MIN_BRAND_PREFIX_LEN and brand_terms_dawg.has_keys_with_prefix(token[:])) or \
-                   (token_len < MIN_BRAND_PREFIX_LEN and token in brand_terms_dawg)
+            if token_len >= MIN_BRAND_PREFIX_LEN:
+                term_indexes = map(lambda _i: ord(_i[1]), terms_prefix_dict.items(token[:]))
+            else:
+                term_idx = terms_prefix_dict.get(token)
+                term_indexes = [ord(term_idx[0])] if term_idx else []
+
+            if term_indexes:
+                # Prefixed terms found. Save their indexes in bitset
+                return BitSet(term_indexes)
 
         def collect_matches(self):
             reader = self.top_searcher.reader()
             original_query_tokens = self.original_query_tokens
-            limit_count = self.brands_limit
             # Collect distinct brand names if brands_limit was specified to calculate when stop collection
             brands_found = self.brands_found
-            seen_docset = self.seen_docset
+
+            # Cache methods for call optimization
+            stored_fields = self.stored_fields
+            _collect = self._collect
             token_matches = self.token_matches
-            stored_brand = self._stored_brand
+            terms_for_doc = self._terms
+
+            seen_docset = self.seen_docset
 
             for sub_docnum in self.matches():
 
@@ -228,140 +254,186 @@ class FindBrandsQuery(BaseFindQuery):
                         continue
                     seen_docset.add(global_docnum)
 
-                brand, brand_terms, _ = stored_brand(reader, global_docnum)
+                brand_terms, terms_prefix_dict = terms_for_doc(reader, global_docnum)
                 brand_length = len(brand_terms)
-
-                score = self.child.matcher.score()
-                min_score_brand = None
-                if brands_found:
-                    if limit_count is not None and brand not in brands_found:
-                        min_score_brand, min_score_value = min(brands_found.items(), key=lambda _t: _t[1][0])
-                        if limit_count == 0 and score <= min_score_value[0]:
-                            # Score of current doc's brand is too low to be selected in brands_found.
-                            continue
 
                 # For Multi token brand: Brand tokens can occur in query in any order but always must be in one phrase
                 end = len(original_query_tokens)
-                found_brand_tokens = set()
+                found_tokens_bitset = []
                 matched_pos = []
                 for i, token in enumerate(original_query_tokens):
-                    if token_matches(reader, token, global_docnum):
-                        found_brand_tokens.add(token)
+                    if i + brand_length > end:
+                        # Not enough tokens for next match
+                        break
+                    match_bitset = token_matches(reader, token, global_docnum, terms_prefix_dict=terms_prefix_dict)
+                    if match_bitset:
+                        found_tokens_bitset.append(match_bitset)
                         # NOTE: First brand token may be a proposition. Do not check here
                         start_pos = end_pos = token.position
                         j = i + 1
-                        while j < end and len(found_brand_tokens) < brand_length:
+                        while j < end and len(found_tokens_bitset) < brand_length:
                             # Check next tokens are set of matched brand terms
                             next_token = original_query_tokens[j]
                             if next_token in TYPE_TERM_PROPOSITION_LIST:
                                 pass
-                            elif not token_matches(reader, next_token, global_docnum):
-                                # Break the sequence and restart from next token
-                                found_brand_tokens.clear()
-                                break
                             else:
-                                found_brand_tokens.add(next_token)
-                                end_pos = next_token.position
+                                match_bitset = token_matches(reader, next_token, global_docnum, terms_prefix_dict=terms_prefix_dict)
+                                if not match_bitset:
+                                    # Break the sequence and restart from next token
+                                    found_tokens_bitset = []
+                                    break
+                                else:
+                                    found_tokens_bitset.append(match_bitset)
+                                    end_pos = next_token.position
                             j += 1
+
                         else:
-                            if len(found_brand_tokens) == brand_length:
+                            if any(len(set(term_comb)) == brand_length for term_comb in itertools.product(*found_tokens_bitset)):
+                                # Check that one of prefix combinations makes full length brand sequence
                                 # One match found. Keep match and prepare for next cycle
-                                matched_pos.append((start_pos, end_pos, set(brand_terms), global_docnum))
-                            found_brand_tokens.clear()
-                            if i + brand_length >= end:
-                                # Not enough tokens for next match
-                                break
+                                matched_pos.append(MatchedPos(start_pos, end_pos, set(brand_terms), global_docnum))
+
+                            found_tokens_bitset = []
 
                 if matched_pos:
                     # All brand tokens found in the query as a sub-sequence
-                    self.collect(sub_docnum)
+                    score = self.matcher.score()
+                    fields = stored_fields(reader, global_docnum)
+                    brand = fields['brand']
+                    _collect(global_docnum, score)
 
                     if brand not in brands_found:
-                        if limit_count is not None:
-                            if limit_count > 0:
-                                limit_count -= 1
-                            elif min_score_brand:
-                                # Replace min_score_brand. Score of current doc was checked already on the cycle start
-                                del brands_found[min_score_brand]
-
-                        # TODO: keep matched pos list separately from brands_found because
-                        # brand may be deleted from brands_found due to limit but later another document appears for that brand with higher score
-                        # Than, previous low score matches will be lost
                         brands_found[brand] = [score, matched_pos]
-                        self.matched_brand_pos[global_docnum] = matched_pos
+
                     else:
                         old_score, brand_matched_pos = brands_found[brand]
                         brands_found[brand][0] = max(score, old_score)
                         brand_matched_pos.extend(matched_pos)
-                        self.matched_brand_pos[global_docnum] = brand_matched_pos
 
                 elif log.isEnabledFor(logging.DEBUG):
-                    log.debug("Filtered out: %s. Query: %s", ' + '.join(brand_terms), self.child.q)
+                    log.debug("Filtered out: %s. Query: %s", ' + '.join(brand_terms), self.q)
+
+        def _collect(self, global_docnum, score):
+            self.items.append((score, global_docnum))
+            self.docset.add(global_docnum)
+            return 0 - score
+
+        def doc_brand(self, global_docnum):
+            reader = self.top_searcher.reader()
+            fields = self.stored_fields(reader, global_docnum)
+            brand = fields['brand']
+            return brand
+
+        def sort_key(self, sub_docnum):
+            global_docnum = self.offset + sub_docnum
+            score = self.matcher.score()
+
+            # Sort by score
+            key = 0 - score
+
+            if self.sort_brands:
+                brand = self.doc_brand(global_docnum)
+                key = (brand, key)
+
+            return key
 
         def results(self):
-            if self.brands_limit is not None:
-                # Clean up possible low-score brand matches
-                docset = self.child.docset
-                items = self.child.items
-                """@type: list"""
+            docset = self.docset
+            items = self.items
+            """@type: list"""
 
-                filtered_brands = self.brands_found
-                stored_brand = self._stored_brand
-                reader = self.top_searcher.reader()
+            if items:
+                # Sort by first element in tuple, i.e. key. If two items have identical key,
+                # than docnum is used (i.e. second element). 3rd and 4th elements wont used in sorting because docnum is unique
+                doc_brand = self.doc_brand
+                key = (lambda _i: 0-_i[0]) if not self.sort_brands else (lambda _i: (doc_brand(_i[1]), 0-_i[0]))
+                items.sort(key=key)
 
-                shift = 0
-                for i in range(len(items)):
-                    docnum = items[i + shift][1]
-                    brand = stored_brand(reader, docnum)[0]
-                    if brand not in filtered_brands:
-                        docset.remove(docnum)
-                        del items[i + shift]
-                        shift -= 1
+                if self.group_limit is not None:
+                    # Clean up possible low-score brand matches
+                    # Items are sorted already. Thus, just look forward until n-th different key
+                    group_count_down = self.group_limit + 1
+                    prev_key = last = None
+                    key = (lambda _i: 0-_i[0]) if not self.sort_brands else (lambda _i: doc_brand(_i[1]))
+                    for i, item in enumerate(items):
+                        this_key = key(item)
+                        if prev_key is None or this_key != prev_key:
+                            prev_key = this_key
+                            group_count_down -= 1
+                            if not group_count_down:
+                                last = i
+                                break
 
-            return self.child.results()
+                    if last is not None:
+                        items = self.items = items[:last]
+
+            results = self._results(items, docset=docset)
+            return results
+
+        def _results(self, items, **kwargs):
+            r = ResultsPreCachedStoredFields(self._stored_fields, self.top_searcher, self.q, items, **kwargs)
+            r.runtime = self.runtime
+            r.collector = self
+            return r
 
     def _search(self, searcher, wq, **kwargs):
         """
         @param whoosh.searching.Searcher searcher: index searcher
         @param whoosh.query.qcore.Query whoosh_query: one of query produced by @query_variants()
         """
-        collector = self._collector(kwargs)
+        collector = self._collector(**kwargs)
         searcher.search_with_collector(wq, collector)
 
-        results = collector.results()
-        results.matched_brand_pos = collector.matched_brand_pos
-
-        return results
+        return collector.results()
 
     _seen_docset = None
+    _stored_fields = None
 
-    def _collector(self, kwargs):
-        assert kwargs.get('groupedby') is None, 'Brands search does not support facets at the moment'
-        limit = kwargs.pop('limit', 1)
+    def _collector(self, limit=1, sortedby=None, groupedby=None, **_):
+        assert groupedby is None, 'Brands search does not support facets at the moment'
+        if isinstance(sortedby, sorting.ScoreFacet):
+            sort_brands = False  # Default behaviour
+        elif isinstance(sortedby, sorting.FieldFacet) and sortedby.fieldname == 'brand':
+            sort_brands = True
+        else:
+            raise AssertionError('%s supports only Score and "brand" field sorting' % self.__class__.__name__)
 
         seen_docset = self._seen_docset = self._seen_docset or set()
+        stored_fields = self._stored_fields = self._stored_fields or dict()
 
-        wrapped_collector = collectors.UnlimitedCollector()
-        collector = self.BrandsCollector(wrapped_collector, self.q_tokenized.tokens, brands_limit=limit, seen_docset=seen_docset)
+        collector = self.BrandsCollector(self.q_tokenized.tokens, group_limit=limit, sort_brands=sort_brands,
+                                         seen_docset=seen_docset, stored_fields=stored_fields)
         return collector
+
+    def matched_brand_positions(self):
+        """
+        Returns list of matched token positions of original query where brand of current match was found
+        """
+        collector = self._results.collector
+        """@type: ok.query.whoosh_contrib.find_brands.FindBrandsQuery.BrandsCollector"""
+        brand = self.current_match['brand']
+        pos = collector.brands_found[brand][1]
+        return pos
 
     @property
     def matched_tokens(self):
-        pos = self._results.matched_brand_pos.get(self.current_match.docnum)
+        pos = self.matched_brand_positions()
+
         q_tokenized = self.q_tokenized
         tokens = []
         if pos:
             for pos_item in pos:
-                tokens.extend(filter(lambda token: isinstance(token, QueryToken), q_tokenized[pos_item[0]: pos_item[1] + 1]))
+                tokens.extend(filter(lambda token: isinstance(token, QueryToken), q_tokenized[pos_item.start_pos: pos_item.end_pos + 1]))
         return tokens
 
     @property
     def matched_terms(self):
         docnum = self.current_match.docnum
-        pos = self._results.matched_brand_pos.get(docnum)
+        pos = self.matched_brand_positions()
+
         matched_terms = set()
         if pos:
             for pos_item in pos:
-                if pos_item[3] == docnum:
-                    matched_terms.update(pos_item[2])
+                if pos_item.docnum == docnum:
+                    matched_terms.update(pos_item.brand_terms_set)
         return matched_terms
