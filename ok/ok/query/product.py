@@ -63,8 +63,8 @@ class ProductQuery(object):
                   'weight': tokenize_attr(product.get('weight')),
                   'fat': tokenize_attr(product.get('fat')),
                   'pack': tokenize_attr(product.get('pack')),
-                  'types': product['types'],
-                  'tags': product['tags'],
+                  'types': product.get('types', set()),
+                  'tags': product.get('tags', set()),
                   'brand': product.get('brand'),
                   'brand_detected': product.get('brand_detected')
                   }
