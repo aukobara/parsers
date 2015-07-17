@@ -7,13 +7,15 @@ from whoosh import sorting
 
 log = logging.getLogger(__name__)
 
+
 class BaseFindQuery(object):
     # Class attributes to override
     need_matched_terms = False
     index_name = None
     searcher_factory = None
+    schema = None
 
-    def __init__(self, q, searcher=None, return_fields=None, facet_fields=None, limit=10):
+    def __init__(self, q, searcher=None, return_fields=None, facet_fields=None, limit=10, sort_by_facet_name=None):
         """
         @param whoosh.searching.Searcher searcher: whoosh_contrib searcher
         """
@@ -27,8 +29,8 @@ class BaseFindQuery(object):
         self.matched_query = None
         self.return_fields = return_fields
 
-        self.facets = None if not facet_fields else \
-            sorting.Facets({facet: sorting.FieldFacet(facet, allow_overlap=False, maptype=sorting.Count) for facet in facet_fields})
+        self.facets = self.group_by_facet(facet_fields)
+        self.facets_sort_by = self.sort_by_facet(sort_by_facet_name)
 
         self.limit = limit
         """@type: int"""
@@ -38,6 +40,21 @@ class BaseFindQuery(object):
         """@type: whoosh.searching.Hit"""
         self._results = None
         """@type: whoosh.searching.Results"""
+
+    @staticmethod
+    def group_by_facet(facet_fields):
+        if facet_fields:
+            return sorting.Facets({facet: sorting.FieldFacet(facet, allow_overlap=False, maptype=sorting.Count) for facet in facet_fields})
+
+    def sort_by_facet(self, sort_by_facet_name):
+        if sort_by_facet_name:
+            sort_by_facet_name = sort_by_facet_name.lower()
+            if sort_by_facet_name == 'score':
+                return sorting.ScoreFacet()
+            elif sort_by_facet_name in self.schema:
+                return sorting.FieldFacet(sort_by_facet_name)
+            else:
+                raise AssertionError('sort_by_facet must be "score" or field name but "%s" came to %s query' % (sort_by_facet_name, self.__class__))
 
     @property
     def q_tokenized(self):
@@ -69,6 +86,7 @@ class BaseFindQuery(object):
         limit = self.limit
         terms = self.need_matched_terms
         facets = self.facets
+        sorted_by = self.facets_sort_by
         search = self._search
 
         q_attempt = None
@@ -77,7 +95,7 @@ class BaseFindQuery(object):
             if log.isEnabledFor(logging.DEBUG):
                 log.debug("Searching for query: %s" % q_attempt)
 
-            r = search(searcher, q_attempt, limit=limit, terms=terms, groupedby=facets)
+            r = search(searcher, q_attempt, limit=limit, terms=terms, groupedby=facets, sortedby=sorted_by)
             for match in r:
 
                 if not match_found:
@@ -110,7 +128,7 @@ class BaseFindQuery(object):
         # It can be useful for analysis of empty result
         self.matched_query = q_attempt
 
-    def _search(self, searcher, whoosh_query, **kwargs):
+    def _search(self, searcher, whoosh_query, sortedby=None, **kwargs):
         """
         This method encapsulate one whoosh query attempt logic. It can be overridden by implementations to add
         some logic like: post-filtering, query enhancement, more precise result size estimations, Results object wrapping,
@@ -122,11 +140,19 @@ class BaseFindQuery(object):
         @param bool terms: If True collect matching terms for later use by caller logic. Some implementations can ignore this flag and implement
                 matching terms by their own
         @param whoosh.sorting.Facets|None groupedby: if facets collection is required.
+        @param whoosh.sorting.FacetType|None sortedby: ScoreFacet (default behaviour) or FieldFacet with known field.
         @return: whoosh Results like API object. Actually this can by any proxy object with required __iter__ implementation as well as __len__ methods.
                     Also it will require groups() method implementation if facets we specified for this query
         @rtype: whoosh.searching.Results
         """
-        return searcher.search(whoosh_query, **kwargs)
+
+        if isinstance(sortedby, sorting.ScoreFacet):
+            # Score sorting is default behaviour. Avoid overhead
+            sortedby = None
+        else:
+            assert sortedby is None or isinstance(sortedby, sorting.FieldFacet), "%s supports sorting by Field or Score only" % self.__class__.__name__
+
+        return searcher.search(whoosh_query, sortedby=sortedby, **kwargs)
 
     # Current match object accessor helpers
     @property
@@ -137,15 +163,23 @@ class BaseFindQuery(object):
     def matched_tokens(self):
         """
         @rtype: list[ok.query.tokens.QueryToken]
-        @return: list of tuples (field_name, term_value)
+        @return: list original query tokens that has been matched to current_match
         """
         assert self.need_matched_terms, "Query class %r must set 'need_matched_terms' to access matched terms data" % self.__class__
-        m_terms = frozenset(t[1].decode('utf-8') for t in self.current_match.matched_terms())
+        m_terms = self.matched_terms
         result = []
         for token in self.q_tokenized.tokens:
             if token in m_terms:
                 result.append(token)
         return result
+
+    @property
+    def matched_terms(self):
+        """
+        @rtype: set[unicode]
+        @return: current_match indexed term set that has been matched to query
+        """
+        return frozenset(t[1].decode('utf-8') for t in self.current_match.matched_terms())
 
     def facet_counts(self, facet_field):
         return self._results.groups(facet_field)
