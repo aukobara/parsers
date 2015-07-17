@@ -58,6 +58,9 @@ def product_type_normalizer(value):
 
 
 def feeder(writer):
+    from ok.dicts.term import load_term_dict
+    load_term_dict()
+
     products = products_data_source()
     for p in products:
         feed_product(p, writer)
@@ -84,19 +87,23 @@ def data_checksum():
     """@rtype: long"""
     from ok.dicts import main_options
     config = main_options([])
-    return utils.text_data_file_checksum(config.products_meta_in_csvname)
+
+    term_dict_cs = TypeTerm.term_dict.dawg_checksum_in_file(config.term_dict)
+    products_cs = utils.text_data_file_checksum(config.products_meta_in_csvname)
+    return products_cs + term_dict_cs
 
 
 class FindProductsQuery(BaseFindQuery):
-    qp = QueryParser('pfqn', SCHEMA, termclass=query.Prefix, group=syntax.AndGroup)
-    qp.remove_plugin_class(WildcardPlugin)
-    qp.add_plugin(PrefixPlugin)
-
-    tail_qp = QueryParser('tail', SCHEMA, plugins=[PrefixPlugin], termclass=query.Prefix, group=syntax.OrGroup)
-
     # Base attributes setup
     need_matched_terms = True
     index_name = INDEX_NAME
+    schema = SCHEMA
+
+    qp = QueryParser('pfqn', schema, termclass=query.Prefix, group=syntax.AndGroup)
+    qp.remove_plugin_class(WildcardPlugin)
+    qp.add_plugin(PrefixPlugin)
+
+    tail_qp = QueryParser('tail', schema, plugins=[PrefixPlugin], termclass=query.Prefix, group=syntax.OrGroup)
 
     p_type_cache = None
 
@@ -106,6 +113,8 @@ class FindProductsQuery(BaseFindQuery):
         return ProductQueryParser(q)
 
     def query_variants(self):
+        # TODO: extend original query with main forms of each token. Original tokens should have more boost
+        original_query_string = to_str(self.q_original)
         p_type_cache = {}
 
         def type_filter(p_types):
@@ -118,49 +127,56 @@ class FindProductsQuery(BaseFindQuery):
                     yield p_type
 
         pq = ProductQuery.from_pfqn(self.q_tokenized, type_filter=type_filter)
-        and_maybe_scoring_q = self.tail_qp.parse(to_str(self.q_original))
+
+        scoring_query = self.tail_qp.parse(original_query_string)
 
         wfp_term_queries = self.supplementary_queries(pq)
+        wpf_group_queries = utils.and_or_query(wfp_term_queries, And=None)
 
-        len_map = defaultdict(set)
-        [len_map[len(pt)].add(p_type_cache[pt]) for pt in pq.types]
-
-        def get_query(term_group=None):
-            if wfp_term_queries:
-                if len(wfp_term_queries) == 1:
-                    wpf_group_queries = [wfp_term_queries[0]]
+        def add_supplementary_queries(term_group=None):
+            for wpf_gq in wpf_group_queries:
+                # yield query.AndMaybe(term_group & wpf_gq if term_group else wpf_gq, scoring_query)
+                if term_group:
+                    yield query.AndMaybe(term_group, wpf_gq | scoring_query)
                 else:
-                    wpf_group_queries = [query.And(wfp_term_queries), query.Or(wfp_term_queries)]
-                for wpf_gq in wpf_group_queries:
-                    yield query.AndMaybe(term_group & wpf_gq if term_group else wpf_gq, and_maybe_scoring_q)
-            if term_group:
-                yield query.AndMaybe(term_group, and_maybe_scoring_q)
+                    yield query.AndMaybe(wpf_gq, scoring_query)
+            if term_group and not wpf_group_queries:
+                yield query.AndMaybe(term_group, scoring_query)
 
-        q_types = []
-        for _, len_p_types in sorted(len_map.items(), key=lambda _l: _l[0], reverse=True):
-            same_len_terms = [query.Term('types', pt_norm_str) for pt_norm_str in len_p_types]
-            q_types.extend(get_query(query.And(same_len_terms)))
-            if len(same_len_terms) > 1:
-                q_types.extend(get_query(query.Or(same_len_terms)))
-        if not q_types and wfp_term_queries:
+        # Group product types by type length to allow find queries with type length priority
+        len_map = defaultdict(set)
+        for pt in pq.types:
+            norm_type = p_type_cache[pt]
+            len_map[len(pt)].add(norm_type)
+
+        result_queries = []
+        for types_length in sorted(len_map, reverse=True):
+            query_terms = []
+            for norm_type in len_map[types_length]:
+                query_terms.append(query.Term('types', norm_type))
+
+            for type_query in utils.and_or_query(query_terms):
+                result_queries += add_supplementary_queries(type_query)
+
+        if not result_queries and wfp_term_queries:
             # Weird situation when no types but other attributes are present
             # It can be used for listing of all brand products
-            q_types.extend(get_query())
+            result_queries += add_supplementary_queries()
 
         # Final attempt of hope - if exact types not matched try direct pfqn query
-        q_types.append(self.qp.parse(to_str(self.q_original)))
-        return q_types
+        result_queries.append(self.qp.parse(original_query_string))
 
-    def supplementary_queries(self, pq):
+        return result_queries
+
+    @staticmethod
+    def supplementary_queries(pq):
         """@param ok.query.product.ProductQuery pq: parsed query"""
         supp_fields = ['weight', 'fat', 'pack', 'brand']
         wfp_term_queries = []
         for field in supp_fields:
             if field in pq:
                 term_set = pq['%s_all' % field]
-                if len(term_set) == 1:
-                    wfp_term_queries.append(query.Term(field, next(iter(term_set))))
-                else:
-                    wfp_term_queries.append(query.Or(map(lambda term: query.Term(field, term), term_set)))
+                wfp_term_queries += utils.and_or_query(map(lambda term: query.Term(field, term), term_set),
+                                                       And=None, boost=1.5)
 
         return wfp_term_queries
