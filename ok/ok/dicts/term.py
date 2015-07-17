@@ -6,9 +6,8 @@ import re
 import dawg
 import itertools
 
-from ok.dicts import main_options
 from ok.dicts.russian import get_word_normal_form, is_known_word, is_simple_russian_word, RE_WORD_OR_NUMBER_CHAR_SET
-from ok.utils import EventfulDict, to_str
+from ok.utils import EventfulDict, to_str, checksum
 
 TYPE_TERM_PROPOSITION_LIST = (u'в', u'во', u'с', u'со', u'из', u'для', u'и', u'на', u'без', u'к', u'не', u'де', u'по', u'под')
 TYPE_TERM_PROPOSITION_AND_WORD_LIST = (u'со',)
@@ -21,8 +20,11 @@ class TypeTermException(Exception):
 class ContextRequiredTypeTermException(TypeTermException):
     pass
 
-# Context aware decorator
+
 def context_aware(func):
+    """
+    Context aware decorator
+    """
     _context_aware_function_reg = getattr(context_aware, '_context_aware_function_reg', [])
     try:
         func_idx = _context_aware_function_reg.index(func)
@@ -74,7 +76,10 @@ class TypeTermDict(object):
     def __init__(self):
         self.__terms = defaultdict(set)
         """@type: dict of (unicode, int)"""
+
         self.__terms_dawg = dawg.BytesDAWG()
+        self.__terms_dawg_checksum = None
+
         self.__terms_idx = [None] * 10000
         """@type: list[unicode]"""
         self.__next_idx = 1  # 0 is not used to avoid matching with None
@@ -109,6 +114,7 @@ class TypeTermDict(object):
     def clear(self):
         self.__terms = defaultdict(set)
         self.__terms_dawg = dawg.BytesDAWG()
+        self.__terms_dawg_checksum = None
         self.__terms_idx = [None] * 10000
         self.__next_idx = 1
 
@@ -141,6 +147,7 @@ class TypeTermDict(object):
         assert len(new_dawg.keys()) == len(self.__terms.keys()) + len(self.__terms_dawg.keys()), \
             "DAWG does not match to terms dict!"
         self.__terms_dawg = new_dawg
+        self.__terms_dawg_checksum = self._terms_dawg_checksum(new_dawg)
         self.__terms.clear()
 
         # TODO: invalidate PrefixTypeTerms, i.e. check they are still valid PrefixTypeTerm.
@@ -148,15 +155,43 @@ class TypeTermDict(object):
         assert not any(isinstance(self.get_by_unicode(key), PrefixTypeTerm) for key in self.__terms_dawg.keys()), \
             "TODO: INVALIDATE Prefix Types before merge them to DAWG"
 
-    def dawg_checksum(self):
-        if self.__terms:
+    def dawg_checksum(self, core_only=False):
+        if not core_only and self.__terms:
             raise TypeTermException("DAWG was dynamically updated. Use update_dawg() first to persist terms")
-        from zlib import adler32
-        from io import BytesIO
-        b = BytesIO()
-        self.__terms_dawg.write(b)
-        checksum = adler32(b.getvalue()) & 0xffffffff
-        return checksum
+
+        dawg_checksum = self.__terms_dawg_checksum
+        if dawg_checksum is not None:
+            return dawg_checksum
+
+        dawg_checksum = self.__terms_dawg_checksum = self._terms_dawg_checksum(self.__terms_dawg)
+
+        return dawg_checksum
+
+    @classmethod
+    def dawg_checksum_in_file(cls, dawg_filename):
+        dawg_in_file = dawg.BytesDAWG()
+        dawg_in_file.load(dawg_filename)
+        return cls._terms_dawg_checksum(dawg_in_file)
+
+    @staticmethod
+    def _terms_dawg_checksum(dawg_obj):
+        return checksum(dawg_obj.write)
+
+    # noinspection PyCompatibility
+    def ensure_loaded(self, dawg_filename=None, dawg_checksum=None):
+        if dawg_checksum is None:
+            loaded = next(self.__terms_dawg.iterkeys(), None) is not None
+        else:
+            loaded = dawg_checksum == self.dawg_checksum(core_only=True)
+        if not loaded:
+            if dawg_filename is None:
+                from ok.dicts import main_options
+                config = main_options([])
+                dawg_filename = config.term_dict
+
+            self.from_file(dawg_filename, required_checksum=dawg_checksum)
+
+        return self
 
     def save_term(self, term):
         return self.__term_to_idx(term)
@@ -225,7 +260,7 @@ class TypeTermDict(object):
         if verbose:
             print("Dumped %d terms to %s" % (len(self.__terms_dawg.keys()), filename))
 
-    def from_file(self, filename, verbose=False, skip_word_forms_validation=False):
+    def from_file(self, filename, verbose=False, skip_word_forms_validation=False, required_checksum=None):
         """
         @param bool skip_word_forms_validation: see description in update_dawg()
         """
@@ -236,6 +271,14 @@ class TypeTermDict(object):
         self.clear()
         new_dawg = dawg.BytesDAWG()
         new_dawg.load(filename)
+        if required_checksum is not None:
+            new_checksum = self._terms_dawg_checksum(new_dawg)
+            if new_checksum != required_checksum:
+                raise TypeTermException(
+                    "Loading term dict from file '%s' was changed and have different checksum than required (required: %d, in file: %d)" %
+                    (filename, required_checksum, new_checksum)
+                )
+
         term_id = 0
         # noinspection PyCompatibility
         for term_str, term_id in sorted(new_dawg.iteritems(), key=lambda _t: int(_t[1])):
@@ -769,6 +812,7 @@ class WithPropositionTypeTerm(CompoundTypeTerm):
 
         return collected_forms
 
+
 class TagTypeTerm(TypeTerm):
     # Special term starting with hash - it is used for unparseable tag names
     @classmethod
@@ -871,6 +915,7 @@ class PrefixTypeTerm(TypeTerm):
 ctx_def = namedtuple('_ctx_def', 'ctx_terms main_form')
 DEFAULT_CONTEXT = u'__default__'
 
+
 class ContextDependentTypeTerm(TypeTerm):
 
     # If any term in context of ctx_terms use main_form
@@ -920,7 +965,7 @@ class ContextDependentTypeTerm(TypeTerm):
         'цел': [ctx_def(['шоколад', 'молоко', 'конфеты', 'кондитерский'], 'цельный')],
         'цельн': [ctx_def([DEFAULT_CONTEXT], 'цельный')],
         'раф': [ctx_def(['масло'], 'рафинированное')],
-        'подсол': [ctx_def(['масло','семечки'], 'подсолнечное')],
+        'подсол': [ctx_def(['масло', 'семечки'], 'подсолнечное')],
         'сод': [ctx_def(['напиток', 'сок'], 'содержащий')],
         'содер': [ctx_def([DEFAULT_CONTEXT], 'содержащий')],
         'пит': [ctx_def(['вода', 'йогурт'], 'питьевой')],
@@ -1291,25 +1336,30 @@ class ContextDependentTypeTerm(TypeTerm):
     def all_context_word_forms(self):
         collected_word_forms = {self}
         ctx_map = self.get_ctx_map()
+
         # Check if main_form in definition is self (acceptable for default context definition)
         # If not all other terms must not be context dependant
         # For prefixes check their base key
         base_key = self.get_prefix_base_key()
-        [collected_word_forms.update([main_form] if main_form == self or main_form == base_key else main_form.word_forms(context=None))
-                                        for main_form in ctx_map.values()]
+        for main_form in ctx_map.values():
+            collected_word_forms.update([main_form] if main_form == self or main_form == base_key
+                                        else main_form.word_forms(context=None))
         return list(collected_word_forms)
 
     def all_context_main_forms(self):
         """@rtype: list[TypeTerm]"""
         collected_main_forms = set()
         ctx_map = self.get_ctx_map()
+
         # Check if main_form in definition is self (acceptable for default context definition)
         # If not all other terms must not be context dependant
         # For prefixes check their base key
         base_key = self.get_prefix_base_key()
-        [collected_main_forms.add(main_form if main_form == self or main_form == base_key else main_form.get_main_form(context=None))
-                                    for main_form in ctx_map.values()]
+        for main_form in ctx_map.values():
+            collected_main_forms.add(main_form if main_form == self or main_form == base_key
+                                     else main_form.get_main_form(context=None))
         return list(collected_main_forms)
+
 
 class TermContext(deque):
 
@@ -1446,7 +1496,7 @@ def print_prefix_word_candidates():
     print("=" * 80)
     print("3-4 char or unknown (almost) same main form and count>2")
     exclude = ['лен', 'мир', 'фри', 'вино', 'грей', 'карт', 'море']
-    for term, full_terms in sorted(prefix_terms.items(), key=lambda _k:'%2d%s' % (len(_k[0]), _k[0])):
+    for term, full_terms in sorted(prefix_terms.items(), key=lambda _k: '%2d%s' % (len(_k[0]), _k[0])):
         if (len(term) not in [3, 4] and is_known_word(term)) or len(full_terms) < 2 or term in exclude:
             continue
         main_forms = defaultdict(set)
@@ -1462,7 +1512,7 @@ def print_prefix_word_candidates():
 
     print("=" * 80)
     print("Remaining: %d" % len(set(prefix_terms) - seen))
-    for term, full_terms in sorted(prefix_terms.items(), key=lambda _k:'%2d%s' % (len(_k[0]), _k[0])):
+    for term, full_terms in sorted(prefix_terms.items(), key=lambda _k: '%2d%s' % (len(_k[0]), _k[0])):
         if term in seen:
             continue
         print(u'%s%s => %s' % (term, (u'?' if not is_known_word(term) else ''),
@@ -1487,15 +1537,15 @@ def dump_term_dict_from_product_types(config, filename='out/term_dict.dawg'):
     return term_dict
 
 
-def load_term_dict(filename=None):
+def load_term_dict(filename=None, force_reload=False):
     if not filename:
-        import ok.dicts
-        config = ok.dicts.main_options([])
+        from ok.dicts import main_options
+        config = main_options([])
         filename = config.term_dict
-    term_dict = TypeTermDict()
-    TypeTerm.term_dict = term_dict
-    term_dict.from_file(filename, verbose=True)
-    return term_dict
+    dawg_checksum = TypeTerm.term_dict.dawg_checksum_in_file(filename)
+    if force_reload:
+        TypeTerm.term_dict.clear()
+    return TypeTerm.term_dict.ensure_loaded(filename, dawg_checksum=dawg_checksum)
 
 
 def print_logged_contexts_for_product_type_dict(config):
@@ -1523,12 +1573,16 @@ def print_logged_contexts_for_product_type_dict(config):
 
 if __name__ == '__main__':
     import sys
+    from ok.dicts import main_options
+    _config = main_options(sys.argv)
+
+    # noinspection PyUnresolvedReferences
     import ok.dicts.term as ot
-    config = main_options(sys.argv)
-    if config.action == 'dump-pdt':
-        ot.dump_term_dict_from_product_types(config)
-    elif config.action == 'print-prefixes':
+    if _config.action == 'dump-pdt':
+        ot.dump_term_dict_from_product_types(_config)
+    elif _config.action == 'print-prefixes':
         ot.load_term_dict()
         ot.print_prefix_word_candidates()
-    elif config.action == 'print-logged-context':
-        ot.print_logged_contexts_for_product_type_dict(config)
+    elif _config.action == 'print-logged-context':
+        # noinspection PyTypeChecker
+        ot.print_logged_contexts_for_product_type_dict(_config)

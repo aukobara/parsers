@@ -12,7 +12,7 @@ from ok.dicts.product_type_dict import reload_product_type_dict, ProductTypeDict
 from ok.dicts.russian import get_word_normal_form
 from ok.dicts.term import load_term_dict, TypeTerm, ContextRequiredTypeTermException, dump_term_dict_from_product_types, \
     CompoundTypeTerm, ContextDependentTypeTerm, ctx_def, DEFAULT_CONTEXT, WithPropositionTypeTerm, TermContext, \
-    context_aware
+    context_aware, TypeTermDict
 
 
 @pytest.fixture(autouse=True)
@@ -626,6 +626,8 @@ def test_dawg_persistence_full():
     print("test_dawg_persistence()")
     filename = 'out/_term_dict_test.dawg'
     test_term_dict_saved = dump_term_dict_from_product_types(None, filename)
+    # Set empty dict to keep saved dict untouched
+    TypeTerm.term_dict = TypeTermDict()
     test_term_dict_loaded = load_term_dict(filename)
     max_id = test_term_dict_loaded.get_max_id()
     assert test_term_dict_saved.get_max_id() == max_id and max_id > 0, "Saved and loaded dawgs are different size!"
