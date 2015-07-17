@@ -505,3 +505,14 @@ def any_item(seq, default=None, sort=True):
         else:
             return next(iter(seq), default)
     return seq
+
+def checksum(write_to_method):
+    assert callable(write_to_method)
+    from zlib import crc32
+    from io import BytesIO
+
+    b = BytesIO()
+    write_to_method(b)
+    checksum = crc32(b.getvalue()) & 0xffffffff
+    return checksum
+
